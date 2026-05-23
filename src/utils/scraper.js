@@ -270,6 +270,20 @@ export async function resolverUrls(datos) {
     datos.boxes[i].alto = est ? est.alto : 30;
     datos.boxes[i].valor_mercancia = (result.price || 0) * cantidad;
 
+    if (cantidad > 1 && est) {
+      const volUnidad = est.largo * est.ancho * est.alto;
+      const volTotal = volUnidad * cantidad;
+      for (const caja of CAJAS_ESTANDAR) {
+        if (caja.largo * caja.ancho * caja.alto >= volTotal) {
+          datos.boxes[i].largo = caja.largo;
+          datos.boxes[i].ancho = caja.ancho;
+          datos.boxes[i].alto = caja.alto;
+          log('INFO', 'Box expanded to standard size', { box: i + 1, dims: `${caja.largo}x${caja.ancho}x${caja.alto}`, for: cantidad + ' units', vol: volTotal });
+          break;
+        }
+      }
+    }
+
     log('INFO', 'Box scraped', { box: i + 1, title: result.title, dims: `${datos.boxes[i].largo}x${datos.boxes[i].ancho}x${datos.boxes[i].alto}`, peso: datos.boxes[i].peso_bruto });
   }
 
