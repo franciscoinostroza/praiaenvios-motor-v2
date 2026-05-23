@@ -58,7 +58,7 @@ async function manejarCotizacion(req, res) {
     }
 
     const total_reales = resultadoMotor.total_final || 0;
-    const tasa = resultadoMotor.tasa_dolar || parseFloat(process.env.DEFAULT_TASA_DOLAR) || 4.60;
+    const tasa = resultadoMotor.tasa_dolar;
     const total_usd = parseFloat((total_reales / tasa).toFixed(2));
     const modalidad = resultadoMotor.modalidad
       || (resultadoMotor.cajas && resultadoMotor.cajas.length > 0 ? resultadoMotor.cajas[0].modalidad : undefined);

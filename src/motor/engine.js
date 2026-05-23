@@ -313,7 +313,7 @@ export function crearMotor(config) {
       fecha_entrega: calcularFechaEntrega(modalidad_cfg.tiempo_entrega_dias),
       con_trecho: trecho > 0,
       costo_nacional: calcularCostoNacional(peso_bruto),
-      tasa_dolar: FORMULAS.tasa_dolar || 4.60
+      tasa_dolar: FORMULAS.tasa_dolar
     };
   }
 
@@ -395,7 +395,7 @@ export function crearMotor(config) {
     }
 
     const total_final = Math.round(sub_total + trecho_val);
-    const tasa = FORMULAS.tasa_dolar || 4.60;
+    const tasa = FORMULAS.tasa_dolar;
 
     return {
       status: 'ok',
@@ -463,7 +463,7 @@ export function crearMotor(config) {
       tiempo_entrega: maxDias + ' días',
       fecha_entrega: calcularFechaEntrega(maxDias),
       costo_nacional: calcularCostoNacional(totalPeso),
-      tasa_dolar: FORMULAS.tasa_dolar || 4.60,
+      tasa_dolar: FORMULAS.tasa_dolar,
       cajas: cajas
     };
   }

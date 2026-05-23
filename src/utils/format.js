@@ -38,7 +38,7 @@ export function extractMotorParams(datos) {
 
 export function formatearMensaje(datos, resultadoMotor) {
   var total_reales = resultadoMotor.total_final || 0;
-  var tasa = resultadoMotor.tasa_dolar || 4.60;
+  var tasa = resultadoMotor.tasa_dolar;
   var total_usd = (total_reales / tasa).toFixed(2);
 
   var modalidad = resultadoMotor.modalidad

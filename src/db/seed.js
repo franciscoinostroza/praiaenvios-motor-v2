@@ -71,7 +71,8 @@ async function seed() {
     ['divisor_volumetrico', 6000], ['factor_ft3', 0.0000353147],
     ['flete_aereo_por_kg', 9.5], ['factor_seguro', 0.007],
     ['factor_empresa_manaus', 0.04444], ['factor_ganancia', 6],
-    ['nacional_peso_min', 1], ['nacional_peso_max', 80]
+    ['nacional_peso_min', 1], ['nacional_peso_max', 80],
+    ['tasa_dolar', 4.60]
   ];
   for (const [key, val] of forms) {
     await query('INSERT INTO formulas (clave, valor) VALUES ($1, $2) ON CONFLICT (clave) DO NOTHING', [key, val]);
