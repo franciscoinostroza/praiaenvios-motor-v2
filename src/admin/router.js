@@ -2,6 +2,7 @@ import { Router, urlencoded } from 'express';
 import cookieParser from 'cookie-parser';
 import { query } from '../db/pool.js';
 import { invalidateCache } from '../motor/config.js';
+import { cotizarDebug as simular } from '../services/motor.js';
 
 function auth(req, res, next) {
   const pw = process.env.ADMIN_PASSWORD || 'admin123';
@@ -50,10 +51,10 @@ body{font-family:'Inter',-apple-system,sans-serif;background:var(--gray-50);colo
 .main-header p{font-size:.85rem;color:var(--gray-500);margin-top:2px}
 
 /* ─── STATS ─── */
-.stats{display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:12px;margin-bottom:24px}
+.stats{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:12px;margin-bottom:24px}
 .stat-card{background:#fff;border-radius:var(--radius);padding:16px;box-shadow:var(--shadow);border:1px solid var(--gray-200)}
 .stat-card .num{font-size:1.5rem;font-weight:700;color:var(--blue)}
-.stat-card .label{font-size:.75rem;color:var(--gray-500);margin-top:2px}
+.stat-card .label{font-size:.75rem;color:var(--gray-500);margin-top:2px;overflow-wrap:break-word}
 
 /* ─── CARDS GRID ─── */
 .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:12px}
@@ -166,18 +167,20 @@ function renderNav(active) {
   const items = [
     { label: 'Dashboard', path: '/admin', icon: '📊', key: 'Admin' },
     { divider: true },
-    { label: '💰 Tarifas Express', path: '/admin/tarifas_express', icon: '💰', key: 'Tarifas Express' },
-    { label: '🚚 Tarifas Terrestre', path: '/admin/tarifas_terrestre', icon: '🚚', key: 'Tarifas Terrestre' },
-    { label: '🇻🇪 Nacional OP1', path: '/admin/nacional_op1', icon: '🇻🇪', key: 'Nacional OP1 (MRW)' },
-    { label: '🇻🇪 Nacional OP2', path: '/admin/nacional_op2', icon: '🇻🇪', key: 'Nacional OP2 (LAE)' },
+    { label: 'Simulador', path: '/admin/simulador', icon: '🧮', key: 'Simulador' },
     { divider: true },
-    { label: '📏 Tramos BV', path: '/admin/tramos_boa_vista', icon: '📏', key: 'Tramos Boa Vista' },
-    { label: '📊 Tramos Gan.', path: '/admin/tramos_ganancia', icon: '📊', key: 'Tramos Ganancia' },
-    { label: '📋 Modalidades', path: '/admin/modalidades', icon: '📋', key: 'Modalidades' },
-    { label: '🧮 Fórmulas', path: '/admin/formulas', icon: '🧮', key: 'Fórmulas' },
+    { label: 'Tarifas Express', path: '/admin/tarifas_express', icon: '💰', key: 'Tarifas Express' },
+    { label: 'Tarifas Terrestre', path: '/admin/tarifas_terrestre', icon: '🚚', key: 'Tarifas Terrestre' },
+    { label: 'Nacional OP1', path: '/admin/nacional_op1', icon: '🇻🇪', key: 'Nacional OP1 (MRW)' },
+    { label: 'Nacional OP2', path: '/admin/nacional_op2', icon: '🇻🇪', key: 'Nacional OP2 (LAE)' },
     { divider: true },
-    { label: '🏷️ Categorías', path: '/admin/categorias', icon: '🏷️', key: 'Categorías' },
-    { label: '📍 Zonas', path: '/admin/zonas', icon: '📍', key: 'Zonas' },
+    { label: 'Tramos BV', path: '/admin/tramos_boa_vista', icon: '📏', key: 'Tramos Boa Vista' },
+    { label: 'Tramos Gan.', path: '/admin/tramos_ganancia', icon: '📊', key: 'Tramos Ganancia' },
+    { label: 'Modalidades', path: '/admin/modalidades', icon: '📋', key: 'Modalidades' },
+    { label: 'Fórmulas', path: '/admin/formulas', icon: '🧮', key: 'Fórmulas' },
+    { divider: true },
+    { label: 'Categorías', path: '/admin/categorias', icon: '🏷️', key: 'Categorías' },
+    { label: 'Zonas', path: '/admin/zonas', icon: '📍', key: 'Zonas' },
   ];
   return items.map(i => {
     if (i.divider) return '<div class="divider"></div>';
@@ -328,8 +331,92 @@ if(document.cookie.includes('token=')){fetch('/admin').then(r=>{if(r.ok&&r.url.i
     res.send(layout('Admin', body, t));
   });
 
+  /* ─── SIMULADOR ─── */
+  router.get('/simulador', auth, async (req, res) => {
+    const t = req.adminToken;
+    let ciudades = '', categorias = '';
+    try {
+      const z = await query("SELECT ciudad FROM zonas WHERE tipo = 'BASE' ORDER BY ciudad");
+      ciudades = z.rows.map(r => `<option value="${r.ciudad}">${r.ciudad}</option>`).join('');
+      const c = await query("SELECT DISTINCT categoria FROM categorias WHERE tipo = 'NEUTRAS' ORDER BY categoria");
+      categorias = c.rows.map(r => `<label style="font-weight:400;flex-direction:row;align-items:center;gap:4px;font-size:.78rem"><input type="checkbox" name="cats" value="${r.categoria}"> ${r.categoria}</label>`).join('');
+    } catch {}
+
+    const result = req.query.r ? JSON.parse(Buffer.from(req.query.r, 'base64').toString()) : null;
+
+    const form = `<div class="table-wrap" style="padding:20px">
+      <form method="POST" action="/admin/simulador">
+        <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:12px;margin-bottom:16px">
+          <label>Peso (kg) <input type="number" step="any" name="peso_bruto" required value="5"></label>
+          <label>Largo (cm) <input type="number" step="any" name="largo" required value="30"></label>
+          <label>Ancho (cm) <input type="number" step="any" name="ancho" required value="20"></label>
+          <label>Alto (cm) <input type="number" step="any" name="alto" required value="15"></label>
+          <label>Valor (R$) <input type="number" step="any" name="valor_mercancia" required value="500"></label>
+          <label>Tipo <select name="tipo_mercancia"><option value="personal">Personal</option><option value="comercial">Comercial</option></select></label>
+          <label>Origen <select name="ciudad_origen">${ciudades}</select></label>
+        </div>
+        <div style="margin-bottom:16px">
+          <div style="font-size:.78rem;font-weight:600;color:var(--gray-600);margin-bottom:6px">Categorías</div>
+          <div style="display:flex;flex-wrap:wrap;gap:6px">${categorias || '<span style="font-size:.78rem;color:var(--gray-400)">Sin categorías disponibles</span>'}</div>
+        </div>
+        <button type="submit" class="btn-add" style="font-size:.85rem;padding:10px 24px">🧮 Simular cotización</button>
+      </form>
+    </div>`;
+
+    let resultHtml = '';
+    if (result) {
+      const d = result.desglose;
+      const comps = d.componentes;
+      const rows = Object.entries(comps).map(([k, v]) =>
+        `<tr><td style="text-transform:capitalize;font-weight:500">${k.replace(/_/g, ' ')}</td><td style="text-align:right;font-family:monospace">R$ ${typeof v === 'number' ? v.toLocaleString('es-VE',{minimumFractionDigits:2}) : v}</td></tr>`
+      ).join('');
+      resultHtml = `<div class="table-wrap" style="margin-top:16px">
+        <div class="table-toolbar"><span style="font-weight:600;font-size:.85rem">📊 Resultado: ${result.nombre_modalidad}</span></div>
+        <table>
+          <thead><tr><th>Componente</th><th style="text-align:right">Valor</th></tr></thead>
+          <tbody>
+            <tr><td style="font-weight:600">Peso bruto</td><td style="text-align:right;font-family:monospace">${d.peso_bruto} kg</td></tr>
+            <tr><td style="font-weight:600">Peso volumétrico</td><td style="text-align:right;font-family:monospace">${d.peso_volumetrico} kg</td></tr>
+            <tr><td style="font-weight:600">Peso facturable</td><td style="text-align:right;font-family:monospace">${d.peso_facturable} kg (${d.peso_facturable === d.peso_bruto ? 'bruto' : 'volumétrico'} usado)</td></tr>
+            <tr><td style="font-weight:600">FT³</td><td style="text-align:right;font-family:monospace">${d.ft3}</td></tr>
+            <tr><td style="font-weight:600">Tarifa USD/kg</td><td style="text-align:right;font-family:monospace">$${d.tarifa_usd_kg}</td></tr>
+            <tr style="background:var(--gray-50)"><td colspan="2" style="font-weight:600;color:var(--gray-600);font-size:.75rem;text-transform:uppercase">Componentes del costo</td></tr>
+            ${rows}
+            <tr><td style="font-weight:600">Subtotal</td><td style="text-align:right;font-family:monospace;font-weight:700">R$ ${d.sub_total.toLocaleString('es-VE',{minimumFractionDigits:2})}</td></tr>
+            ${d.trecho ? `<tr><td style="font-weight:600">Trecho</td><td style="text-align:right;font-family:monospace">R$ ${d.trecho.toLocaleString('es-VE',{minimumFractionDigits:2})}</td></tr>` : ''}
+            <tr style="background:#e8f0fe"><td style="font-weight:700;color:var(--blue);font-size:.95rem">Total final</td><td style="text-align:right;font-family:monospace;font-weight:700;color:var(--blue);font-size:.95rem">R$ ${result.total_final.toLocaleString('es-VE',{minimumFractionDigits:2})}</td></tr>
+            <tr><td style="font-weight:600">Total USD</td><td style="text-align:right;font-family:monospace;font-weight:600">$${result.total_usd.toFixed(2)} (tasa: R$${result.tasa_dolar})</td></tr>
+            <tr><td style="font-weight:600">Costo nacional</td><td style="text-align:right;font-family:monospace">R$ ${d.costo_nacional.toLocaleString('es-VE',{minimumFractionDigits:2})}</td></tr>
+            <tr><td style="font-weight:600">Tiempo entrega</td><td style="text-align:right;font-family:monospace">${result.tiempo_entrega}</td></tr>
+          </tbody>
+        </table>
+      </div>`;
+    }
+
+    res.send(layout('Simulador', form + resultHtml, t));
+  });
+
+  router.post('/simulador', auth, async (req, res) => {
+    try {
+      const cats = Array.isArray(req.body.cats) ? req.body.cats : (req.body.cats ? [req.body.cats] : ['general']);
+      const result = await simular({
+        peso_bruto: parseFloat(req.body.peso_bruto),
+        largo: parseFloat(req.body.largo),
+        ancho: parseFloat(req.body.ancho),
+        alto: parseFloat(req.body.alto),
+        valor_mercancia: parseFloat(req.body.valor_mercancia),
+        tipo_mercancia: req.body.tipo_mercancia,
+        categorias: cats,
+        ciudad_origen: req.body.ciudad_origen
+      });
+      const encoded = Buffer.from(JSON.stringify(result)).toString('base64');
+      res.redirect(`/admin/simulador?r=${encoded}`);
+    } catch (err) {
+      res.status(500).send(layout('Error', `<p style="color:var(--red)">Error: ${err.message}</p>`, req.adminToken));
+    }
+  });
+
   /* ─── TABLES ─── */
-  const TABLES = {
     tarifas_express: { cols: ['kg', 'precio_bs'], pk: 'kg', title: 'Tarifas Express', icon: '💰' },
     tarifas_terrestre: { cols: ['kg', 'precio_bs'], pk: 'kg', title: 'Tarifas Terrestre', icon: '🚚' },
     nacional_op1: { cols: ['kg', 'precio_bs'], pk: 'kg', title: 'Nacional OP1 (MRW)', icon: '🇻🇪' },

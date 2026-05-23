@@ -29,3 +29,13 @@ export async function cotizar(args) {
     return { status: 'error_interno', mensaje: 'Error inesperado: ' + err.message };
   }
 }
+
+export async function cotizarDebug(args) {
+  const config = await loadConfig();
+  const engine = crearMotor(config);
+  try {
+    return engine.cotizarDebug(args);
+  } catch (err) {
+    return { status: 'error_interno', mensaje: err.message };
+  }
+}
