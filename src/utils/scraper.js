@@ -206,6 +206,56 @@ async function fetchWithTimeout(url, ua, signal) {
   return response.text();
 }
 
+function scrapeMercadoLibre(html) {
+  const result = {};
+
+  const ogTitle = html.match(/<meta[^>]*property=["']og:title["'][^>]*content=["']([^"']*)["']/i);
+  if (ogTitle) result.title = ogTitle[1];
+  else {
+    const titleTag = html.match(/<title[^>]*>([\s\S]*?)<\/title>/i);
+    if (titleTag) result.title = titleTag[1].trim().replace(/\s*\|\s*Mercado( Libre| Livre).*$/, '');
+  }
+
+  const priceMeta = html.match(/<meta[^>]*property=["']product:price:amount["'][^>]*content=["']([^"']*)["']/i);
+  if (priceMeta) {
+    result.price = parseFloat(priceMeta[1]);
+  } else {
+    const priceMatch = html.match(/andes-money-amount__fraction[^>]*>([\d.]+)</);
+    if (priceMatch) result.price = parseFloat(priceMatch[1].replace(/\./g, ''));
+  }
+  if (!result.price) {
+    const centsMatch = html.match(/andes-money-amount__cents[^>]*>(\d+)</);
+    const frac = html.match(/andes-money-amount__fraction[^>]*>([\d.]+)</);
+    if (frac) {
+      let val = frac[1].replace(/\./g, '');
+      if (centsMatch) val += '.' + centsMatch[1];
+      result.price = parseFloat(val);
+    }
+  }
+
+  const specTables = html.match(/<th[^>]*>.*?Peso.*?<\/th>\s*<td[^>]*>(.*?)<\/td>/is);
+  if (specTables) {
+    const pesoText = specTables[1].replace(/<[^>]+>/g, '').trim();
+    const pesoMatch = pesoText.match(/[\d,.]+/);
+    if (pesoMatch) result.weight = parseFloat(pesoMatch[0].replace(',', '.'));
+  }
+  if (!result.weight) {
+    const weightMeta = html.match(/<meta[^>]*property=["']product:weight["'][^>]*content=["']([^"']*)["']/i);
+    if (weightMeta) result.weight = parseFloat(weightMeta[1]);
+  }
+  if (!result.weight) {
+    const anyPeso = html.match(/(?:peso|weight|peso bruto)[^<]{0,50}?([\d,.]+)\s*(kg|g)/i);
+    if (anyPeso) {
+      let val = parseFloat(anyPeso[1].replace(',', '.'));
+      if (anyPeso[2] === 'g' && val > 0) val = val / 1000;
+      if (val > 0) result.weight = val;
+    }
+  }
+
+  if (!result.title && !result.price) return null;
+  return result;
+}
+
 async function scrapeUrl(url) {
   const cached = await getCache(url);
   if (cached) {
@@ -221,6 +271,13 @@ async function scrapeUrl(url) {
       log('DEBUG', 'Scraping URL', { url, ua: ua.substring(0, 40) });
       const html = await fetchWithTimeout(url, ua, controller.signal);
       clearTimeout(timeout);
+
+      const isML = url.includes('mercadolibre') || url.includes('mercadolivre');
+      if (isML) {
+        const mlData = scrapeMercadoLibre(html);
+        if (mlData) { log('INFO', 'Scraped via MercadoLibre extractor', { url, title: mlData.title, price: mlData.price, weight: mlData.weight }); await setCache(url, mlData); return mlData; }
+        log('WARN', 'ML extractor failed, falling back to generic', { url });
+      }
 
       let data = extractJsonLd(html);
       if (data) { log('INFO', 'Scraped via ld+json', { url, title: data.title }); await setCache(url, data); return data; }
