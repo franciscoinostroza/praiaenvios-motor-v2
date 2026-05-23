@@ -1,4 +1,4 @@
-import { Router } from 'express';
+import { Router, urlencoded } from 'express';
 import cookieParser from 'cookie-parser';
 import { query } from '../db/pool.js';
 import { invalidateCache } from '../motor/config.js';
@@ -19,6 +19,7 @@ function auth(req, res, next) {
 export function crearAdminRouter() {
   const router = Router();
   router.use(cookieParser());
+  router.use(urlencoded({ extended: false }));
 
   router.get('/login', (req, res) => {
     const pw = process.env.ADMIN_PASSWORD || 'admin123';
