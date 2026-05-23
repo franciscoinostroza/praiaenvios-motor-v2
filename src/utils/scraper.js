@@ -53,6 +53,28 @@ const USER_AGENTS = [
 const TIMEOUT_MS = 5000;
 const CACHE_TTL = 600_000; // 10 min
 
+const SITE_TIMEOUTS = {
+  'mercadolibre': 8000,
+  'mercadolivre': 8000,
+  'shopee': 3000,
+  'amazon': 8000
+};
+
+function getSiteTimeout(url) {
+  for (const [site, ms] of Object.entries(SITE_TIMEOUTS)) {
+    if (url.includes(site)) return ms;
+  }
+  return TIMEOUT_MS;
+}
+
+class RateLimitedError extends Error {
+  constructor(retryAfter) {
+    super('Rate limited');
+    this.name = 'RateLimitedError';
+    this.retryAfter = retryAfter;
+  }
+}
+
 async function getCache(url) {
   try {
     const r = await query('SELECT resultado FROM cache_urls WHERE url = $1 AND created_at > NOW() - INTERVAL \'10 minutes\'', [url]);
@@ -198,12 +220,169 @@ function extractByRegex(html) {
   return Object.keys(result).length > 0 ? result : null;
 }
 
-async function fetchWithTimeout(url, ua, signal) {
-  const response = await fetch(url, {
-    headers: { 'User-Agent': ua, 'Accept': 'text/html,application/xhtml+xml' },
-    signal
-  });
-  return response.text();
+function extractDimensiones(html) {
+  const patterns = [
+    /(\d+[\s,.]*(?:x|×|\*)\s*[\d,.]+[\s,.]*(?:x|×|\*)\s*[\d,.]+)\s*(?:cm|centímetros|centimetros)/i,
+    /(?:dimens[oó]es|dimensiones|dimensões|tamanho|tamaño|medidas)[^<]{0,80}?(\d+[\s,.]*(?:x|×|\*)\s*[\d,.]+[\s,.]*(?:x|×|\*)\s*[\d,.]+)/i,
+    /<th[^>]*>.*?(?:dimens[oó]es|dimensiones|dimensões|tamanho|tamaño|medidas).*?<\/th>\s*<td[^>]*>(.*?)<\/td>/is,
+    /<th[^>]*>.*?(?:altura|largura|profundidad|comprimento).*?<\/th>\s*<td[^>]*>(.*?)<\/td>/is
+  ];
+  for (const pat of patterns) {
+    const m = html.match(pat);
+    if (!m) continue;
+    const dimStr = m[1] || m[2] || m[3];
+    if (!dimStr) continue;
+    const nums = dimStr.replace(/\s*(?:cm|centímetros|centimetros)\s*/gi, '').match(/[\d,.]+/g);
+    if (nums && nums.length >= 3) {
+      const dims = nums.slice(0, 3).map(n => Math.round(parseFloat(n.replace(',', '.'))));
+      if (dims.every(d => d > 0 && d < 200)) return { largo: dims[0], ancho: dims[1], alto: dims[2] };
+    }
+  }
+
+  const specs = html.match(/<th[^>]*>(.*?)<\/th>\s*<td[^>]*>(.*?)<\/td>/gis);
+  if (specs) {
+    let l, a, h;
+    for (const row of specs) {
+      const labelM = row.match(/<th[^>]*>(.*?)<\/th>/i);
+      const valM = row.match(/<td[^>]*>(.*?)<\/td>/i);
+      if (!labelM || !valM) continue;
+      const label = labelM[1].replace(/<[^>]+>/g, '').trim().toLowerCase();
+      const val = valM[1].replace(/<[^>]+>/g, '').trim();
+      const num = parseFloat(val.replace(',', '.'));
+      if (isNaN(num) || num <= 0) continue;
+      if (label.includes('altura') || label.includes('alt')) h = num;
+      else if (label.includes('largura') || label.includes('ancho') || label.includes('larg') || label.includes('width')) a = num;
+      else if (label.includes('profundidad') || label.includes('profundidade') || label.includes('comprimento') || label.includes('compr') || label.includes('depth')) l = num;
+    }
+    if (l && a && h && l < 200 && a < 200 && h < 200) return { largo: Math.round(l), ancho: Math.round(a), alto: Math.round(h) };
+  }
+  return null;
+}
+
+function scrapeShopee(html) {
+  const result = {};
+
+  const titleMatch = html.match(/<meta[^>]*property=["']og:title["'][^>]*content=["']([^"']*)["']/i);
+  if (titleMatch) result.title = titleMatch[1];
+  else {
+    const tt = html.match(/<title[^>]*>([\s\S]*?)<\/title>/i);
+    if (tt) result.title = tt[1].trim().replace(/\s*\|\s*Shopee.*$/, '');
+  }
+
+  const priceMatch = html.match(/data-sku-price["']>\s*R?\$?\s*([\d,.]+)/i) || html.match(/data-sale-price["']>\s*([\d,.]+)/i);
+  if (priceMatch) result.price = parseFloat(priceMatch[1].replace(/\./g, '').replace(',', '.'));
+  if (!result.price) {
+    const priceScript = html.match(/"price"\s*:\s*(\d+)/);
+    if (priceScript) result.price = parseInt(priceScript[1]) / 100000;
+  }
+  if (!result.price) {
+    const priceSpan = html.match(/<span[^>]*class="[^"]*price[^"]*"[^>]*>([\d,.]+)/i);
+    if (priceSpan) result.price = parseFloat(priceSpan[1].replace(/\./g, '').replace(',', '.'));
+  }
+
+  const weightScript = html.match(/"weight"\s*:\s*([\d.]+)/);
+  if (weightScript) {
+    let w = parseFloat(weightScript[1]);
+    if (w > 100) w = w / 1000;
+    if (w > 0 && w < 100) result.weight = w;
+  }
+  if (!result.weight) {
+    const anyPeso = html.match(/(?:peso|weight)[^<]{0,50}?([\d,.]+)\s*(kg|g|kilos|gramas)/i);
+    if (anyPeso) {
+      let val = parseFloat(anyPeso[1].replace(',', '.'));
+      if (anyPeso[2].toLowerCase() === 'g' || anyPeso[2].toLowerCase() === 'gramas') val = val / 1000;
+      if (val > 0 && val < 100) result.weight = val;
+    }
+  }
+
+  if (!result.title && !result.price) return null;
+
+  const dims = extractDimensiones(html);
+  if (dims) {
+    result.largo = dims.largo;
+    result.ancho = dims.ancho;
+    result.alto = dims.alto;
+  }
+  return result;
+}
+
+function scrapeAmazon(html) {
+  const result = {};
+
+  const ogTitle = html.match(/<meta[^>]*name=["']title["'][^>]*content=["']([^"']*)["']/i);
+  if (ogTitle) result.title = ogTitle[1];
+  else {
+    const tt = html.match(/<title[^>]*>([\s\S]*?)<\/title>/i);
+    if (tt) result.title = tt[1].trim().replace(/\s*:?\s*Amazon\.com(\.br)?.*$/, '');
+  }
+
+  const priceEl = html.match(/id="priceblock_ourprice"[^>]*>([\d,.]+)/i) || html.match(/id="priceblock_saleprice"[^>]*>([\d,.]+)/i);
+  if (priceEl) result.price = parseFloat(priceEl[1].replace(/\./g, '').replace(',', '.'));
+  if (!result.price) {
+    const aPrice = html.match(/a-price-whole[^>]*>(\d+)[^<]*</);
+    const aFrac = html.match(/a-price-fraction[^>]*>(\d+)[^<]*</);
+    if (aPrice) {
+      let val = aPrice[1];
+      if (aFrac) val += '.' + aFrac[1];
+      result.price = parseFloat(val);
+    }
+  }
+  if (!result.price) {
+    const priceScript = html.match(/"price"\s*:\s*([\d.]+)/);
+    if (priceScript) result.price = parseFloat(priceScript[1]);
+  }
+
+  const weightTable = html.match(/id="productDetails_db_sections"[^>]*>([\s\S]*?)<\/table>/i);
+  if (weightTable) {
+    const pesoMatch = weightTable[1].match(/(?:Peso do produto|Peso|Weight|Item Weight)[^<]*?<td[^>]*>([\s\S]*?)<\/td>/i);
+    if (pesoMatch) {
+      const pesoText = pesoMatch[1].replace(/<[^>]+>/g, '').trim();
+      const num = pesoText.match(/[\d,.]+/);
+      if (num) {
+        let val = parseFloat(num[0].replace(',', '.'));
+        if (pesoText.includes('g') && !pesoText.includes('kg')) val = val / 1000;
+        if (val > 0 && val < 100) result.weight = val;
+      }
+    }
+  }
+
+  if (!result.weight) {
+    const anyPeso = html.match(/(?:Peso|Weight|Item Weight)[^<]{0,60}?([\d,.]+)\s*(kg|g|pounds|lbs)/i);
+    if (anyPeso) {
+      let val = parseFloat(anyPeso[1].replace(',', '.'));
+      if (anyPeso[2] === 'g') val = val / 1000;
+      if (anyPeso[2] === 'pounds' || anyPeso[2] === 'lbs') val = val * 0.453;
+      if (val > 0 && val < 100) result.weight = val;
+    }
+  }
+
+  if (!result.title && !result.price) return null;
+
+  const dims = extractDimensiones(html);
+  if (dims) {
+    result.largo = dims.largo;
+    result.ancho = dims.ancho;
+    result.alto = dims.alto;
+  }
+  return result;
+}
+
+async function fetchWithTimeout(url, ua, timeoutMs) {
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), timeoutMs);
+  try {
+    const response = await fetch(url, {
+      headers: { 'User-Agent': ua, 'Accept': 'text/html,application/xhtml+xml' },
+      signal: controller.signal
+    });
+    if (response.status === 429) {
+      const retryAfter = parseInt(response.headers.get('retry-after') || '2', 10);
+      throw new RateLimitedError(retryAfter);
+    }
+    return await response.text();
+  } finally {
+    clearTimeout(timer);
+  }
 }
 
 function scrapeMercadoLibre(html) {
@@ -253,6 +432,13 @@ function scrapeMercadoLibre(html) {
   }
 
   if (!result.title && !result.price) return null;
+
+  const dims = extractDimensiones(html);
+  if (dims) {
+    result.largo = dims.largo;
+    result.ancho = dims.ancho;
+    result.alto = dims.alto;
+  }
   return result;
 }
 
@@ -265,12 +451,17 @@ async function scrapeUrl(url) {
 
   let lastError = null;
   for (const ua of USER_AGENTS) {
-    const controller = new AbortController();
-    const timeout = setTimeout(() => controller.abort(), TIMEOUT_MS);
+    const timeoutMs = getSiteTimeout(url);
     try {
-      log('DEBUG', 'Scraping URL', { url, ua: ua.substring(0, 40) });
-      const html = await fetchWithTimeout(url, ua, controller.signal);
-      clearTimeout(timeout);
+      log('DEBUG', 'Scraping URL', { url, ua: ua.substring(0, 40), timeout: timeoutMs });
+      const html = await fetchWithTimeout(url, ua, timeoutMs);
+
+      const isShopee = url.includes('shopee');
+      if (isShopee) {
+        const shData = scrapeShopee(html);
+        if (shData) { log('INFO', 'Scraped via Shopee extractor', { url, title: shData.title, price: shData.price, weight: shData.weight }); await setCache(url, shData); return shData; }
+        log('WARN', 'Shopee extractor failed, falling back', { url });
+      }
 
       const isML = url.includes('mercadolibre') || url.includes('mercadolivre');
       if (isML) {
@@ -279,20 +470,44 @@ async function scrapeUrl(url) {
         log('WARN', 'ML extractor failed, falling back to generic', { url });
       }
 
+      const isAmazon = url.includes('amazon');
+      if (isAmazon) {
+        const amData = scrapeAmazon(html);
+        if (amData) { log('INFO', 'Scraped via Amazon extractor', { url, title: amData.title, price: amData.price, weight: amData.weight }); await setCache(url, amData); return amData; }
+        log('WARN', 'Amazon extractor failed, falling back', { url });
+      }
+
       let data = extractJsonLd(html);
-      if (data) { log('INFO', 'Scraped via ld+json', { url, title: data.title }); await setCache(url, data); return data; }
+      if (data) {
+        const dims = extractDimensiones(html);
+        if (dims) { data.largo = dims.largo; data.ancho = dims.ancho; data.alto = dims.alto; }
+        log('INFO', 'Scraped via ld+json', { url, title: data.title }); await setCache(url, data); return data;
+      }
 
       data = extractMetaTags(html);
-      if (data) { log('INFO', 'Scraped via meta tags', { url, title: data.title }); await setCache(url, data); return data; }
+      if (data) {
+        const dims = extractDimensiones(html);
+        if (dims) { data.largo = dims.largo; data.ancho = dims.ancho; data.alto = dims.alto; }
+        log('INFO', 'Scraped via meta tags', { url, title: data.title }); await setCache(url, data); return data;
+      }
 
       data = extractByRegex(html);
-      if (data) { log('WARN', 'Scraped via regex fallback', { url, title: data.title }); await setCache(url, data); return data; }
+      if (data) {
+        const dims = extractDimensiones(html);
+        if (dims) { data.largo = dims.largo; data.ancho = dims.ancho; data.alto = dims.alto; }
+        log('WARN', 'Scraped via regex fallback', { url, title: data.title }); await setCache(url, data); return data;
+      }
 
       log('WARN', 'No data extracted from URL', { url });
       return null;
     } catch (err) {
-      clearTimeout(timeout);
       lastError = err;
+      if (err instanceof RateLimitedError) {
+        const wait = Math.min(err.retryAfter, 5);
+        log('WARN', 'Rate limited, backing off', { url, ua: ua.substring(0, 20), wait: wait + 's' });
+        await new Promise(r => setTimeout(r, wait * 1000));
+        continue;
+      }
       log('WARN', 'Scrape attempt failed', { url, attempt: ua.substring(0, 20), error: err.message });
     }
   }
@@ -320,14 +535,17 @@ export async function resolverUrls(datos) {
     const cantidad = parseInt(box.cantidad) || 1;
     const pesoEstimado = result.weight > 0 ? result.weight : (est ? est.peso : 1);
 
+    const tieneDims = result.largo > 0 && result.ancho > 0 && result.alto > 0;
+
     datos.boxes[i].peso_bruto = pesoEstimado * cantidad;
-    datos.boxes[i].largo = est ? est.largo : 30;
-    datos.boxes[i].ancho = est ? est.ancho : 30;
-    datos.boxes[i].alto = est ? est.alto : 30;
+    datos.boxes[i].largo = tieneDims ? result.largo : (est ? est.largo : 30);
+    datos.boxes[i].ancho = tieneDims ? result.ancho : (est ? est.ancho : 30);
+    datos.boxes[i].alto = tieneDims ? result.alto : (est ? est.alto : 30);
     datos.boxes[i].valor_mercancia = (result.price || 0) * cantidad;
 
-    if (cantidad > 1 && est) {
-      const volUnidad = est.largo * est.ancho * est.alto;
+    const dims = tieneDims ? result : est;
+    if (cantidad > 1 && dims) {
+      const volUnidad = dims.largo * dims.ancho * dims.alto;
       const volTotal = volUnidad * cantidad;
       for (const caja of CAJAS_ESTANDAR) {
         if (caja.largo * caja.ancho * caja.alto >= volTotal) {
