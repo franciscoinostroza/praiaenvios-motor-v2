@@ -1,4 +1,5 @@
 import { log } from './log.js';
+import { query } from '../db/pool.js';
 
 const ESTIMACIONES = {
   'celular':   { largo: 20, ancho: 10, alto: 5,  peso: 0.5 },
@@ -50,22 +51,20 @@ const USER_AGENTS = [
 ];
 
 const TIMEOUT_MS = 5000;
-const CACHE_TTL = 600_000;
+const CACHE_TTL = 600_000; // 10 min
 
-const urlCache = new Map();
-
-function getCache(url) {
-  const entry = urlCache.get(url);
-  if (entry && Date.now() - entry.ts < CACHE_TTL) return entry.data;
+async function getCache(url) {
+  try {
+    const r = await query('SELECT resultado FROM cache_urls WHERE url = $1 AND created_at > NOW() - INTERVAL \'10 minutes\'', [url]);
+    if (r.rows.length > 0) return r.rows[0].resultado;
+  } catch {}
   return null;
 }
 
-function setCache(url, data) {
-  urlCache.set(url, { data, ts: Date.now() });
-  if (urlCache.size > 500) {
-    const oldest = urlCache.keys().next().value;
-    if (oldest) urlCache.delete(oldest);
-  }
+async function setCache(url, data) {
+  try {
+    await query('INSERT INTO cache_urls (url, resultado) VALUES ($1, $2) ON CONFLICT (url) DO UPDATE SET resultado = $2, created_at = NOW()', [url, JSON.stringify(data)]);
+  } catch {}
 }
 
 const CAJAS_ESTANDAR = [
@@ -208,7 +207,7 @@ async function fetchWithTimeout(url, ua, signal) {
 }
 
 async function scrapeUrl(url) {
-  const cached = getCache(url);
+  const cached = await getCache(url);
   if (cached) {
     log('INFO', 'URL cache hit', { url });
     return cached;
@@ -224,13 +223,13 @@ async function scrapeUrl(url) {
       clearTimeout(timeout);
 
       let data = extractJsonLd(html);
-      if (data) { log('INFO', 'Scraped via ld+json', { url, title: data.title }); setCache(url, data); return data; }
+      if (data) { log('INFO', 'Scraped via ld+json', { url, title: data.title }); await setCache(url, data); return data; }
 
       data = extractMetaTags(html);
-      if (data) { log('INFO', 'Scraped via meta tags', { url, title: data.title }); setCache(url, data); return data; }
+      if (data) { log('INFO', 'Scraped via meta tags', { url, title: data.title }); await setCache(url, data); return data; }
 
       data = extractByRegex(html);
-      if (data) { log('WARN', 'Scraped via regex fallback', { url, title: data.title }); setCache(url, data); return data; }
+      if (data) { log('WARN', 'Scraped via regex fallback', { url, title: data.title }); await setCache(url, data); return data; }
 
       log('WARN', 'No data extracted from URL', { url });
       return null;

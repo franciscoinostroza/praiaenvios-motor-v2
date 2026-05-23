@@ -72,6 +72,14 @@ CREATE TABLE IF NOT EXISTS logs (
 
 CREATE INDEX IF NOT EXISTS idx_logs_created ON logs(created_at DESC);
 
+CREATE TABLE IF NOT EXISTS cache_urls (
+  url VARCHAR(2048) PRIMARY KEY,
+  resultado JSONB NOT NULL,
+  created_at TIMESTAMP DEFAULT NOW()
+);
+
+CREATE INDEX IF NOT EXISTS idx_cache_urls_created ON cache_urls(created_at);
+
 `;
 
 async function migrate() {
