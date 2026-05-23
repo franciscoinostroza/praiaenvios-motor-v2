@@ -484,36 +484,21 @@ if(document.cookie.includes('token=')){fetch('/admin').then(r=>{if(r.ok&&r.url.i
       const esc = (s) => (s == null ? '' : String(s)).replace(/</g, '&lt;').replace(/>/g, '&gt;');
       const rowsHtml = rows.map(r => {
         const ctxStr = r.contexto ? JSON.stringify(r.contexto, null, 2) : '';
-        return `<tr class="log-row" onclick="toggleLog(this)">
+        const msgPreview = r.mensaje.length > 80 ? esc(r.mensaje.substring(0, 80)) + '…' : esc(r.mensaje);
+        return `<tr class="log-row" onclick="openLog(${r.id})">
           <td><span class="log-badge ${badgeClass(r.nivel)}">${r.nivel}</span></td>
-          <td class="msg-cell">${esc(r.mensaje)}</td>
+          <td class="msg-cell" title="${esc(r.mensaje)}">${msgPreview}</td>
           <td>${r.contacto ? esc(r.contacto) : '<span class="hint">—</span>'}</td>
-          <td class="ctx-cell">${ctxStr ? '<code>'+esc(ctxStr.substring(0,80))+'…</code>' : '<span class="hint">—</span>'}</td>
+          <td class="ctx-cell">${ctxStr ? '<code>'+esc(ctxStr.substring(0,60))+'…</code>' : '<span class="hint">—</span>'}</td>
           <td class="date-cell">${new Date(r.created_at).toLocaleString('es-VE')}</td>
-        </tr>
-        <tr class="log-detail" style="display:none">
-          <td colspan="5">
-            <div class="log-detail-body">
-              <div class="detail-section">
-                <div class="detail-label">Mensaje completo</div>
-                <div class="detail-value">${esc(r.mensaje)}</div>
-              </div>
-              ${ctxStr ? `<div class="detail-section">
-                <div class="detail-label">Contexto</div>
-                <pre class="detail-pre">${esc(ctxStr)}</pre>
-              </div>` : ''}
-              ${r.contacto ? `<div class="detail-section">
-                <div class="detail-label">Contacto</div>
-                <div class="detail-value">${esc(r.contacto)}</div>
-              </div>` : ''}
-              <div class="detail-section">
-                <div class="detail-label">ID</div>
-                <div class="detail-value" style="font-family:monospace;font-size:.78rem">${r.id}</div>
-              </div>
-            </div>
-          </td>
         </tr>`;
       }).join('');
+
+      const logsJson = esc(JSON.stringify(rows.map(r => ({
+        id: r.id, nivel: r.nivel, mensaje: r.mensaje,
+        contexto: r.contexto, contacto: r.contacto,
+        fecha: new Date(r.created_at).toLocaleString('es-VE')
+      }))));
 
       const body = `<div class="table-wrap">
         <div class="table-toolbar">
@@ -529,7 +514,7 @@ if(document.cookie.includes('token=')){fetch('/admin').then(r=>{if(r.ok&&r.url.i
           </div>
         </div>
         <table>
-          <thead><tr><th style="width:70px">Nivel</th><th>Mensaje</th><th style="width:120px">Contacto</th><th>Contexto</th><th style="width:140px">Fecha</th></tr></thead>
+          <thead><tr><th style="width:64px">Nivel</th><th>Mensaje</th><th style="width:110px">Contacto</th><th style="width:120px">Contexto</th><th style="width:130px">Fecha</th></tr></thead>
           <tbody>${rows.length > 0 ? rowsHtml : '<tr><td colspan="5" style="text-align:center;padding:24px;color:var(--gray-400)">No hay logs</td></tr>'}</tbody>
         </table>
       </div>`;
@@ -540,25 +525,40 @@ if(document.cookie.includes('token=')){fetch('/admin').then(r=>{if(r.ok&&r.url.i
 .badge-wa{background:#fef3c7;color:#d97706}
 .badge-in{background:#e8f0fe;color:var(--blue)}
 .log-row{cursor:pointer;transition:background .15s}
-.log-row:hover td{background:#f0f4ff!important}
-.log-row td:first-child{position:relative}
-.log-row td:first-child::before{content:'▶';position:absolute;left:3px;top:50%;transform:translateY(-50%);font-size:.55rem;color:var(--gray-400);transition:transform .2s}
-.log-row.open td:first-child::before{transform:translateY(-50%) rotate(90deg)}
-.msg-cell{max-width:300px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.ctx-cell{max-width:160px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.ctx-cell code{font-size:.7rem;color:var(--gray-500);background:var(--gray-50);padding:2px 6px;border-radius:4px}
+.log-row:hover td{background:#f5f7ff!important}
+.msg-cell{max-width:280px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:.8rem}
+.ctx-cell{max-width:140px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.ctx-cell code{font-size:.68rem;color:var(--gray-500);background:var(--gray-50);padding:2px 5px;border-radius:4px}
 .date-cell{white-space:nowrap;font-size:.72rem;color:var(--gray-400)}
-.log-detail td{padding:0!important;background:var(--gray-50)!important}
-.log-detail-body{padding:16px 20px 16px 36px;border-top:1px solid var(--gray-200)}
-.detail-section{margin-bottom:12px}
-.detail-section:last-child{margin-bottom:0}
-.detail-label{font-size:.68rem;font-weight:600;color:var(--gray-500);text-transform:uppercase;letter-spacing:.04em;margin-bottom:4px}
-.detail-value{font-size:.82rem;color:var(--gray-700);line-height:1.5}
-.detail-pre{font-size:.78rem;color:var(--gray-700);background:#fff;border:1px solid var(--gray-200);border-radius:6px;padding:10px 12px;overflow-x:auto;line-height:1.5;font-family:ui-monospace,monospace;max-height:300px;overflow-y:auto}
 .hint{color:var(--gray-400);font-size:.75rem}
+
+/* ─── MODAL ─── */
+.log-modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:999;display:flex;align-items:center;justify-content:center;animation:fadeIn .2s;padding:20px}
+.log-modal{background:#fff;border-radius:14px;width:100%;max-width:680px;max-height:85vh;overflow-y:auto;box-shadow:0 25px 50px rgba(0,0,0,.2);animation:scaleIn .2s}
+.log-modal-header{display:flex;align-items:center;justify-content:space-between;padding:18px 22px;border-bottom:1px solid var(--gray-200);position:sticky;top:0;background:#fff;z-index:1;border-radius:14px 14px 0 0}
+.log-modal-header h3{font-size:.95rem;font-weight:700}
+.log-modal-close{background:var(--gray-100);border:none;width:32px;height:32px;border-radius:8px;cursor:pointer;font-size:1rem;display:flex;align-items:center;justify-content:center;color:var(--gray-500);transition:all .15s}
+.log-modal-close:hover{background:var(--gray-200);color:var(--gray-700)}
+.log-modal-body{padding:20px 22px}
+.log-field{margin-bottom:16px}
+.log-field:last-child{margin-bottom:0}
+.log-field-label{font-size:.68rem;font-weight:600;color:var(--gray-500);text-transform:uppercase;letter-spacing:.05em;margin-bottom:5px}
+.log-field-value{font-size:.85rem;color:var(--gray-800);line-height:1.6;word-break:break-word;white-space:pre-wrap}
+.log-field-pre{font-size:.8rem;color:var(--gray-700);background:var(--gray-50);border:1px solid var(--gray-200);border-radius:8px;padding:12px 14px;overflow-x:auto;line-height:1.5;font-family:ui-monospace,monospace;max-height:260px;overflow-y:auto;white-space:pre;margin:0}
+.log-field-small{font-size:.78rem;color:var(--gray-500);font-family:monospace}
 </style>
 <script>
-function toggleLog(tr){const open=tr.classList.toggle('open');const detail=tr.nextElementSibling;if(detail&&detail.classList.contains('log-detail')){detail.style.display=open?'table-row':'none'}}
+const logsData = ${logsJson};
+function openLog(id){const r=logsData.find(l=>l.id===id);if(!r)return;const d=document.createElement('div');d.className='log-modal-overlay';d.onclick=function(e){if(e.target===this)this.remove()};
+const ctx=r.contexto?JSON.stringify(r.contexto,null,2):'';const badge=r.nivel==='ERROR'?'badge-er':r.nivel==='WARN'?'badge-wa':'badge-in';
+d.innerHTML='<div class="log-modal">'+
+'<div class="log-modal-header"><h3><span class="log-badge '+badge+'">'+r.nivel+'</span> Log #'+id+'</h3><button class="log-modal-close" onclick="this.closest(\\'.log-modal-overlay\\').remove()">✕</button></div>'+
+'<div class="log-modal-body">'+
+'<div class="log-field"><div class="log-field-label">Mensaje</div><div class="log-field-value">'+r.mensaje.replace(/</g,'&lt;')+'</div></div>'+
+(ctx?'<div class="log-field"><div class="log-field-label">Contexto</div><pre class="log-field-pre">'+ctx.replace(/</g,'&lt;')+'</pre></div>':'')+
+(r.contacto?'<div class="log-field"><div class="log-field-label">Contacto</div><div class="log-field-value">'+r.contacto.replace(/</g,'&lt;')+'</div></div>':'')+
+'<div class="log-field"><div class="log-field-label">Fecha</div><div class="log-field-small">'+r.fecha+'</div></div>'+
+'</div></div>';document.body.appendChild(d)}
 </script>
 ${body}`, t));
     } catch (err) {
