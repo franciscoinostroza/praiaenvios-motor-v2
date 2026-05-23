@@ -23,12 +23,19 @@ if (SHIPPO_TOKEN) {
 
 function extractContacto(body) {
   const inner = body?.json_datos || body;
-  return inner?.contacto || inner?.nombre || inner?.name
-    || inner?.from_name || inner?.pushname || inner?.profile?.name
-    || body?.contacto || body?.nombre || body?.name || body?.pushname
-    || body?.from || body?.wa_id || body?.sender
-    || body?.telefono || body?.phone || body?.sessionId || body?.session_id
-    || null;
+  const candidates = [
+    inner?.sessionId, inner?.session_id, inner?.phone,
+    inner?.contacto, inner?.nombre, inner?.name,
+    inner?.from_name, inner?.pushname, inner?.profile?.name,
+    inner?.from, inner?.wa_id, inner?.sender, inner?.telefono,
+    body?.sessionId, body?.session_id, body?.phone,
+    body?.contacto, body?.nombre, body?.name,
+    body?.from, body?.wa_id, body?.sender, body?.telefono
+  ];
+  for (const c of candidates) {
+    if (c && typeof c === 'string' && !c.includes('{{') && !c.includes('}}')) return c;
+  }
+  return null;
 }
 
 async function manejarCotizacion(req, res) {
