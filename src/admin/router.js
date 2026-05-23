@@ -339,61 +339,97 @@ if(document.cookie.includes('token=')){fetch('/admin').then(r=>{if(r.ok&&r.url.i
       const z = await query("SELECT ciudad FROM zonas WHERE tipo = 'BASE' ORDER BY ciudad");
       ciudades = z.rows.map(r => `<option value="${r.ciudad}">${r.ciudad}</option>`).join('');
       const c = await query("SELECT DISTINCT categoria FROM categorias WHERE tipo = 'NEUTRAS' ORDER BY categoria");
-      categorias = c.rows.map(r => `<label style="font-weight:400;flex-direction:row;align-items:center;gap:4px;font-size:.78rem"><input type="checkbox" name="cats" value="${r.categoria}"> ${r.categoria}</label>`).join('');
+      categorias = c.rows.map(r => `<label class="cat-tag"><input type="checkbox" name="cats" value="${r.categoria}"> ${r.categoria}</label>`).join('');
     } catch {}
 
     const result = req.query.r ? JSON.parse(Buffer.from(req.query.r.replace(/-/g, '+').replace(/_/g, '/'), 'base64').toString()) : null;
-
-    const form = `<div class="table-wrap" style="padding:20px">
-      <form method="POST" action="/admin/simulador">
-        <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:12px;margin-bottom:16px">
-          <label>Peso (kg) <input type="number" step="any" name="peso_bruto" required value="5"></label>
-          <label>Largo (cm) <input type="number" step="any" name="largo" required value="30"></label>
-          <label>Ancho (cm) <input type="number" step="any" name="ancho" required value="20"></label>
-          <label>Alto (cm) <input type="number" step="any" name="alto" required value="15"></label>
-          <label>Valor (R$) <input type="number" step="any" name="valor_mercancia" required value="500"></label>
-          <label>Tipo <select name="tipo_mercancia"><option value="personal">Personal</option><option value="comercial">Comercial</option></select></label>
-          <label>Origen <select name="ciudad_origen">${ciudades}</select></label>
-        </div>
-        <div style="margin-bottom:16px">
-          <div style="font-size:.78rem;font-weight:600;color:var(--gray-600);margin-bottom:6px">Categorías</div>
-          <div style="display:flex;flex-wrap:wrap;gap:6px">${categorias || '<span style="font-size:.78rem;color:var(--gray-400)">Sin categorías disponibles</span>'}</div>
-        </div>
-        <button type="submit" class="btn-add" style="font-size:.85rem;padding:10px 24px">🧮 Simular cotización</button>
-      </form>
-    </div>`;
 
     let resultHtml = '';
     if (result) {
       const d = result.desglose;
       const comps = d.componentes;
       const rows = Object.entries(comps).map(([k, v]) =>
-        `<tr><td style="text-transform:capitalize;font-weight:500">${k.replace(/_/g, ' ')}</td><td style="text-align:right;font-family:monospace">R$ ${typeof v === 'number' ? v.toLocaleString('es-VE',{minimumFractionDigits:2}) : v}</td></tr>`
+        `<tr><td>${k.replace(/_/g, ' ')}</td><td class="val">R$ ${typeof v === 'number' ? v.toLocaleString('es-VE',{minimumFractionDigits:2}) : v}</td></tr>`
       ).join('');
-      resultHtml = `<div class="table-wrap" style="margin-top:16px">
-        <div class="table-toolbar"><span style="font-weight:600;font-size:.85rem">📊 Resultado: ${result.nombre_modalidad}</span></div>
-        <table>
-          <thead><tr><th>Componente</th><th style="text-align:right">Valor</th></tr></thead>
-          <tbody>
-            <tr><td style="font-weight:600">Peso bruto</td><td style="text-align:right;font-family:monospace">${d.peso_bruto} kg</td></tr>
-            <tr><td style="font-weight:600">Peso volumétrico</td><td style="text-align:right;font-family:monospace">${d.peso_volumetrico} kg</td></tr>
-            <tr><td style="font-weight:600">Peso facturable</td><td style="text-align:right;font-family:monospace">${d.peso_facturable} kg (${d.peso_facturable === d.peso_bruto ? 'bruto' : 'volumétrico'} usado)</td></tr>
-            <tr><td style="font-weight:600">FT³</td><td style="text-align:right;font-family:monospace">${d.ft3}</td></tr>
-            <tr><td style="font-weight:600">Tarifa USD/kg</td><td style="text-align:right;font-family:monospace">$${d.tarifa_usd_kg}</td></tr>
-            <tr style="background:var(--gray-50)"><td colspan="2" style="font-weight:600;color:var(--gray-600);font-size:.75rem;text-transform:uppercase">Componentes del costo</td></tr>
-            ${rows}
-            <tr><td style="font-weight:600">Subtotal</td><td style="text-align:right;font-family:monospace;font-weight:700">R$ ${d.sub_total.toLocaleString('es-VE',{minimumFractionDigits:2})}</td></tr>
-            ${d.trecho ? `<tr><td style="font-weight:600">Trecho</td><td style="text-align:right;font-family:monospace">R$ ${d.trecho.toLocaleString('es-VE',{minimumFractionDigits:2})}</td></tr>` : ''}
-            <tr style="background:#e8f0fe"><td style="font-weight:700;color:var(--blue);font-size:.95rem">Total final</td><td style="text-align:right;font-family:monospace;font-weight:700;color:var(--blue);font-size:.95rem">R$ ${result.total_final.toLocaleString('es-VE',{minimumFractionDigits:2})}</td></tr>
-            <tr><td style="font-weight:600">Total USD</td><td style="text-align:right;font-family:monospace;font-weight:600">$${result.total_usd.toFixed(2)} (tasa: R$${result.tasa_dolar})</td></tr>
-            <tr><td style="font-weight:600">Costo nacional</td><td style="text-align:right;font-family:monospace">R$ ${d.costo_nacional.toLocaleString('es-VE',{minimumFractionDigits:2})}</td></tr>
-            <tr><td style="font-weight:600">Tiempo entrega</td><td style="text-align:right;font-family:monospace">${result.tiempo_entrega}</td></tr>
-          </tbody>
+      resultHtml = `<div class="result-card">
+        <div class="result-header"><span class="result-badge ${result.con_trecho ? 'badge-trecho' : 'badge-ok'}">${result.nombre_modalidad}${result.con_trecho ? ' + Trecho' : ''}</span></div>
+        <table class="result-table">
+          <tr><td>Peso bruto</td><td class="val">${d.peso_bruto} kg</td></tr>
+          <tr><td>Volumétrico</td><td class="val">${d.peso_volumetrico} kg</td></tr>
+          <tr><td>Facturable</td><td class="val">${d.peso_facturable} kg <span class="hint">(${d.peso_facturable === d.peso_bruto ? 'usó bruto' : 'usó volumétrico'})</span></td></tr>
+          <tr><td>FT³ / USD/kg</td><td class="val">${d.ft3} / $${d.tarifa_usd_kg}</td></tr>
+          <tr class="sep"><td colspan="2"></td></tr>
+          ${rows}
+          <tr class="sep"><td colspan="2"></td></tr>
+          <tr><td class="sub-label">Subtotal</td><td class="val sub-val">R$ ${d.sub_total.toLocaleString('es-VE',{minimumFractionDigits:2})}</td></tr>
+          ${d.trecho ? `<tr><td>Trecho</td><td class="val">R$ ${d.trecho.toLocaleString('es-VE',{minimumFractionDigits:2})}</td></tr><tr class="sep"><td colspan="2"></td></tr>` : ''}
+          <tr class="total-row"><td>Total</td><td class="val total-val">R$ ${result.total_final.toLocaleString('es-VE',{minimumFractionDigits:2})}</td></tr>
+          <tr><td>USD</td><td class="val">$${result.total_usd.toFixed(2)} <span class="hint">(tasa R$${result.tasa_dolar})</span></td></tr>
+          <tr><td>Costo nacional</td><td class="val">R$ ${d.costo_nacional.toLocaleString('es-VE',{minimumFractionDigits:2})}</td></tr>
+          <tr><td>Tiempo entrega</td><td class="val">${result.tiempo_entrega}</td></tr>
         </table>
       </div>`;
     }
 
-    res.send(layout('Simulador', form + resultHtml, t));
+    const form = `<div class="sim-layout">
+      <div class="sim-form">
+        <div class="sim-title">🧮 Simulador de cotización</div>
+        <form method="POST" action="/admin/simulador">
+          <div class="sim-grid">
+            <label>Peso <small>kg</small><input type="number" step="any" name="peso_bruto" required value="5"></label>
+            <label>Largo <small>cm</small><input type="number" step="any" name="largo" required value="30"></label>
+            <label>Ancho <small>cm</small><input type="number" step="any" name="ancho" required value="20"></label>
+            <label>Alto <small>cm</small><input type="number" step="any" name="alto" required value="15"></label>
+            <label>Valor <small>R$</small><input type="number" step="any" name="valor_mercancia" required value="500"></label>
+            <label>Tipo<select name="tipo_mercancia"><option value="personal">Personal</option><option value="comercial">Comercial</option></select></label>
+            <label class="full">Origen<select name="ciudad_origen">${ciudades}</select></label>
+          </div>
+          <div class="sim-cats">
+            <div class="cats-title">Categorías</div>
+            <div class="cats-grid">${categorias || '<span class="hint">Sin categorías disponibles</span>'}</div>
+          </div>
+          <button type="submit" class="sim-btn">🧮 Calcular cotización</button>
+        </form>
+      </div>
+      ${resultHtml ? `<div class="sim-result">${resultHtml}</div>` : ''}
+    </div>`;
+
+    res.send(layout('Simulador', `<style>
+.sim-layout{display:flex;gap:20px;align-items:flex-start}
+.sim-form{background:#fff;border-radius:var(--radius);box-shadow:var(--shadow);border:1px solid var(--gray-200);padding:24px;flex:1;min-width:0}
+.sim-title{font-size:1rem;font-weight:700;color:var(--gray-800);margin-bottom:16px}
+.sim-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:12px;margin-bottom:16px}
+.sim-grid label{display:flex;flex-direction:column;gap:3px;font-size:.72rem;font-weight:600;color:var(--gray-500)}
+.sim-grid label.full{grid-column:1/-1}
+.sim-grid small{color:var(--gray-400);font-weight:400}
+.sim-grid input,.sim-grid select{padding:8px 10px;border:1.5px solid var(--gray-200);border-radius:8px;font-size:.85rem;font-family:inherit;transition:all .2s;background:#fff}
+.sim-grid input:focus,.sim-grid select:focus{outline:none;border-color:var(--blue);box-shadow:0 0 0 3px rgba(59,130,246,.12)}
+.sim-cats{margin-bottom:16px}
+.cats-title{font-size:.78rem;font-weight:600;color:var(--gray-600);margin-bottom:8px}
+.cats-grid{display:flex;flex-wrap:wrap;gap:6px}
+.cat-tag{display:inline-flex;align-items:center;gap:5px;padding:4px 10px;background:var(--gray-50);border:1px solid var(--gray-200);border-radius:6px;font-size:.75rem;color:var(--gray-600);cursor:pointer;transition:all .15s}
+.cat-tag:hover{border-color:var(--blue);background:#f0f4ff}
+.cat-tag input{accent-color:var(--blue)}
+.sim-btn{width:100%;padding:10px;background:linear-gradient(135deg,var(--blue),#6366f1);border:none;border-radius:8px;color:#fff;font-size:.85rem;font-weight:600;font-family:inherit;cursor:pointer;transition:all .2s}
+.sim-btn:hover{transform:translateY(-1px);box-shadow:0 4px 16px rgba(59,130,246,.3)}
+.sim-result{width:380px;flex-shrink:0}
+.result-card{background:#fff;border-radius:var(--radius);box-shadow:var(--shadow);border:1px solid var(--gray-200);overflow:hidden;animation:fadeSlide .3s ease}
+@keyframes fadeSlide{from{opacity:0;transform:translateX(20px)}to{opacity:1;transform:translateX(0)}}
+.result-header{padding:14px 18px;background:var(--gray-50);border-bottom:1px solid var(--gray-200)}
+.result-badge{display:inline-block;padding:4px 12px;border-radius:20px;font-size:.75rem;font-weight:600}
+.badge-ok{background:#e8f0fe;color:var(--blue)}
+.badge-trecho{background:#fef3c7;color:#d97706}
+.result-table{width:100%;border-collapse:collapse;font-size:.8rem}
+.result-table td{padding:7px 18px;border-bottom:1px solid var(--gray-100);color:var(--gray-600)}
+.result-table .val{text-align:right;font-family:monospace;font-weight:500;color:var(--gray-800)}
+.result-table .hint{font-size:.68rem;color:var(--gray-400);font-weight:400}
+.result-table .sep td{height:1px;padding:0;background:var(--gray-100)}
+.result-table .sub-label{font-weight:600;color:var(--gray-600)}
+.result-table .sub-val{font-weight:600;color:var(--gray-700)}
+.result-table .total-row td{padding:10px 18px}
+.result-table .total-val{font-size:1.05rem;font-weight:700;color:var(--blue)}
+@media(max-width:900px){.sim-layout{flex-direction:column}.sim-result{width:100%}}
+</style>${form}`, t));
   });
 
   router.post('/simulador', auth, async (req, res) => {
