@@ -417,6 +417,7 @@ if(document.cookie.includes('token=')){fetch('/admin').then(r=>{if(r.ok&&r.url.i
   });
 
   /* ─── TABLES ─── */
+  const TABLES = {
     tarifas_express: { cols: ['kg', 'precio_bs'], pk: 'kg', title: 'Tarifas Express', icon: '💰' },
     tarifas_terrestre: { cols: ['kg', 'precio_bs'], pk: 'kg', title: 'Tarifas Terrestre', icon: '🚚' },
     nacional_op1: { cols: ['kg', 'precio_bs'], pk: 'kg', title: 'Nacional OP1 (MRW)', icon: '🇻🇪' },
