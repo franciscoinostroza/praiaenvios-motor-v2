@@ -51,7 +51,6 @@ async function manejarCotizacion(req, res) {
     }
 
     log('INFO', 'Cotizar datos recibidos', { datos: JSON.stringify(datos) }, contacto);
-    log('DEBUG', 'Body crudo', { keys: Object.keys(req.body), sample: JSON.stringify(req.body).substring(0, 500) }, contacto);
 
     const validacion = validateMotorInput(datos);
     if (!validacion.valid) {
