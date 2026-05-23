@@ -79,7 +79,7 @@ td{padding:8px 14px;border-bottom:1px solid var(--gray-100);color:var(--gray-700
 tbody tr:hover td{background:var(--gray-50)}
 tbody tr:last-child td{border-bottom:none}
 td form.inline{display:flex;gap:4px;align-items:center}
-td input{padding:4px 8px;border:1px solid var(--gray-300);border-radius:5px;font-size:.78rem;font-family:inherit;width:90px;transition:border-color .15s}
+td input{padding:4px 8px;border:1px solid var(--gray-300);border-radius:5px;font-size:.78rem;font-family:inherit;width:100%;min-width:0;transition:border-color .15s}
 td input:focus{outline:none;border-color:var(--blue);box-shadow:0 0 0 2px rgba(59,130,246,.12)}
 td .btn-sm{display:inline-flex;align-items:center;gap:4px;border:none;padding:4px 10px;border-radius:5px;cursor:pointer;font-size:.72rem;font-weight:500;transition:all .15s}
 .btn-save{background:#e8f0fe;color:var(--blue)}
