@@ -342,7 +342,7 @@ if(document.cookie.includes('token=')){fetch('/admin').then(r=>{if(r.ok&&r.url.i
       categorias = c.rows.map(r => `<label style="font-weight:400;flex-direction:row;align-items:center;gap:4px;font-size:.78rem"><input type="checkbox" name="cats" value="${r.categoria}"> ${r.categoria}</label>`).join('');
     } catch {}
 
-    const result = req.query.r ? JSON.parse(Buffer.from(req.query.r, 'base64').toString()) : null;
+    const result = req.query.r ? JSON.parse(Buffer.from(req.query.r.replace(/-/g, '+').replace(/_/g, '/'), 'base64').toString()) : null;
 
     const form = `<div class="table-wrap" style="padding:20px">
       <form method="POST" action="/admin/simulador">
@@ -409,7 +409,7 @@ if(document.cookie.includes('token=')){fetch('/admin').then(r=>{if(r.ok&&r.url.i
         categorias: cats,
         ciudad_origen: req.body.ciudad_origen
       });
-      const encoded = Buffer.from(JSON.stringify(result)).toString('base64');
+      const encoded = Buffer.from(JSON.stringify(result)).toString('base64').replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
       res.redirect(`/admin/simulador?r=${encoded}`);
     } catch (err) {
       res.status(500).send(layout('Error', `<p style="color:var(--red)">Error: ${err.message}</p>`, req.adminToken));
