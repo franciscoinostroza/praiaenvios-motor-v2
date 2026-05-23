@@ -1,3 +1,5 @@
+import { log } from './log.js';
+
 const ESTIMACIONES = {
   'celular':   { largo: 20, ancho: 10, alto: 5,  peso: 0.5 },
   'telefono':  { largo: 20, ancho: 10, alto: 5,  peso: 0.5 },
@@ -40,6 +42,32 @@ const ESTIMACIONES = {
   'suplemento':  { largo: 20, ancho: 15, alto: 15, peso: 1 }
 };
 
+const USER_AGENTS = [
+  'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36',
+  'Mozilla/5.0 (Macintosh; Intel Mac OS X 14_4) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.4 Safari/605.1.15',
+  'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/123.0.0.0 Safari/537.36',
+  'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:124.0) Gecko/20100101 Firefox/124.0'
+];
+
+const TIMEOUT_MS = 5000;
+const CACHE_TTL = 600_000;
+
+const urlCache = new Map();
+
+function getCache(url) {
+  const entry = urlCache.get(url);
+  if (entry && Date.now() - entry.ts < CACHE_TTL) return entry.data;
+  return null;
+}
+
+function setCache(url, data) {
+  urlCache.set(url, { data, ts: Date.now() });
+  if (urlCache.size > 500) {
+    const oldest = urlCache.keys().next().value;
+    if (oldest) urlCache.delete(oldest);
+  }
+}
+
 const CAJAS_ESTANDAR = [
   { largo: 25, ancho: 16, alto: 12 },
   { largo: 29, ancho: 16, alto: 29 },
@@ -51,121 +79,200 @@ const CAJAS_ESTANDAR = [
 
 function estimarDimensiones(titulo) {
   titulo = (titulo || '').toLowerCase();
-  for (var key in ESTIMACIONES) {
+  for (const key in ESTIMACIONES) {
     if (titulo.includes(key)) return ESTIMACIONES[key];
   }
-  return { largo: 30, ancho: 30, alto: 30, peso: 1 };
+  return null;
 }
 
 function consolidarBoxes(datos) {
   if (!Array.isArray(datos.boxes) || datos.boxes.length < 2) return datos;
 
-  var scrapeados = [];
-  var directos   = [];
-  for (var i = 0; i < datos.boxes.length; i++) {
-    if (datos.boxes[i].url) scrapeados.push(datos.boxes[i]);
-    else directos.push(datos.boxes[i]);
+  const scrapeados = [];
+  const directos = [];
+  for (const b of datos.boxes) {
+    if (b.url) scrapeados.push(b);
+    else directos.push(b);
   }
 
   if (scrapeados.length < 2) return datos;
 
-  var volumenTotal = 0, pesoTotal = 0, valorTotal = 0;
-  for (var s = 0; s < scrapeados.length; s++) {
-    var b = scrapeados[s];
+  let volumenTotal = 0, pesoTotal = 0, valorTotal = 0;
+  for (const b of scrapeados) {
     volumenTotal += b.largo * b.ancho * b.alto;
-    pesoTotal    += b.peso_bruto || 0;
-    valorTotal   += b.valor_mercancia || 0;
+    pesoTotal += b.peso_bruto || 0;
+    valorTotal += b.valor_mercancia || 0;
   }
 
-  var cajaElegida = CAJAS_ESTANDAR[CAJAS_ESTANDAR.length - 1];
-  for (var k = 0; k < CAJAS_ESTANDAR.length; k++) {
-    var volCaja = CAJAS_ESTANDAR[k].largo * CAJAS_ESTANDAR[k].ancho * CAJAS_ESTANDAR[k].alto;
-    if (volCaja >= volumenTotal) {
-      cajaElegida = CAJAS_ESTANDAR[k];
+  let cajaElegida = CAJAS_ESTANDAR[CAJAS_ESTANDAR.length - 1];
+  for (const caja of CAJAS_ESTANDAR) {
+    if (caja.largo * caja.ancho * caja.alto >= volumenTotal) {
+      cajaElegida = caja;
       break;
     }
   }
 
-  console.log('[consolidar]', scrapeados.length, 'boxes scrapeados → 1 caja', cajaElegida.largo + 'x' + cajaElegida.ancho + 'x' + cajaElegida.alto, 'vol total:', volumenTotal, 'cm³, peso:', pesoTotal, 'kg, R$', valorTotal);
+  log('INFO', 'Boxes consolidated', { count: scrapeados.length, to: `${cajaElegida.largo}x${cajaElegida.ancho}x${cajaElegida.alto}`, vol: volumenTotal, peso: pesoTotal });
 
-  var newBoxes = directos;
+  const newBoxes = [...directos];
   newBoxes.push({
-    peso_bruto:      pesoTotal,
-    largo:           cajaElegida.largo,
-    ancho:           cajaElegida.ancho,
-    alto:            cajaElegida.alto,
+    peso_bruto: pesoTotal,
+    largo: cajaElegida.largo,
+    ancho: cajaElegida.ancho,
+    alto: cajaElegida.alto,
     valor_mercancia: valorTotal
   });
   datos.boxes = newBoxes;
-
   return datos;
+}
+
+function extractJsonLd(html) {
+  const matches = html.match(/<script[^>]*type=["']application\/ld\+json["'][^>]*>([\s\S]*?)<\/script>/gi);
+  if (!matches) return null;
+  for (const match of matches) {
+    try {
+      const jsonStr = match.replace(/<script[^>]*>/gi, '').replace(/<\/script>/gi, '');
+      const ld = JSON.parse(jsonStr);
+      const item = ld['@graph'] ? ld['@graph'][0] : ld;
+      const result = {};
+      if (item.name) result.title = item.name;
+      if (item.offers) {
+        const offer = Array.isArray(item.offers) ? item.offers[0] : item.offers;
+        result.price = parseFloat(offer.price) || 0;
+      }
+      if (item.weight && item.weight.value) {
+        result.weight = parseFloat(item.weight.value) || 0;
+      }
+      if (result.title || result.price) return result;
+    } catch {}
+  }
+  return null;
+}
+
+function extractMetaTags(html) {
+  const result = {};
+  const ogTitle = html.match(/<meta[^>]*property=["']og:title["'][^>]*content=["']([^"']*)["']/i);
+  if (ogTitle) result.title = ogTitle[1];
+  const priceMeta = html.match(/<meta[^>]*property=["']product:price:amount["'][^>]*content=["']([^"']*)["']/i);
+  if (priceMeta) result.price = parseFloat(priceMeta[1]) || 0;
+  const weightMeta = html.match(/<meta[^>]*property=["']product:weight["'][^>]*content=["']([^"']*)["']/i);
+  if (weightMeta) result.weight = parseFloat(weightMeta[1]) || 0;
+  if (!result.title) {
+    const titleTag = html.match(/<title[^>]*>([\s\S]*?)<\/title>/i);
+    if (titleTag) result.title = titleTag[1].trim();
+  }
+  return Object.keys(result).length > 0 ? result : null;
+}
+
+function extractByRegex(html) {
+  const result = {};
+  const titleMatch = html.match(/<title[^>]*>([\s\S]*?)<\/title>/i);
+  if (titleMatch) result.title = titleMatch[1].trim();
+
+  const pricePatterns = [
+    /R\$\s*([\d,.]+)/,
+    /precio.*?([\d,.]+)/,
+    /price.*?([\d,.]+)/,
+    /valor.*?([\d,.]+)/
+  ];
+  for (const pat of pricePatterns) {
+    const m = html.match(pat);
+    if (m) {
+      const val = parseFloat(m[1].replace(/\./g, '').replace(',', '.'));
+      if (val > 0) { result.price = val; break; }
+    }
+  }
+
+  const weightPatterns = [
+    /(\d+[\.,]?\d*)\s*kg/i,
+    /peso.*?(\d+[\.,]?\d*)/i,
+    /weight.*?(\d+[\.,]?\d*)/
+  ];
+  for (const pat of weightPatterns) {
+    const m = html.match(pat);
+    if (m) {
+      const val = parseFloat(m[1].replace(',', '.'));
+      if (val > 0) { result.weight = val; break; }
+    }
+  }
+
+  return Object.keys(result).length > 0 ? result : null;
+}
+
+async function fetchWithTimeout(url, ua, signal) {
+  const response = await fetch(url, {
+    headers: { 'User-Agent': ua, 'Accept': 'text/html,application/xhtml+xml' },
+    signal
+  });
+  return response.text();
+}
+
+async function scrapeUrl(url) {
+  const cached = getCache(url);
+  if (cached) {
+    log('INFO', 'URL cache hit', { url });
+    return cached;
+  }
+
+  let lastError = null;
+  for (const ua of USER_AGENTS) {
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), TIMEOUT_MS);
+    try {
+      log('DEBUG', 'Scraping URL', { url, ua: ua.substring(0, 40) });
+      const html = await fetchWithTimeout(url, ua, controller.signal);
+      clearTimeout(timeout);
+
+      let data = extractJsonLd(html);
+      if (data) { log('INFO', 'Scraped via ld+json', { url, title: data.title }); setCache(url, data); return data; }
+
+      data = extractMetaTags(html);
+      if (data) { log('INFO', 'Scraped via meta tags', { url, title: data.title }); setCache(url, data); return data; }
+
+      data = extractByRegex(html);
+      if (data) { log('WARN', 'Scraped via regex fallback', { url, title: data.title }); setCache(url, data); return data; }
+
+      log('WARN', 'No data extracted from URL', { url });
+      return null;
+    } catch (err) {
+      clearTimeout(timeout);
+      lastError = err;
+      log('WARN', 'Scrape attempt failed', { url, attempt: ua.substring(0, 20), error: err.message });
+    }
+  }
+
+  log('ERROR', 'All scrape attempts failed', { url, lastError: lastError?.message });
+  return null;
 }
 
 export async function resolverUrls(datos) {
   if (!Array.isArray(datos.boxes)) return datos;
 
-  for (var i = 0; i < datos.boxes.length; i++) {
-    var box = datos.boxes[i];
+  let scrapeFailed = false;
+  for (let i = 0; i < datos.boxes.length; i++) {
+    const box = datos.boxes[i];
     if (!box.url) continue;
+    if (box.peso_bruto && box.peso_bruto > 0) continue;
 
-    var necesitaScraping = !box.peso_bruto || box.peso_bruto === 0;
-    if (!necesitaScraping) continue;
-
-    try {
-      console.log('[scraper] fetching', box.url);
-      var resp = await fetch(box.url, {
-        headers: { 'User-Agent': 'Mozilla/5.0 (compatible; PraiaBot/1.0)' }
-      });
-      var html = await resp.text();
-
-      var precio = 0, titulo = '', peso = 0;
-
-      var jsonLdMatch = html.match(/<script[^>]*type=["']application\/ld\+json["'][^>]*>([\s\S]*?)<\/script>/gi);
-      if (jsonLdMatch) {
-        for (var j = 0; j < jsonLdMatch.length; j++) {
-          try {
-            var jsonStr = jsonLdMatch[j].replace(/<script[^>]*>/gi, '').replace(/<\/script>/gi, '');
-            var ld = JSON.parse(jsonStr);
-            ld = ld['@graph'] ? ld['@graph'][0] : ld;
-            if (!titulo && ld.name) titulo = ld.name;
-            if (!precio && ld.offers) {
-              var offer = Array.isArray(ld.offers) ? ld.offers[0] : ld.offers;
-              precio = parseFloat(offer.price) || 0;
-            }
-            if (!peso && ld.weight && ld.weight.value) {
-              peso = parseFloat(ld.weight.value) || 0;
-            }
-          } catch(_) {}
-        }
-      }
-
-      if (!titulo) {
-        var ogTitle = html.match(/<meta[^>]*property=["']og:title["'][^>]*content=["']([^"']*)["']/i);
-        if (ogTitle) titulo = ogTitle[1];
-        else {
-          var titleTag = html.match(/<title[^>]*>([\s\S]*?)<\/title>/i);
-          if (titleTag) titulo = titleTag[1].trim();
-        }
-      }
-      if (!precio) {
-        var priceMeta = html.match(/<meta[^>]*property=["']product:price:amount["'][^>]*content=["']([^"']*)["']/i);
-        if (priceMeta) precio = parseFloat(priceMeta[1]) || 0;
-      }
-
-      var est = estimarDimensiones(titulo);
-      var cantidad = parseInt(box.cantidad) || 1;
-      var pesoEstimado = peso > 0 ? peso : est.peso;
-
-      datos.boxes[i].peso_bruto      = pesoEstimado * cantidad;
-      datos.boxes[i].largo           = est.largo;
-      datos.boxes[i].ancho           = est.ancho;
-      datos.boxes[i].alto            = est.alto;
-      datos.boxes[i].valor_mercancia = precio * cantidad;
-
-      console.log('[scraper]', titulo, '→', JSON.stringify(datos.boxes[i]));
-    } catch (err) {
-      console.log('[scraper] error', box.url, err.message);
+    const result = await scrapeUrl(box.url);
+    if (!result) {
+      scrapeFailed = true;
+      continue;
     }
+
+    const est = result.title ? estimarDimensiones(result.title) : null;
+    const cantidad = parseInt(box.cantidad) || 1;
+    const pesoEstimado = result.weight > 0 ? result.weight : (est ? est.peso : 1);
+
+    datos.boxes[i].peso_bruto = pesoEstimado * cantidad;
+    datos.boxes[i].largo = est ? est.largo : 30;
+    datos.boxes[i].ancho = est ? est.ancho : 30;
+    datos.boxes[i].alto = est ? est.alto : 30;
+    datos.boxes[i].valor_mercancia = (result.price || 0) * cantidad;
+
+    log('INFO', 'Box scraped', { box: i + 1, title: result.title, dims: `${datos.boxes[i].largo}x${datos.boxes[i].ancho}x${datos.boxes[i].alto}`, peso: datos.boxes[i].peso_bruto });
   }
-  return consolidarBoxes(datos);
+
+  consolidarBoxes(datos);
+  return { scrapeFailed };
 }

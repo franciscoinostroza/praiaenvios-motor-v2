@@ -61,6 +61,17 @@ CREATE TABLE IF NOT EXISTS zonas (
   UNIQUE(tipo, ciudad)
 );
 
+CREATE TABLE IF NOT EXISTS logs (
+  id SERIAL PRIMARY KEY,
+  nivel VARCHAR(10) NOT NULL,
+  mensaje TEXT NOT NULL,
+  contexto JSONB,
+  contacto VARCHAR(100),
+  created_at TIMESTAMP DEFAULT NOW()
+);
+
+CREATE INDEX IF NOT EXISTS idx_logs_created ON logs(created_at DESC);
+
 `;
 
 async function migrate() {

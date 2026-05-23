@@ -6,13 +6,14 @@ import { extractMotorParams, formatearMensaje } from './src/utils/format.js';
 import { extractShippoParams, formatearMensajeShippo } from './src/utils/format-shippo.js';
 import { parseBody, validateMotorInput, validateShippoInput } from './src/utils/validate.js';
 import { crearAdminRouter } from './src/admin/router.js';
+import { log } from './src/utils/log.js';
 
 const app = express();
 app.use(express.json());
 
 const SHIPPO_TOKEN = process.env.SHIPPO_TOKEN;
 if (!SHIPPO_TOKEN) {
-  console.warn('[shippo] SHIPPO_TOKEN no definida — cotizaciones internacionales no disponibles');
+  log('WARN', 'SHIPPO_TOKEN no definida — cotizaciones internacionales no disponibles');
 }
 
 let cotizarShippo = null;
@@ -20,40 +21,55 @@ if (SHIPPO_TOKEN) {
   cotizarShippo = crearShippo(SHIPPO_TOKEN).cotizar;
 }
 
+function extractContacto(body) {
+  return body?.from || body?.wa_id || body?.sender || body?.telefono || body?.contacto || null;
+}
+
 async function manejarCotizacion(req, res) {
+  const contacto = extractContacto(req.body);
   try {
     const datos = parseBody(req.body);
     if (!datos) {
+      log('WARN', 'No se pudieron interpretar los datos', null, contacto);
       return res.json({
         resultado_final: { error: true, mensaje: 'No se pudieron interpretar los datos del envío.' },
         mensaje_formateado: '\u274C No se pudieron interpretar los datos del envío.\n\n_Escribe *Menú* para volver al inicio._'
       });
     }
 
-    console.log('[cotizar] datos crudos →', JSON.stringify(datos));
+    log('INFO', 'Cotizar datos recibidos', { datos: JSON.stringify(datos) }, contacto);
 
     const validacion = validateMotorInput(datos);
     if (!validacion.valid) {
+      log('WARN', 'Validación fallida', { error: validacion.error }, contacto);
       return res.json({
         resultado_final: { error: true, mensaje: validacion.error },
-        mensaje_formateado: '\u274C ' + validacion.error + '\n\n_Escribe *Menú* para volver al inicio._'
+        mensaje_formateado: '\u274C ' + validacion.error
       });
     }
 
     const entrada = extractMotorParams(datos);
-    console.log('[cotizar] entrada →', JSON.stringify(entrada));
+    log('INFO', 'Entrada normalizada', { entrada: JSON.stringify(entrada) }, contacto);
 
-    await resolverUrls(entrada);
-    console.log('[cotizar] entrada (post-scrape) →', JSON.stringify(entrada));
+    const scrapeResult = await resolverUrls(entrada);
+    log('INFO', 'Post-scrape', { entrada: JSON.stringify(entrada), scrapeFailed: scrapeResult?.scrapeFailed }, contacto);
+
+    if (scrapeResult?.scrapeFailed) {
+      log('WARN', 'Scrape falló para alguna URL', null, contacto);
+      return res.json({
+        resultado_final: { error: true, mensaje: 'No pude leer los datos del link.' },
+        mensaje_formateado: `📦 No pude leer los datos del link.\n\nEscríbeme directo así para cotizar al instante 🤖:\npeso=2, largo=30, ancho=20, alto=15, valor=500, categoria=electronico`
+      });
+    }
 
     const resultadoMotor = await cotizar(entrada);
-    console.log('[cotizar] motor →', JSON.stringify(resultadoMotor));
+    log('INFO', 'Motor resultado', { resultado: JSON.stringify(resultadoMotor) }, contacto);
 
     if (resultadoMotor.status === 'error_datos' || resultadoMotor.status === 'error_interno') {
+      log('WARN', 'Motor devolvió error', { status: resultadoMotor.status, mensaje: resultadoMotor.mensaje }, contacto);
       return res.json({
         resultado_final: { error: true, mensaje: resultadoMotor.mensaje || 'Error al calcular la cotización' },
         mensaje_formateado: '\u274C ' + (resultadoMotor.mensaje || 'Error al calcular la cotización')
-          + '\n\n_Escribe *Menú* para volver al inicio._'
       });
     }
 
@@ -88,12 +104,13 @@ async function manejarCotizacion(req, res) {
 
     const mensaje_formateado = formatearMensaje(datos, resultadoMotor);
 
+    log('INFO', 'Cotización exitosa', { total_reales, total_usd, modalidad }, contacto);
     res.json({ resultado_final, mensaje_formateado });
   } catch (err) {
-    console.error('[cotizar] error:', err.message);
+    log('ERROR', 'Error en cotización', { error: err.message, stack: err.stack?.split('\n')[0] }, contacto);
     res.status(500).json({
       resultado_final: { error: true, mensaje: 'No se pudo calcular la cotización. Intenta de nuevo.' },
-      mensaje_formateado: '\u274C No se pudo calcular la cotización. Intenta de nuevo.\n\n_Escribe *Menú* para volver al inicio._'
+      mensaje_formateado: '\u274C No se pudo calcular la cotización. Intenta de nuevo.'
     });
   }
 }
@@ -102,45 +119,49 @@ app.post('/cotizar', manejarCotizacion);
 app.post('/whapify/cotizar', manejarCotizacion);
 
 async function manejarCotizacionShippo(req, res) {
+  const contacto = extractContacto(req.body);
   try {
     if (!cotizarShippo) {
+      log('WARN', 'Shippo no disponible', null, contacto);
       return res.status(503).json({
         resultado_final: { error: true, mensaje: 'Shippo no configurado' },
-        mensaje_formateado: '\u274C Cotización internacional no disponible. SHIPPO_TOKEN no configurado.\n\n_Escribe *Menú* para volver al inicio._'
+        mensaje_formateado: '\u274C Cotización internacional no disponible. SHIPPO_TOKEN no configurado.'
       });
     }
 
     const datos = parseBody(req.body);
     if (!datos) {
+      log('WARN', 'No se pudieron interpretar los datos (shippo)', null, contacto);
       return res.json({
         resultado_final: { error: true, mensaje: 'No se pudieron interpretar los datos del envío.' },
-        mensaje_formateado: '\u274C No se pudieron interpretar los datos del envío.\n\n_Escribe *Menú* para volver al inicio._'
+        mensaje_formateado: '\u274C No se pudieron interpretar los datos del envío.'
       });
     }
 
-    console.log('[cotizar-shippo] datos crudos →', JSON.stringify(datos));
+    log('INFO', 'Cotizar shippo datos recibidos', { datos: JSON.stringify(datos) }, contacto);
 
     const validacion = validateShippoInput(datos);
     if (!validacion.valid) {
+      log('WARN', 'Validación shippo fallida', { error: validacion.error }, contacto);
       return res.json({
         resultado_final: { error: true, mensaje: validacion.error },
-        mensaje_formateado: '\u274C ' + validacion.error + '\n\n_Escribe *Menú* para volver al inicio._'
+        mensaje_formateado: '\u274C ' + validacion.error
       });
     }
 
     const entrada = extractShippoParams(datos);
-    console.log('[cotizar-shippo] entrada →', JSON.stringify(entrada));
+    log('INFO', 'Entrada shippo normalizada', { entrada: JSON.stringify(entrada) }, contacto);
 
     const resultadoShippo = await cotizarShippo(entrada);
-    console.log('[cotizar-shippo] shippo →', JSON.stringify(resultadoShippo));
+    log('INFO', 'Shippo resultado', { resultado: JSON.stringify(resultadoShippo) }, contacto);
 
     const mensaje_formateado = formatearMensajeShippo(datos, resultadoShippo);
     res.json({ resultado_final: resultadoShippo, mensaje_formateado });
   } catch (err) {
-    console.error('[cotizar-shippo] error:', err.message);
+    log('ERROR', 'Error en cotización shippo', { error: err.message, stack: err.stack?.split('\n')[0] }, contacto);
     res.status(500).json({
       resultado_final: { error: true, mensaje: 'No se pudo calcular la cotización internacional. Intenta de nuevo.' },
-      mensaje_formateado: '\u274C No se pudo calcular la cotización internacional. Intenta de nuevo.\n\n_Escribe *Menú* para volver al inicio._'
+      mensaje_formateado: '\u274C No se pudo calcular la cotización internacional. Intenta de nuevo.'
     });
   }
 }
@@ -153,4 +174,4 @@ app.use('/admin', crearAdminRouter());
 app.get('/health', (_, res) => res.json({ status: 'ok', version: 'v2.0.0' }));
 
 const PORT = process.env.PORT || 3000;
-app.listen(PORT, () => console.log(`[server] Praia Envíos Motor v2 en http://localhost:${PORT}`));
+app.listen(PORT, () => log('INFO', `Praia Envíos Motor v2 en http://localhost:${PORT}`));

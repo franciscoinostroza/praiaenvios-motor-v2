@@ -3,6 +3,7 @@ import cookieParser from 'cookie-parser';
 import { query } from '../db/pool.js';
 import { invalidateCache } from '../motor/config.js';
 import { cotizarDebug as simular } from '../services/motor.js';
+import { log } from '../utils/log.js';
 
 function auth(req, res, next) {
   const pw = process.env.ADMIN_PASSWORD || 'admin123';
@@ -181,6 +182,8 @@ function renderNav(active) {
     { divider: true },
     { label: 'Categorías', path: '/admin/categorias', icon: '🏷️', key: 'Categorías' },
     { label: 'Zonas', path: '/admin/zonas', icon: '📍', key: 'Zonas' },
+    { divider: true },
+    { label: 'Logs', path: '/admin/logs', icon: '📋', key: 'Logs' },
   ];
   return items.map(i => {
     if (i.divider) return '<div class="divider"></div>';
@@ -315,12 +318,17 @@ if(document.cookie.includes('token=')){fetch('/admin').then(r=>{if(r.ok&&r.url.i
       { key: 'categorias', icon: '🏷️', name: 'Categorías', desc: 'Vocabulario de categorías' },
       { key: 'zonas', icon: '📍', name: 'Zonas', desc: 'Base y orígenes prohibidos' },
     ];
+    let logsStatHtml = '';
+    try {
+      const errCount = await query("SELECT COUNT(*) c FROM logs WHERE nivel='ERROR' AND created_at >= NOW() - INTERVAL '1 day'");
+      logsStatHtml = `<div class="stat-card"><div class="num" style="color:${parseInt(errCount.rows[0].c) > 0 ? 'var(--red)' : 'var(--green)'}">${errCount.rows[0].c}</div><div class="label">📋 Errores hoy</div></div>`;
+    } catch {}
     let statsHtml = '';
     try {
       const counts = await Promise.all(tables.map(t => query(`SELECT COUNT(*) c FROM ${t.key}`)));
       statsHtml = '<div class="stats">' + tables.map((t, i) =>
         `<div class="stat-card"><div class="num">${counts[i].rows[0].c}</div><div class="label">${t.icon} ${t.name}</div></div>`
-      ).join('') + '</div>';
+      ).join('') + logsStatHtml + '</div>';
     } catch {
       statsHtml = '<p style="color:var(--red);font-size:.85rem">⚠️ Error al cargar estadísticas</p>';
     }
@@ -449,6 +457,70 @@ if(document.cookie.includes('token=')){fetch('/admin').then(r=>{if(r.ok&&r.url.i
       res.redirect(`/admin/simulador?r=${encoded}`);
     } catch (err) {
       res.status(500).send(layout('Error', `<p style="color:var(--red)">Error: ${err.message}</p>`, req.adminToken));
+    }
+  });
+
+  /* ─── LOGS ─── */
+  router.get('/logs', auth, async (req, res) => {
+    const t = req.adminToken;
+    const nivel = req.query.nivel || '';
+    const search = req.query.search || '';
+    try {
+      let conditions = [];
+      let params = [];
+      if (nivel) {
+        params.push(nivel);
+        conditions.push(`nivel = $${params.length}`);
+      }
+      if (search) {
+        params.push(`%${search}%`);
+        conditions.push(`(mensaje ILIKE $${params.length} OR COALESCE(contacto,'') ILIKE $${params.length})`);
+      }
+      const where = conditions.length > 0 ? 'WHERE ' + conditions.join(' AND ') : '';
+      const result = await query(`SELECT id, nivel, mensaje, contexto, contacto, created_at FROM logs ${where} ORDER BY created_at DESC LIMIT 100`, params);
+      const rows = result.rows;
+
+      const badgeClass = (n) => n === 'ERROR' ? 'badge-er' : n === 'WARN' ? 'badge-wa' : 'badge-in';
+      const rowsHtml = rows.map(r =>
+        `<tr>
+          <td><span class="log-badge ${badgeClass(r.nivel)}">${r.nivel}</span></td>
+          <td>${r.mensaje.replace(/</g, '&lt;')}</td>
+          <td>${r.contacto ? r.contacto.replace(/</g, '&lt;') : '<span class="hint">—</span>'}</td>
+          <td class="ctx-cell">${r.contexto ? `<code>${JSON.stringify(r.contexto).substring(0, 120).replace(/</g, '&lt;')}${JSON.stringify(r.contexto).length > 120 ? '…' : ''}</code>` : '<span class="hint">—</span>'}</td>
+          <td style="white-space:nowrap;font-size:.72rem;color:var(--gray-400)">${new Date(r.created_at).toLocaleString('es-VE')}</td>
+        </tr>`
+      ).join('');
+
+      const body = `<div class="table-wrap">
+        <div class="table-toolbar">
+          <span style="font-weight:600;font-size:.85rem">📋 Logs (últimos 100)</span>
+          <div style="display:flex;gap:8px">
+            <select onchange="location='?nivel='+this.value+(document.querySelector('#ls')?.value?'&search='+encodeURIComponent(document.querySelector('#ls').value):'')" style="padding:5px 10px;border:1px solid var(--gray-300);border-radius:6px;font-size:.78rem;font-family:inherit">
+              <option value="">Todos</option>
+              <option value="ERROR" ${nivel === 'ERROR' ? 'selected' : ''}>ERROR</option>
+              <option value="WARN" ${nivel === 'WARN' ? 'selected' : ''}>WARN</option>
+              <option value="INFO" ${nivel === 'INFO' ? 'selected' : ''}>INFO</option>
+            </select>
+            <div class="search-wrap"><span class="icon">🔍</span><input type="text" id="ls" placeholder="Buscar..." value="${search.replace(/"/g,'&quot;')}" onchange="location='?search='+encodeURIComponent(this.value)+(document.querySelector('select')?.value?'&nivel='+document.querySelector('select').value:'')"></div>
+          </div>
+        </div>
+        <table>
+          <thead><tr><th style="width:70px">Nivel</th><th>Mensaje</th><th style="width:120px">Contacto</th><th>Contexto</th><th style="width:140px">Fecha</th></tr></thead>
+          <tbody>${rows.length > 0 ? rowsHtml : '<tr><td colspan="5" style="text-align:center;padding:24px;color:var(--gray-400)">No hay logs</td></tr>'}</tbody>
+        </table>
+      </div>`;
+
+      res.send(layout('Logs', `<style>
+.log-badge{display:inline-block;padding:2px 8px;border-radius:10px;font-size:.68rem;font-weight:600}
+.badge-er{background:#fef2f2;color:var(--red)}
+.badge-wa{background:#fef3c7;color:#d97706}
+.badge-in{background:#e8f0fe;color:var(--blue)}
+.ctx-cell{max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.ctx-cell code{font-size:.7rem;color:var(--gray-500);background:var(--gray-50);padding:2px 6px;border-radius:4px}
+.hint{color:var(--gray-400);font-size:.75rem}
+</style>${body}`, t));
+    } catch (err) {
+      res.status(500).send(layout('Logs', `<p style="color:var(--red)">Error: ${err.message}</p>`, t));
     }
   });
 
