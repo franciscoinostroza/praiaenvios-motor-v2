@@ -83,6 +83,7 @@ export function validateMotorInput(data) {
   if (Array.isArray(boxes) && boxes.length > 0) {
     for (let i = 0; i < boxes.length; i++) {
       const b = boxes[i];
+      if (b.url) continue;
       for (const campo of ['largo', 'ancho', 'alto', 'peso_bruto', 'valor_mercancia']) {
         if (b[campo] === undefined || b[campo] === null || b[campo] === '' || Number(b[campo]) <= 0) {
           errors.push(`${campo} en caja ${i + 1}`);
