@@ -481,15 +481,39 @@ if(document.cookie.includes('token=')){fetch('/admin').then(r=>{if(r.ok&&r.url.i
       const rows = result.rows;
 
       const badgeClass = (n) => n === 'ERROR' ? 'badge-er' : n === 'WARN' ? 'badge-wa' : 'badge-in';
-      const rowsHtml = rows.map(r =>
-        `<tr>
+      const esc = (s) => (s == null ? '' : String(s)).replace(/</g, '&lt;').replace(/>/g, '&gt;');
+      const rowsHtml = rows.map(r => {
+        const ctxStr = r.contexto ? JSON.stringify(r.contexto, null, 2) : '';
+        return `<tr class="log-row" onclick="toggleLog(this)">
           <td><span class="log-badge ${badgeClass(r.nivel)}">${r.nivel}</span></td>
-          <td>${r.mensaje.replace(/</g, '&lt;')}</td>
-          <td>${r.contacto ? r.contacto.replace(/</g, '&lt;') : '<span class="hint">—</span>'}</td>
-          <td class="ctx-cell">${r.contexto ? `<code>${JSON.stringify(r.contexto).substring(0, 120).replace(/</g, '&lt;')}${JSON.stringify(r.contexto).length > 120 ? '…' : ''}</code>` : '<span class="hint">—</span>'}</td>
-          <td style="white-space:nowrap;font-size:.72rem;color:var(--gray-400)">${new Date(r.created_at).toLocaleString('es-VE')}</td>
-        </tr>`
-      ).join('');
+          <td class="msg-cell">${esc(r.mensaje)}</td>
+          <td>${r.contacto ? esc(r.contacto) : '<span class="hint">—</span>'}</td>
+          <td class="ctx-cell">${ctxStr ? '<code>'+esc(ctxStr.substring(0,80))+'…</code>' : '<span class="hint">—</span>'}</td>
+          <td class="date-cell">${new Date(r.created_at).toLocaleString('es-VE')}</td>
+        </tr>
+        <tr class="log-detail" style="display:none">
+          <td colspan="5">
+            <div class="log-detail-body">
+              <div class="detail-section">
+                <div class="detail-label">Mensaje completo</div>
+                <div class="detail-value">${esc(r.mensaje)}</div>
+              </div>
+              ${ctxStr ? `<div class="detail-section">
+                <div class="detail-label">Contexto</div>
+                <pre class="detail-pre">${esc(ctxStr)}</pre>
+              </div>` : ''}
+              ${r.contacto ? `<div class="detail-section">
+                <div class="detail-label">Contacto</div>
+                <div class="detail-value">${esc(r.contacto)}</div>
+              </div>` : ''}
+              <div class="detail-section">
+                <div class="detail-label">ID</div>
+                <div class="detail-value" style="font-family:monospace;font-size:.78rem">${r.id}</div>
+              </div>
+            </div>
+          </td>
+        </tr>`;
+      }).join('');
 
       const body = `<div class="table-wrap">
         <div class="table-toolbar">
@@ -515,10 +539,28 @@ if(document.cookie.includes('token=')){fetch('/admin').then(r=>{if(r.ok&&r.url.i
 .badge-er{background:#fef2f2;color:var(--red)}
 .badge-wa{background:#fef3c7;color:#d97706}
 .badge-in{background:#e8f0fe;color:var(--blue)}
-.ctx-cell{max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.log-row{cursor:pointer;transition:background .15s}
+.log-row:hover td{background:#f0f4ff!important}
+.log-row td:first-child{position:relative}
+.log-row td:first-child::before{content:'▶';position:absolute;left:3px;top:50%;transform:translateY(-50%);font-size:.55rem;color:var(--gray-400);transition:transform .2s}
+.log-row.open td:first-child::before{transform:translateY(-50%) rotate(90deg)}
+.msg-cell{max-width:300px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.ctx-cell{max-width:160px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .ctx-cell code{font-size:.7rem;color:var(--gray-500);background:var(--gray-50);padding:2px 6px;border-radius:4px}
+.date-cell{white-space:nowrap;font-size:.72rem;color:var(--gray-400)}
+.log-detail td{padding:0!important;background:var(--gray-50)!important}
+.log-detail-body{padding:16px 20px 16px 36px;border-top:1px solid var(--gray-200)}
+.detail-section{margin-bottom:12px}
+.detail-section:last-child{margin-bottom:0}
+.detail-label{font-size:.68rem;font-weight:600;color:var(--gray-500);text-transform:uppercase;letter-spacing:.04em;margin-bottom:4px}
+.detail-value{font-size:.82rem;color:var(--gray-700);line-height:1.5}
+.detail-pre{font-size:.78rem;color:var(--gray-700);background:#fff;border:1px solid var(--gray-200);border-radius:6px;padding:10px 12px;overflow-x:auto;line-height:1.5;font-family:ui-monospace,monospace;max-height:300px;overflow-y:auto}
 .hint{color:var(--gray-400);font-size:.75rem}
-</style>${body}`, t));
+</style>
+<script>
+function toggleLog(tr){const open=tr.classList.toggle('open');const detail=tr.nextElementSibling;if(detail&&detail.classList.contains('log-detail')){detail.style.display=open?'table-row':'none'}}
+</script>
+${body}`, t));
     } catch (err) {
       res.status(500).send(layout('Logs', `<p style="color:var(--red)">Error: ${err.message}</p>`, t));
     }
