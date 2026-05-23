@@ -22,7 +22,13 @@ if (SHIPPO_TOKEN) {
 }
 
 function extractContacto(body) {
-  return body?.from || body?.wa_id || body?.sender || body?.telefono || body?.contacto || null;
+  const inner = body?.json_datos || body;
+  return inner?.contacto || inner?.nombre || inner?.name
+    || inner?.from_name || inner?.pushname || inner?.profile?.name
+    || body?.contacto || body?.nombre || body?.name || body?.pushname
+    || body?.from || body?.wa_id || body?.sender
+    || body?.telefono || body?.phone || body?.sessionId || body?.session_id
+    || null;
 }
 
 async function manejarCotizacion(req, res) {
