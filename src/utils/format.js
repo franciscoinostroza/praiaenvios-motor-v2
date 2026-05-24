@@ -15,6 +15,7 @@ export function extractMotorParams(datos) {
   }
 
   categorias = normalizarCategorias(categorias);
+  datos._categorias_norm = categorias;
 
   var boxes = datos.boxes || datos.cajas || [];
 
@@ -49,9 +50,9 @@ export function formatearMensaje(datos, resultadoMotor) {
     ? 'Curitiba (salida logística)'
     : (datos.origen || '');
 
-  var categoria = datos.categoria
-    || (Array.isArray(datos.categorias) ? datos.categorias.join(', ') : '')
-    || '';
+  var categoria = Array.isArray(datos._categorias_norm)
+    ? datos._categorias_norm.join(', ')
+    : (datos.categoria || (Array.isArray(datos.categorias) ? datos.categorias.join(', ') : '') || '');
   var tipoMer = datos.tipo_mercancia || '';
 
   var cajasInfo = '';

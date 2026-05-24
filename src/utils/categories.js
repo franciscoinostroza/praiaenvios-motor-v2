@@ -281,6 +281,20 @@ for (const [categoria, terminos] of Object.entries(TERMINOS_POR_CATEGORIA)) {
   }
 }
 
+function distanciaLevenshtein(a, b) {
+  var m = a.length, n = b.length;
+  var dp = [];
+  for (var i = 0; i <= m; i++) dp[i] = [i];
+  for (var j = 0; j <= n; j++) dp[0][j] = j;
+  for (var i = 1; i <= m; i++) {
+    for (var j = 1; j <= n; j++) {
+      var costo = a[i - 1] === b[j - 1] ? 0 : 1;
+      dp[i][j] = Math.min(dp[i - 1][j] + 1, dp[i][j - 1] + 1, dp[i - 1][j - 1] + costo);
+    }
+  }
+  return dp[m][n];
+}
+
 const CONECTORES = /\b(y|e|con|de|com|und|unidad)\b|[&\/\-\+\.\,]/gi;
 
 function esNuevo(arr, val) {
@@ -303,6 +317,21 @@ function buscarToken(token, resultado) {
   var sing = token.replace(/es$/, '').replace(/s$/, '');
   if (sing !== token && MAPA_CATEGORIAS[sing]) {
     if (esNuevo(resultado, MAPA_CATEGORIAS[sing])) resultado.push(MAPA_CATEGORIAS[sing]);
+    return true;
+  }
+  // fuzzy: distancia de Levenshtein
+  var umbral = Math.max(1, Math.floor(token.length / 4));
+  var mejorDistancia = Infinity, mejorKey = null;
+  for (var key in MAPA_CATEGORIAS) {
+    if (Math.abs(key.length - token.length) > umbral) continue;
+    var dist = distanciaLevenshtein(token, key);
+    if (dist < mejorDistancia) {
+      mejorDistancia = dist;
+      mejorKey = key;
+    }
+  }
+  if (mejorKey && mejorDistancia <= umbral) {
+    if (esNuevo(resultado, MAPA_CATEGORIAS[mejorKey])) resultado.push(MAPA_CATEGORIAS[mejorKey]);
     return true;
   }
   return false;
