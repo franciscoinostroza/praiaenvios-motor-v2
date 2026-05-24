@@ -693,9 +693,193 @@ function confirmFormulaUpdate(form){
     }
   });
 
+  /* ─── TRAMOS BOA VISTA ─── */
+  function renderBoaVistaPage(rows, toast, t) {
+    const esc = (s) => String(s == null ? '' : s).replace(/</g, '&lt;').replace(/>/g, '&gt;');
+    const desc = (r) => r.hasta_cm != null
+      ? 'Suma (largo+ancho+alto) ≤ ' + r.hasta_cm + ' cm'
+      : 'Cualquier suma mayor al último tramo';
+    let html = toast + '<div class="table-wrap">';
+    html += '<div class="table-toolbar"><span style="font-weight:600;font-size:.85rem">📏 Tramos Boa Vista</span></div>';
+    html += '<table><thead><tr><th>hasta_cm</th><th>precio_bs</th><th>Descripción</th><th style="width:120px">Acciones</th></tr></thead><tbody>';
+    for (const row of rows) {
+      html += `<tr>
+        <td>${row.hasta_cm != null ? esc(String(row.hasta_cm)) : '<span style="color:var(--gray-400)">∞</span>'}</td>
+        <td>
+          <form class="inline" method="POST" action="/admin/tramos_boa_vista/${row.id}/update" data-id="${row.id}" onsubmit="event.preventDefault();confirmBoaVista(this)">
+            <input type="number" step="any" name="hasta_cm" value="${row.hasta_cm != null ? esc(String(row.hasta_cm)) : ''}" placeholder="sin límite">
+            <input type="number" step="any" name="precio_bs" value="${esc(String(row.precio_bs))}">
+        </td>
+        <td style="font-size:.78rem;color:var(--gray-500);max-width:300px">${esc(desc(row))}</td>
+        <td>
+          <button class="btn-sm btn-save" type="submit">💾</button>
+          </form>
+          <form class="inline" method="POST" action="/admin/tramos_boa_vista/${row.id}/delete" onsubmit="event.preventDefault();confirmDelete('¿Eliminar tramo ID ${row.id}?',this)">
+            <button class="btn-sm btn-del" type="submit">🗑️</button>
+          </form>
+        </td>
+      </tr>`;
+    }
+    html += '</tbody></table></div>';
+    html += '<div style="margin-top:16px;padding:14px 18px;background:#f0f4ff;border:1px solid #bfdbfe;border-radius:10px;font-size:.8rem;color:var(--gray-700);line-height:1.6">📏 <strong>Tramos Boa Vista</strong> — Define el costo del flete terrestre Boa Vista → frontera, según la <strong>suma de dimensiones</strong> (largo+ancho+alto) de la caja. Se aplica a TODAS las modalidades (Express, Terrestre y Aéreo). Modificar estos valores afecta las cotizaciones en tiempo real.</div>';
+    html += '<div class="add-form"><h3>➕ Agregar tramo</h3>';
+    html += '<form class="fields" method="POST" action="/admin/tramos_boa_vista/add" onsubmit="return fetch(this.action,{method:this.method,body:new URLSearchParams(new FormData(this))}).then(()=>{window.location.reload()}).catch(()=>{window.location.reload()}),false">';
+    html += '<label>hasta_cm <input type="number" step="any" name="hasta_cm" placeholder="sin límite (dejar vacío)"></label>';
+    html += '<label>precio_bs <input type="number" step="any" name="precio_bs" required placeholder="0"></label>';
+    html += '<button class="btn-add" type="submit">➕ Agregar</button></form></div>';
+    html += `<script>
+function confirmBoaVista(form){
+  var hasta=form.querySelector('input[name="hasta_cm"]');
+  var precio=form.querySelector('input[name="precio_bs"]');
+  var oldHasta=hasta.defaultValue||'\\u221E';
+  var newHasta=hasta.value||'\\u221E';
+  var oldPrecio=precio.defaultValue;
+  var newPrecio=precio.value;
+  if(oldHasta===newHasta&&oldPrecio===newPrecio)return;
+  var d=document.createElement('div');d.className='modal-overlay';
+  d.innerHTML='<div class="modal"><h3>\\u26A0\\uFE0F Confirmar cambio</h3><p style="margin-bottom:12px">\\u00BFEst\\u00E1s seguro de modificar el tramo ID '+form.getAttribute('data-id')+'?</p><div style="background:var(--gray-50);padding:12px 14px;border-radius:8px;margin-bottom:14px;font-size:.85rem"><div style="display:flex;justify-content:space-between;margin-bottom:4px"><span style="color:var(--gray-500)">hasta_cm:</span><span style="font-weight:600">'+oldHasta+' \\u2192 <span style="color:var(--blue)">'+newHasta+'</span></span></div><div style="display:flex;justify-content:space-between"><span style="color:var(--gray-500)">precio_bs:</span><span style="font-weight:600">'+oldPrecio+' \\u2192 <span style="color:var(--blue)">'+newPrecio+'</span></span></div></div><p style="font-size:.78rem;color:var(--gray-500);margin-bottom:16px">\\uD83D\\uDCA1 Las cotizaciones se actualizar\\u00E1n con este cambio en tiempo real.</p><div class="actions"><button class="btn-cancel" onclick="this.closest(\\'.modal-overlay\\').remove()">Cancelar</button><button class="btn-confirm" style="background:var(--blue)" onclick="this.closest(\\'.modal-overlay\\').remove();fetch(form.action,{method:form.method,body:new URLSearchParams(new FormData(form))}).then(function(){window.location.reload()}).catch(function(){window.location.reload()})">Confirmar</button></div></div>';
+  document.body.appendChild(d);}
+</script>`;
+    return layout('Tramos Boa Vista', html, t);
+  }
+
+  router.get('/tramos_boa_vista', auth, async (req, res) => {
+    try {
+      const result = await query('SELECT * FROM tramos_boa_vista ORDER BY id');
+      const toast = req.query.saved ? '<div class="toast toast-success">✅ Cambios guardados</div>' : req.query.deleted ? '<div class="toast toast-error">🗑️ Tramo eliminado</div>' : '';
+      res.send(renderBoaVistaPage(result.rows, toast, req.adminToken));
+    } catch (err) {
+      res.status(500).send(layout('Error', `<p style="color:var(--red)">Error: ${err.message}</p>`, req.adminToken));
+    }
+  });
+
+  router.post('/tramos_boa_vista/add', auth, async (req, res) => {
+    try {
+      const hastaCm = req.body.hasta_cm === '' || req.body.hasta_cm == null ? null : Number(req.body.hasta_cm);
+      await query('INSERT INTO tramos_boa_vista (hasta_cm, precio_bs) VALUES ($1, $2) ON CONFLICT DO NOTHING', [hastaCm, Number(req.body.precio_bs)]);
+      invalidateCache();
+      res.redirect('/admin/tramos_boa_vista?saved=1');
+    } catch (err) {
+      res.status(500).send(layout('Error', `<p style="color:var(--red)">Error: ${err.message}</p>`, req.adminToken));
+    }
+  });
+
+  router.post('/tramos_boa_vista/:pk/update', auth, async (req, res) => {
+    try {
+      const hastaCm = req.body.hasta_cm === '' || req.body.hasta_cm == null ? null : Number(req.body.hasta_cm);
+      await query('UPDATE tramos_boa_vista SET hasta_cm = $1, precio_bs = $2 WHERE id = $3', [hastaCm, Number(req.body.precio_bs), Number(req.params.pk)]);
+      invalidateCache();
+      res.redirect('/admin/tramos_boa_vista?saved=1');
+    } catch (err) {
+      res.status(500).send(layout('Error', `<p style="color:var(--red)">Error: ${err.message}</p>`, req.adminToken));
+    }
+  });
+
+  router.post('/tramos_boa_vista/:pk/delete', auth, async (req, res) => {
+    try {
+      await query('DELETE FROM tramos_boa_vista WHERE id = $1', [Number(req.params.pk)]);
+      invalidateCache();
+      res.redirect('/admin/tramos_boa_vista?deleted=1');
+    } catch (err) {
+      res.status(500).send(layout('Error', `<p style="color:var(--red)">Error: ${err.message}</p>`, req.adminToken));
+    }
+  });
+
+  /* ─── TRAMOS GANANCIA ─── */
+  function renderGananciaPage(rows, toast, t) {
+    const esc = (s) => String(s == null ? '' : s).replace(/</g, '&lt;').replace(/>/g, '&gt;');
+    const desc = (r) => r.hasta_kg != null
+      ? 'Peso bruto ≤ ' + r.hasta_kg + ' kg → $' + r.usd_kg + ' USD/kg'
+      : 'Peso bruto mayor → $' + r.usd_kg + ' USD/kg';
+    let html = toast + '<div class="table-wrap">';
+    html += '<div class="table-toolbar"><span style="font-weight:600;font-size:.85rem">📊 Tramos Ganancia</span></div>';
+    html += '<table><thead><tr><th>hasta_kg</th><th>usd_kg</th><th>Descripción</th><th style="width:120px">Acciones</th></tr></thead><tbody>';
+    for (const row of rows) {
+      html += `<tr>
+        <td>${row.hasta_kg != null ? esc(String(row.hasta_kg)) : '<span style="color:var(--gray-400)">∞</span>'}</td>
+        <td>
+          <form class="inline" method="POST" action="/admin/tramos_ganancia/${row.id}/update" data-id="${row.id}" onsubmit="event.preventDefault();confirmGanancia(this)">
+            <input type="number" step="any" name="hasta_kg" value="${row.hasta_kg != null ? esc(String(row.hasta_kg)) : ''}" placeholder="sin límite">
+            <input type="number" step="any" name="usd_kg" value="${esc(String(row.usd_kg))}">
+        </td>
+        <td style="font-size:.78rem;color:var(--gray-500);max-width:300px">${esc(desc(row))}</td>
+        <td>
+          <button class="btn-sm btn-save" type="submit">💾</button>
+          </form>
+          <form class="inline" method="POST" action="/admin/tramos_ganancia/${row.id}/delete" onsubmit="event.preventDefault();confirmDelete('¿Eliminar tramo ID ${row.id}?',this)">
+            <button class="btn-sm btn-del" type="submit">🗑️</button>
+          </form>
+        </td>
+      </tr>`;
+    }
+    html += '</tbody></table></div>';
+    html += '<div style="margin-top:16px;padding:14px 18px;background:#f0f4ff;border:1px solid #bfdbfe;border-radius:10px;font-size:.8rem;color:var(--gray-700);line-height:1.6">📊 <strong>Tramos Ganancia</strong> — Define la tarifa en <strong>USD por kg</strong> para calcular la ganancia. A mayor peso, menor USD/kg. Se aplica a TODAS las modalidades (Express, Terrestre y Aéreo). Modificar estos valores afecta las cotizaciones en tiempo real.</div>';
+    html += '<div class="add-form"><h3>➕ Agregar tramo</h3>';
+    html += '<form class="fields" method="POST" action="/admin/tramos_ganancia/add" onsubmit="return fetch(this.action,{method:this.method,body:new URLSearchParams(new FormData(this))}).then(()=>{window.location.reload()}).catch(()=>{window.location.reload()}),false">';
+    html += '<label>hasta_kg <input type="number" step="any" name="hasta_kg" placeholder="sin límite (dejar vacío)"></label>';
+    html += '<label>usd_kg <input type="number" step="any" name="usd_kg" required placeholder="0"></label>';
+    html += '<button class="btn-add" type="submit">➕ Agregar</button></form></div>';
+    html += `<script>
+function confirmGanancia(form){
+  var hasta=form.querySelector('input[name="hasta_kg"]');
+  var usd=form.querySelector('input[name="usd_kg"]');
+  var oldHasta=hasta.defaultValue||'\\u221E';
+  var newHasta=hasta.value||'\\u221E';
+  var oldUsd=usd.defaultValue;
+  var newUsd=usd.value;
+  if(oldHasta===newHasta&&oldUsd===newUsd)return;
+  var d=document.createElement('div');d.className='modal-overlay';
+  d.innerHTML='<div class="modal"><h3>\\u26A0\\uFE0F Confirmar cambio</h3><p style="margin-bottom:12px">\\u00BFEst\\u00E1s seguro de modificar el tramo ID '+form.getAttribute('data-id')+'?</p><div style="background:var(--gray-50);padding:12px 14px;border-radius:8px;margin-bottom:14px;font-size:.85rem"><div style="display:flex;justify-content:space-between;margin-bottom:4px"><span style="color:var(--gray-500)">hasta_kg:</span><span style="font-weight:600">'+oldHasta+' \\u2192 <span style="color:var(--blue)">'+newHasta+'</span></span></div><div style="display:flex;justify-content:space-between"><span style="color:var(--gray-500)">usd_kg:</span><span style="font-weight:600">'+oldUsd+' \\u2192 <span style="color:var(--blue)">'+newUsd+'</span></span></div></div><p style="font-size:.78rem;color:var(--gray-500);margin-bottom:16px">\\uD83D\\uDCA1 Las cotizaciones se actualizar\\u00E1n con este cambio en tiempo real.</p><div class="actions"><button class="btn-cancel" onclick="this.closest(\\'.modal-overlay\\').remove()">Cancelar</button><button class="btn-confirm" style="background:var(--blue)" onclick="this.closest(\\'.modal-overlay\\').remove();fetch(form.action,{method:form.method,body:new URLSearchParams(new FormData(form))}).then(function(){window.location.reload()}).catch(function(){window.location.reload()})">Confirmar</button></div></div>';
+  document.body.appendChild(d);}
+</script>`;
+    return layout('Tramos Ganancia', html, t);
+  }
+
+  router.get('/tramos_ganancia', auth, async (req, res) => {
+    try {
+      const result = await query('SELECT * FROM tramos_ganancia ORDER BY id');
+      const toast = req.query.saved ? '<div class="toast toast-success">✅ Cambios guardados</div>' : req.query.deleted ? '<div class="toast toast-error">🗑️ Tramo eliminado</div>' : '';
+      res.send(renderGananciaPage(result.rows, toast, req.adminToken));
+    } catch (err) {
+      res.status(500).send(layout('Error', `<p style="color:var(--red)">Error: ${err.message}</p>`, req.adminToken));
+    }
+  });
+
+  router.post('/tramos_ganancia/add', auth, async (req, res) => {
+    try {
+      const hastaKg = req.body.hasta_kg === '' || req.body.hasta_kg == null ? null : Number(req.body.hasta_kg);
+      await query('INSERT INTO tramos_ganancia (hasta_kg, usd_kg) VALUES ($1, $2) ON CONFLICT DO NOTHING', [hastaKg, Number(req.body.usd_kg)]);
+      invalidateCache();
+      res.redirect('/admin/tramos_ganancia?saved=1');
+    } catch (err) {
+      res.status(500).send(layout('Error', `<p style="color:var(--red)">Error: ${err.message}</p>`, req.adminToken));
+    }
+  });
+
+  router.post('/tramos_ganancia/:pk/update', auth, async (req, res) => {
+    try {
+      const hastaKg = req.body.hasta_kg === '' || req.body.hasta_kg == null ? null : Number(req.body.hasta_kg);
+      await query('UPDATE tramos_ganancia SET hasta_kg = $1, usd_kg = $2 WHERE id = $3', [hastaKg, Number(req.body.usd_kg), Number(req.params.pk)]);
+      invalidateCache();
+      res.redirect('/admin/tramos_ganancia?saved=1');
+    } catch (err) {
+      res.status(500).send(layout('Error', `<p style="color:var(--red)">Error: ${err.message}</p>`, req.adminToken));
+    }
+  });
+
+  router.post('/tramos_ganancia/:pk/delete', auth, async (req, res) => {
+    try {
+      await query('DELETE FROM tramos_ganancia WHERE id = $1', [Number(req.params.pk)]);
+      invalidateCache();
+      res.redirect('/admin/tramos_ganancia?deleted=1');
+    } catch (err) {
+      res.status(500).send(layout('Error', `<p style="color:var(--red)">Error: ${err.message}</p>`, req.adminToken));
+    }
+  });
+
   /* ─── TABLAS GENÉRICAS ─── */
   for (const [table, info] of Object.entries(TABLES)) {
-    if (table === 'formulas') continue;
+    if (table === 'formulas' || table === 'tramos_boa_vista' || table === 'tramos_ganancia') continue;
     const cols = info.cols;
     const pk = info.pk;
     const isNullable = info.nullable || [];
