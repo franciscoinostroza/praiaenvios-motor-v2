@@ -959,7 +959,20 @@ function confirmGanancia(form){
     html += '<label>valor <input type="text" name="valor" required placeholder="ej: 10"></label>';
     html += '<button class="btn-add" type="submit">➕ Agregar</button></form></div>';
 
-    html += '<script>function confirmModalidad(form){var i=form.querySelector(\'input[name="valor"]\');var o=i.defaultValue;var n=i.value;if(o===n)return;var c=form.getAttribute(\'data-clave\')||\'\';var d=document.createElement(\'div\');d.className=\'modal-overlay\';d.innerHTML=\'<div class="modal"><h3>⚠\\uFE0F Confirmar cambio</h3><p style="margin-bottom:12px">¿Estás seguro de modificar <strong>\'+c+\'</strong>?</p><div style="background:var(--gray-50);padding:12px 14px;border-radius:8px;margin-bottom:14px;font-size:.85rem"><div style="display:flex;justify-content:space-between;margin-bottom:6px"><span style="color:var(--gray-500)">Valor actual:</span><span style="font-weight:600">\'+o+\'</span></div><div style="display:flex;justify-content:space-between"><span style="color:var(--gray-500)">Nuevo valor:</span><span style="font-weight:600;color:var(--blue)">\'+n+\'</span></div></div><p style="font-size:.78rem;color:var(--gray-500);margin-bottom:16px">💡 Las cotizaciones se actualizarán con este cambio en tiempo real.</p><div class="actions"><button class="btn-cancel">Cancelar</button><button class="btn-confirm" style="background:var(--blue)">Confirmar</button></div></div>\';d.querySelector(\'.btn-cancel\').onclick=()=>d.remove();d.querySelector(\'.btn-confirm\').onclick=()=>{d.remove();fetch(form.action,{method:form.method,body:new URLSearchParams(new FormData(form))}).then(()=>window.location.reload()).catch(()=>window.location.reload())};document.body.appendChild(d)}</script>';
+    html += `<script>
+function confirmModalidad(form){
+  var i=form.querySelector('input[name="valor"]');
+  var o=i.defaultValue;
+  var n=i.value;
+  if(o===n)return;
+  var c=form.getAttribute('data-clave')||'';
+  var d=document.createElement('div');d.className='modal-overlay';
+  d.innerHTML='<div class="modal"><h3>⚠\\uFE0F Confirmar cambio</h3><p style="margin-bottom:12px">¿Estás seguro de modificar <strong>'+c+'</strong>?</p><div style="background:var(--gray-50);padding:12px 14px;border-radius:8px;margin-bottom:14px;font-size:.85rem"><div style="display:flex;justify-content:space-between;margin-bottom:6px"><span style="color:var(--gray-500)">Valor actual:</span><span style="font-weight:600">'+o+'</span></div><div style="display:flex;justify-content:space-between"><span style="color:var(--gray-500)">Nuevo valor:</span><span style="font-weight:600;color:var(--blue)">'+n+'</span></div></div><p style="font-size:.78rem;color:var(--gray-500);margin-bottom:16px">💡 Las cotizaciones se actualizarán con este cambio en tiempo real.</p><div class="actions"><button class="btn-cancel">Cancelar</button><button class="btn-confirm" style="background:var(--blue)">Confirmar</button></div></div>';
+  d.querySelector('.btn-cancel').onclick=()=>d.remove();
+  d.querySelector('.btn-confirm').onclick=()=>{d.remove();fetch(form.action,{method:form.method,body:new URLSearchParams(new FormData(form))}).then(()=>window.location.reload()).catch(()=>window.location.reload())};
+  document.body.appendChild(d)
+}
+</script>`;
 
     return layout('Modalidades', html, t);
   }
