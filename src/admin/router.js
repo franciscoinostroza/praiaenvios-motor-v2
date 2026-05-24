@@ -156,7 +156,9 @@ td .btn-sm{display:inline-flex;align-items:center;gap:4px;border:none;padding:4p
 <script>
 function confirmDelete(msg,form){
   const d=document.createElement('div');d.className='modal-overlay';
-  d.innerHTML='<div class="modal"><h3>🗑️ Confirmar</h3><p>'+(msg||'¿Eliminar este registro?')+'</p><div class="actions"><button class="btn-cancel" onclick="this.closest(\\'.modal-overlay\\').remove()">Cancelar</button><button class="btn-confirm" onclick="this.closest(\\'.modal-overlay\\').remove();form.submit()">Eliminar</button></div></div>';
+  d.innerHTML='<div class="modal"><h3>🗑️ Confirmar</h3><p>'+(msg||'¿Eliminar este registro?')+'</p><div class="actions"><button class="btn-cancel">Cancelar</button><button class="btn-confirm">Eliminar</button></div></div>';
+  d.querySelector('.btn-cancel').onclick=()=>d.remove();
+  d.querySelector('.btn-confirm').onclick=()=>{d.remove();form.submit()};
   document.body.appendChild(d);
 }
 function filterTable(el){const q=el.value.toLowerCase();const rows=el.closest('.table-wrap').querySelector('tbody').children;for(let r of rows){r.style.display=r.innerText.toLowerCase().includes(q)?'':'none'}}
@@ -642,7 +644,9 @@ function confirmFormulaUpdate(form){
   if(oldVal===newVal)return;
   var clave=form.getAttribute('data-clave')||'';
   var d=document.createElement('div');d.className='modal-overlay';
-  d.innerHTML='<div class="modal"><h3>⚠\uFE0F Confirmar cambio</h3><p style="margin-bottom:12px">¿Est\u00E1s seguro de modificar <strong>'+clave+'</strong>?</p><div style="background:var(--gray-50);padding:12px 14px;border-radius:8px;margin-bottom:14px;font-size:.85rem"><div style="display:flex;justify-content:space-between;margin-bottom:6px"><span style="color:var(--gray-500)">Valor actual:</span><span style="font-weight:600">'+oldVal+'</span></div><div style="display:flex;justify-content:space-between"><span style="color:var(--gray-500)">Nuevo valor:</span><span style="font-weight:600;color:var(--blue)">'+newVal+'</span></div></div><p style="font-size:.78rem;color:var(--gray-500);margin-bottom:16px">\uD83D\uDCA1 Las cotizaciones se actualizar\u00E1n con este cambio en tiempo real.</p><div class="actions"><button class="btn-cancel" onclick="this.closest(\\'.modal-overlay\\').remove()">Cancelar</button><button class="btn-confirm" style="background:var(--blue)" onclick="this.closest(\\'.modal-overlay\\').remove();fetch(form.action,{method:form.method,body:new URLSearchParams(new FormData(form))}).then(function(){window.location.reload()}).catch(function(){window.location.reload()})">Confirmar</button></div></div>';
+  d.innerHTML='<div class="modal"><h3>⚠\uFE0F Confirmar cambio</h3><p style="margin-bottom:12px">¿Est\u00E1s seguro de modificar <strong>'+clave+'</strong>?</p><div style="background:var(--gray-50);padding:12px 14px;border-radius:8px;margin-bottom:14px;font-size:.85rem"><div style="display:flex;justify-content:space-between;margin-bottom:6px"><span style="color:var(--gray-500)">Valor actual:</span><span style="font-weight:600">'+oldVal+'</span></div><div style="display:flex;justify-content:space-between"><span style="color:var(--gray-500)">Nuevo valor:</span><span style="font-weight:600;color:var(--blue)">'+newVal+'</span></div></div><p style="font-size:.78rem;color:var(--gray-500);margin-bottom:16px">\uD83D\uDCA1 Las cotizaciones se actualizar\u00E1n con este cambio en tiempo real.</p><div class="actions"><button class="btn-cancel">Cancelar</button><button class="btn-confirm" style="background:var(--blue)">Confirmar</button></div></div>';
+  d.querySelector('.btn-cancel').onclick=()=>d.remove();
+  d.querySelector('.btn-confirm').onclick=()=>{d.remove();fetch(form.action,{method:form.method,body:new URLSearchParams(new FormData(form))}).then(()=>window.location.reload()).catch(()=>window.location.reload())};
   document.body.appendChild(d);
 }
 </script>`;
@@ -737,7 +741,9 @@ function confirmBoaVista(form){
   var newPrecio=precio.value;
   if(oldHasta===newHasta&&oldPrecio===newPrecio)return;
   var d=document.createElement('div');d.className='modal-overlay';
-  d.innerHTML='<div class="modal"><h3>\\u26A0\\uFE0F Confirmar cambio</h3><p style="margin-bottom:12px">\\u00BFEst\\u00E1s seguro de modificar el tramo ID '+form.getAttribute('data-id')+'?</p><div style="background:var(--gray-50);padding:12px 14px;border-radius:8px;margin-bottom:14px;font-size:.85rem"><div style="display:flex;justify-content:space-between;margin-bottom:4px"><span style="color:var(--gray-500)">hasta_cm:</span><span style="font-weight:600">'+oldHasta+' \\u2192 <span style="color:var(--blue)">'+newHasta+'</span></span></div><div style="display:flex;justify-content:space-between"><span style="color:var(--gray-500)">precio_bs:</span><span style="font-weight:600">'+oldPrecio+' \\u2192 <span style="color:var(--blue)">'+newPrecio+'</span></span></div></div><p style="font-size:.78rem;color:var(--gray-500);margin-bottom:16px">\\uD83D\\uDCA1 Las cotizaciones se actualizar\\u00E1n con este cambio en tiempo real.</p><div class="actions"><button class="btn-cancel" onclick="this.closest(\\'.modal-overlay\\').remove()">Cancelar</button><button class="btn-confirm" style="background:var(--blue)" onclick="this.closest(\\'.modal-overlay\\').remove();fetch(form.action,{method:form.method,body:new URLSearchParams(new FormData(form))}).then(function(){window.location.reload()}).catch(function(){window.location.reload()})">Confirmar</button></div></div>';
+  d.innerHTML='<div class="modal"><h3>\\u26A0\\uFE0F Confirmar cambio</h3><p style="margin-bottom:12px">\\u00BFEst\\u00E1s seguro de modificar el tramo ID '+form.getAttribute('data-id')+'?</p><div style="background:var(--gray-50);padding:12px 14px;border-radius:8px;margin-bottom:14px;font-size:.85rem"><div style="display:flex;justify-content:space-between;margin-bottom:4px"><span style="color:var(--gray-500)">hasta_cm:</span><span style="font-weight:600">'+oldHasta+' \\u2192 <span style="color:var(--blue)">'+newHasta+'</span></span></div><div style="display:flex;justify-content:space-between"><span style="color:var(--gray-500)">precio_bs:</span><span style="font-weight:600">'+oldPrecio+' \\u2192 <span style="color:var(--blue)">'+newPrecio+'</span></span></div></div><p style="font-size:.78rem;color:var(--gray-500);margin-bottom:16px">\\uD83D\\uDCA1 Las cotizaciones se actualizar\\u00E1n con este cambio en tiempo real.</p><div class="actions"><button class="btn-cancel">Cancelar</button><button class="btn-confirm" style="background:var(--blue)">Confirmar</button></div></div>';
+  d.querySelector('.btn-cancel').onclick=()=>d.remove();
+  d.querySelector('.btn-confirm').onclick=()=>{d.remove();fetch(form.action,{method:form.method,body:new URLSearchParams(new FormData(form))}).then(()=>window.location.reload()).catch(()=>window.location.reload())};
   document.body.appendChild(d);}
 </script>`;
     return layout('Tramos Boa Vista', html, t);
@@ -829,7 +835,9 @@ function confirmGanancia(form){
   var newUsd=usd.value;
   if(oldHasta===newHasta&&oldUsd===newUsd)return;
   var d=document.createElement('div');d.className='modal-overlay';
-  d.innerHTML='<div class="modal"><h3>\\u26A0\\uFE0F Confirmar cambio</h3><p style="margin-bottom:12px">\\u00BFEst\\u00E1s seguro de modificar el tramo ID '+form.getAttribute('data-id')+'?</p><div style="background:var(--gray-50);padding:12px 14px;border-radius:8px;margin-bottom:14px;font-size:.85rem"><div style="display:flex;justify-content:space-between;margin-bottom:4px"><span style="color:var(--gray-500)">hasta_kg:</span><span style="font-weight:600">'+oldHasta+' \\u2192 <span style="color:var(--blue)">'+newHasta+'</span></span></div><div style="display:flex;justify-content:space-between"><span style="color:var(--gray-500)">usd_kg:</span><span style="font-weight:600">'+oldUsd+' \\u2192 <span style="color:var(--blue)">'+newUsd+'</span></span></div></div><p style="font-size:.78rem;color:var(--gray-500);margin-bottom:16px">\\uD83D\\uDCA1 Las cotizaciones se actualizar\\u00E1n con este cambio en tiempo real.</p><div class="actions"><button class="btn-cancel" onclick="this.closest(\\'.modal-overlay\\').remove()">Cancelar</button><button class="btn-confirm" style="background:var(--blue)" onclick="this.closest(\\'.modal-overlay\\').remove();fetch(form.action,{method:form.method,body:new URLSearchParams(new FormData(form))}).then(function(){window.location.reload()}).catch(function(){window.location.reload()})">Confirmar</button></div></div>';
+  d.innerHTML='<div class="modal"><h3>\\u26A0\\uFE0F Confirmar cambio</h3><p style="margin-bottom:12px">\\u00BFEst\\u00E1s seguro de modificar el tramo ID '+form.getAttribute('data-id')+'?</p><div style="background:var(--gray-50);padding:12px 14px;border-radius:8px;margin-bottom:14px;font-size:.85rem"><div style="display:flex;justify-content:space-between;margin-bottom:4px"><span style="color:var(--gray-500)">hasta_kg:</span><span style="font-weight:600">'+oldHasta+' \\u2192 <span style="color:var(--blue)">'+newHasta+'</span></span></div><div style="display:flex;justify-content:space-between"><span style="color:var(--gray-500)">usd_kg:</span><span style="font-weight:600">'+oldUsd+' \\u2192 <span style="color:var(--blue)">'+newUsd+'</span></span></div></div><p style="font-size:.78rem;color:var(--gray-500);margin-bottom:16px">\\uD83D\\uDCA1 Las cotizaciones se actualizar\\u00E1n con este cambio en tiempo real.</p><div class="actions"><button class="btn-cancel">Cancelar</button><button class="btn-confirm" style="background:var(--blue)">Confirmar</button></div></div>';
+  d.querySelector('.btn-cancel').onclick=()=>d.remove();
+  d.querySelector('.btn-confirm').onclick=()=>{d.remove();fetch(form.action,{method:form.method,body:new URLSearchParams(new FormData(form))}).then(()=>window.location.reload()).catch(()=>window.location.reload())};
   document.body.appendChild(d);}
 </script>`;
     return layout('Tramos Ganancia', html, t);
@@ -877,9 +885,132 @@ function confirmGanancia(form){
     }
   });
 
+  /* ─── MODALIDADES ─── */
+  const DESC_MODALIDADES = {
+    peso_max_kg: 'Peso máximo permitido (kg)',
+    dimension_max_cm: 'Dimensión máxima por lado (cm)',
+    valor_max_rs: 'Valor máximo de la mercancía (R$)',
+    tiempo_entrega_dias: 'Tiempo estimado de entrega (días)',
+    valor_fijo_rs: 'Cargo fijo adicional que se suma al total (R$)',
+    cargo_yhonatan_rs: 'Cargo de gestión operativa en origen (R$)',
+    cargo_pickup_rs: 'Cargo por recogida en domicilio (R$)',
+    cargo_manaus_bv_rs: 'Cargo flete Manaos → Boa Vista (R$)',
+    id: 'Identificador interno de la fila',
+    nombre: 'Nombre mostrado de la modalidad'
+  };
+
+  function renderModalidadesPage(rows, toast, t) {
+    const esc = (s) => String(s == null ? '' : s).replace(/</g, '&lt;').replace(/>/g, '&gt;');
+    const grupos = {};
+    for (const row of rows) {
+      if (!grupos[row.modalidad]) grupos[row.modalidad] = [];
+      grupos[row.modalidad].push(row);
+    }
+
+    let html = toast;
+    const orden = ['EXPRESS', 'TERRESTRE', 'AEREO', 'AEREO_TRECHO'];
+
+    for (const mod of orden) {
+      const items = grupos[mod] || [];
+      if (items.length === 0) continue;
+      const nombreRow = items.find(r => r.clave === 'nombre');
+      const nombre = nombreRow ? nombreRow.valor : mod;
+
+      html += '<div class="table-wrap" style="margin-bottom:14px">';
+      html += '<div class="table-toolbar"><span style="font-weight:600;font-size:.85rem">' + esc(nombre) + ' (' + mod + ')</span></div>';
+      html += '<table><thead><tr><th>clave</th><th>valor</th><th>Descripción</th><th style="width:100px">Acciones</th></tr></thead><tbody>';
+
+      for (const row of items) {
+        const editable = row.clave !== 'nombre' && row.clave !== 'id';
+        const desc = DESC_MODALIDADES[row.clave] || '';
+
+        html += '<tr>';
+        html += '<td><span style="font-weight:600;color:var(--gray-500)">' + esc(row.clave) + '</span></td>';
+
+        if (editable) {
+          html += '<td><form class="inline" method="POST" action="/admin/modalidades/' + row.id + '/update" data-clave="' + esc(row.clave) + '" onsubmit="event.preventDefault();confirmModalidad(this)"><input type="text" name="valor" value="' + esc(String(row.valor)) + '"></td>';
+          html += '<td style="font-size:.78rem;color:var(--gray-500);max-width:320px">' + (desc ? esc(desc) : '<span style="color:var(--gray-400);font-style:italic">Sin descripción</span>') + '</td>';
+          html += '<td><button class="btn-sm btn-save" type="submit">💾</button></form>';
+          html += '<form class="inline" method="POST" action="/admin/modalidades/' + row.id + '/delete" onsubmit="event.preventDefault();confirmDelete(\'¿Eliminar ' + esc(row.clave) + ' de ' + mod + '?\',this)"><button class="btn-sm btn-del" type="submit">🗑️</button></form></td>';
+        } else {
+          html += '<td><span>' + esc(String(row.valor)) + '</span></td>';
+          html += '<td style="font-size:.78rem;color:var(--gray-500);max-width:320px">' + (desc ? esc(desc) : '') + '</td>';
+          html += '<td><span style="color:var(--gray-400);font-size:.72rem">protegido</span></td>';
+        }
+
+        html += '</tr>';
+      }
+
+      html += '</tbody></table></div>';
+    }
+
+    html += '<div style="margin-top:16px;padding:14px 18px;background:#f0f4ff;border:1px solid #bfdbfe;border-radius:10px;font-size:.8rem;color:var(--gray-700);line-height:1.6">';
+    html += '📋 El motor elige automáticamente la modalidad en este orden:<br>';
+    html += '1. <strong>Express</strong> — si cumple límites y la categoría es neutra<br>';
+    html += '2. <strong>Terrestre</strong> — si cumple límites y la categoría es terrestre<br>';
+    html += '3. <strong>Aéreo</strong> — sin límites de peso/dimensión/valor<br>';
+    html += '4. <strong>Aéreo + Trecho</strong> — si el origen NO es Curitiba<br><br>';
+    html += 'Las filas <em>nombre</em> e <em>id</em> no se pueden editar ni eliminar. Modificar los demás valores afecta las cotizaciones en tiempo real.</div>';
+
+    html += '<div class="add-form"><h3>➕ Agregar nuevo parámetro</h3>';
+    html += '<form class="fields" method="POST" action="/admin/modalidades/add" onsubmit="return fetch(this.action,{method:this.method,body:new URLSearchParams(new FormData(this))}).then(()=>{window.location.reload()}).catch(()=>{window.location.reload()}),false">';
+    html += '<label>modalidad <select name="modalidad" required><option value="EXPRESS">EXPRESS</option><option value="TERRESTRE">TERRESTRE</option><option value="AEREO">AEREO</option><option value="AEREO_TRECHO">AEREO_TRECHO</option></select></label>';
+    html += '<label>clave <input type="text" name="clave" required placeholder="ej: peso_max_kg"></label>';
+    html += '<label>valor <input type="text" name="valor" required placeholder="ej: 10"></label>';
+    html += '<button class="btn-add" type="submit">➕ Agregar</button></form></div>';
+
+    html += '<script>function confirmModalidad(form){var i=form.querySelector(\'input[name="valor"]\');var o=i.defaultValue;var n=i.value;if(o===n)return;var c=form.getAttribute(\'data-clave\')||\'\';var d=document.createElement(\'div\');d.className=\'modal-overlay\';d.innerHTML=\'<div class="modal"><h3>⚠\\uFE0F Confirmar cambio</h3><p style="margin-bottom:12px">¿Estás seguro de modificar <strong>\'+c+\'</strong>?</p><div style="background:var(--gray-50);padding:12px 14px;border-radius:8px;margin-bottom:14px;font-size:.85rem"><div style="display:flex;justify-content:space-between;margin-bottom:6px"><span style="color:var(--gray-500)">Valor actual:</span><span style="font-weight:600">\'+o+\'</span></div><div style="display:flex;justify-content:space-between"><span style="color:var(--gray-500)">Nuevo valor:</span><span style="font-weight:600;color:var(--blue)">\'+n+\'</span></div></div><p style="font-size:.78rem;color:var(--gray-500);margin-bottom:16px">💡 Las cotizaciones se actualizarán con este cambio en tiempo real.</p><div class="actions"><button class="btn-cancel">Cancelar</button><button class="btn-confirm" style="background:var(--blue)">Confirmar</button></div></div>\';d.querySelector(\'.btn-cancel\').onclick=()=>d.remove();d.querySelector(\'.btn-confirm\').onclick=()=>{d.remove();fetch(form.action,{method:form.method,body:new URLSearchParams(new FormData(form))}).then(()=>window.location.reload()).catch(()=>window.location.reload())};document.body.appendChild(d)}</script>';
+
+    return layout('Modalidades', html, t);
+  }
+
+  router.get('/modalidades', auth, async (req, res) => {
+    try {
+      const result = await query('SELECT * FROM modalidades ORDER BY modalidades.modalidad, modalidades.clave');
+      const toast = req.query.saved ? '<div class="toast toast-success">✅ Cambios guardados</div>' : req.query.deleted ? '<div class="toast toast-error">🗑️ Parámetro eliminado</div>' : '';
+      res.send(renderModalidadesPage(result.rows, toast, req.adminToken));
+    } catch (err) {
+      res.status(500).send(layout('Error', `<p style="color:var(--red)">Error: ${err.message}</p>`, req.adminToken));
+    }
+  });
+
+  router.post('/modalidades/add', auth, async (req, res) => {
+    try {
+      await query('INSERT INTO modalidades (modalidad, clave, valor) VALUES ($1, $2, $3) ON CONFLICT DO NOTHING', [req.body.modalidad, req.body.clave, String(req.body.valor)]);
+      invalidateCache();
+      res.redirect('/admin/modalidades?saved=1');
+    } catch (err) {
+      res.status(500).send(layout('Error', `<p style="color:var(--red)">Error: ${err.message}</p>`, req.adminToken));
+    }
+  });
+
+  router.post('/modalidades/:pk/update', auth, async (req, res) => {
+    try {
+      await query('UPDATE modalidades SET valor = $1 WHERE id = $2', [String(req.body.valor), Number(req.params.pk)]);
+      invalidateCache();
+      res.redirect('/admin/modalidades?saved=1');
+    } catch (err) {
+      res.status(500).send(layout('Error', `<p style="color:var(--red)">Error: ${err.message}</p>`, req.adminToken));
+    }
+  });
+
+  router.post('/modalidades/:pk/delete', auth, async (req, res) => {
+    try {
+      const row = await query('SELECT modalidad, clave FROM modalidades WHERE id = $1', [Number(req.params.pk)]);
+      if (row.rows.length > 0 && (row.rows[0].clave === 'nombre' || row.rows[0].clave === 'id')) {
+        return res.status(400).send(layout('Error', '<p style="color:var(--red)">No se puede eliminar ' + row.rows[0].clave + ' de ' + row.rows[0].modalidad + '</p>', req.adminToken));
+      }
+      await query('DELETE FROM modalidades WHERE id = $1', [Number(req.params.pk)]);
+      invalidateCache();
+      res.redirect('/admin/modalidades?deleted=1');
+    } catch (err) {
+      res.status(500).send(layout('Error', `<p style="color:var(--red)">Error: ${err.message}</p>`, req.adminToken));
+    }
+  });
+
   /* ─── TABLAS GENÉRICAS ─── */
   for (const [table, info] of Object.entries(TABLES)) {
-    if (table === 'formulas' || table === 'tramos_boa_vista' || table === 'tramos_ganancia') continue;
+    if (table === 'formulas' || table === 'tramos_boa_vista' || table === 'tramos_ganancia' || table === 'modalidades') continue;
     const cols = info.cols;
     const pk = info.pk;
     const isNullable = info.nullable || [];
