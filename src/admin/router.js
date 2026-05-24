@@ -316,7 +316,7 @@ if(document.cookie.includes('token=')){fetch('/admin').then(r=>{if(r.ok&&r.url.i
       { key: 'tramos_boa_vista', icon: '📏', name: 'Tramos Boa Vista', desc: 'Suma dimensiones → precio' },
       { key: 'tramos_ganancia', icon: '📊', name: 'Tramos Ganancia', desc: 'Peso → USD/kg' },
       { key: 'modalidades', icon: '📋', name: 'Modalidades', desc: 'Configuración de cada modalidad' },
-      { key: 'formulas', icon: '🧮', name: 'Fórmulas', desc: 'Constantes y factores' },
+      { key: 'formulas', icon: '🧮', name: 'Fórmulas', desc: 'Constantes del motor — descripción incluida' },
       { key: 'categorias', icon: '🏷️', name: 'Categorías', desc: 'Vocabulario de categorías' },
       { key: 'zonas', icon: '📍', name: 'Zonas', desc: 'Base y orígenes prohibidos' },
     ];
@@ -582,7 +582,120 @@ ${body}`, t));
     zonas: { cols: ['tipo', 'ciudad'], pk: 'id', title: 'Zonas', icon: '📍' }
   };
 
+  const DESCRIPCIONES_FORMULAS = {
+    divisor_volumetrico:  'Divide (largo × ancho × alto) para obtener el peso volumétrico en kg',
+    factor_ft3:           'Convierte cm³ → ft³ para calcular cargos por volumen',
+    flete_aereo_por_kg:   'Costo del flete aéreo por cada kg facturable',
+    factor_seguro:        'Porcentaje del valor de la mercancía destinado al seguro (0.7%)',
+    factor_empresa_manaus:'Cargo de gestión en Manaos, aplicado sobre el valor de la mercancía',
+    factor_ganancia:      'Multiplicador de ganancia: (peso_bruto × tarifa_usd_kg) × este factor',
+    nacional_peso_min:    'Peso mínimo (kg) para el cálculo del costo nacional',
+    nacional_peso_max:    'Peso máximo (kg) para el cálculo del costo nacional',
+    tasa_dolar:           'Tasa de cambio utilizada para convertir BRL → USD'
+  };
+
+  /* ─── FÓRMULAS (página personalizada con descripciones) ─── */
+  function renderFormulasPage(rows, toast, t) {
+    const esc = (s) => String(s == null ? '' : s).replace(/</g, '&lt;').replace(/>/g, '&gt;');
+    let html = toast + '<div class="table-wrap">';
+    html += '<div class="table-toolbar"><span style="font-weight:600;font-size:.85rem">🧮 Fórmulas</span></div>';
+    html += '<table><thead><tr><th>clave</th><th>valor</th><th>Descripción</th><th style="width:120px">Acciones</th></tr></thead><tbody>';
+
+    for (const row of rows) {
+      const desc = DESCRIPCIONES_FORMULAS[row.clave] || '';
+      html += `<tr>
+        <td><span style="font-weight:600;color:var(--gray-500)">${esc(row.clave)}</span></td>
+        <td>
+          <form class="inline" method="POST" action="/admin/formulas/${esc(row.clave)}/update" data-clave="${esc(row.clave)}" onsubmit="event.preventDefault();confirmFormulaUpdate(this)">
+            <input type="number" step="any" name="valor" value="${esc(row.valor)}">
+        </td>
+        <td style="font-size:.78rem;color:var(--gray-500);max-width:360px">${desc ? esc(desc) : '<span style="color:var(--gray-400);font-style:italic">Sin descripción</span>'}</td>
+        <td>
+          <button class="btn-sm btn-save" type="submit">💾</button>
+          </form>
+          <form class="inline" method="POST" action="/admin/formulas/${esc(row.clave)}/delete" onsubmit="event.preventDefault();confirmDelete('¿Eliminar fórmula ${esc(row.clave)}?',this)">
+            <button class="btn-sm btn-del" type="submit">🗑️</button>
+          </form>
+        </td>
+      </tr>`;
+    }
+
+    html += '</tbody></table></div>';
+
+    html += `<div style="margin-top:16px;padding:14px 18px;background:#f0f4ff;border:1px solid #bfdbfe;border-radius:10px;font-size:.8rem;color:var(--gray-700);line-height:1.6">
+      💡 <strong>Importante:</strong> Modificar el <strong>valor</strong> de una fórmula existente se refleja automáticamente en las cotizaciones.
+      Agregar una nueva clave no tendrá efecto hasta que se agregue el código correspondiente en el motor — contacta a soporte para ello.
+    </div>`;
+
+    html += '<div class="add-form"><h3>➕ Agregar nueva fórmula</h3>';
+    html += '<form class="fields" method="POST" action="/admin/formulas/add" onsubmit="return fetch(this.action,{method:this.method,body:new URLSearchParams(new FormData(this))}).then(()=>{window.location.reload()}).catch(()=>{window.location.reload()}),false">';
+    html += '<label>clave <input type="text" name="clave" required placeholder="ej: impuesto_extra"></label>';
+    html += '<label>valor <input type="number" step="any" name="valor" required placeholder="0.00"></label>';
+    html += '<button class="btn-add" type="submit">➕ Agregar</button>';
+    html += '</form></div>';
+
+    html += `<script>
+function confirmFormulaUpdate(form){
+  var input=form.querySelector('input[name="valor"]');
+  var oldVal=input.defaultValue;
+  var newVal=input.value;
+  if(oldVal===newVal)return;
+  var clave=form.getAttribute('data-clave')||'';
+  var d=document.createElement('div');d.className='modal-overlay';
+  d.innerHTML='<div class="modal"><h3>⚠\uFE0F Confirmar cambio</h3><p style="margin-bottom:12px">¿Est\u00E1s seguro de modificar <strong>'+clave+'</strong>?</p><div style="background:var(--gray-50);padding:12px 14px;border-radius:8px;margin-bottom:14px;font-size:.85rem"><div style="display:flex;justify-content:space-between;margin-bottom:6px"><span style="color:var(--gray-500)">Valor actual:</span><span style="font-weight:600">'+oldVal+'</span></div><div style="display:flex;justify-content:space-between"><span style="color:var(--gray-500)">Nuevo valor:</span><span style="font-weight:600;color:var(--blue)">'+newVal+'</span></div></div><p style="font-size:.78rem;color:var(--gray-500);margin-bottom:16px">\uD83D\uDCA1 Las cotizaciones se actualizar\u00E1n con este cambio en tiempo real.</p><div class="actions"><button class="btn-cancel" onclick="this.closest(\\'.modal-overlay\\').remove()">Cancelar</button><button class="btn-confirm" style="background:var(--blue)" onclick="this.closest(\\'.modal-overlay\\').remove();fetch(form.action,{method:form.method,body:new URLSearchParams(new FormData(form))}).then(function(){window.location.reload()}).catch(function(){window.location.reload()})">Confirmar</button></div></div>';
+  document.body.appendChild(d);
+}
+</script>`;
+
+    return layout('Fórmulas', html, t);
+  }
+
+  router.get('/formulas', auth, async (req, res) => {
+    try {
+      const result = await query('SELECT * FROM formulas ORDER BY clave');
+      const toast = req.query.saved
+        ? '<div class="toast toast-success">✅ Cambios guardados</div>'
+        : req.query.deleted
+          ? '<div class="toast toast-error">🗑️ Fórmula eliminada</div>' : '';
+      res.send(renderFormulasPage(result.rows, toast, req.adminToken));
+    } catch (err) {
+      res.status(500).send(layout('Error', `<p style="color:var(--red)">Error: ${err.message}</p>`, req.adminToken));
+    }
+  });
+
+  router.post('/formulas/add', auth, async (req, res) => {
+    try {
+      await query('INSERT INTO formulas (clave, valor) VALUES ($1, $2) ON CONFLICT (clave) DO NOTHING', [req.body.clave, Number(req.body.valor)]);
+      invalidateCache();
+      res.redirect('/admin/formulas?saved=1');
+    } catch (err) {
+      res.status(500).send(layout('Error', `<p style="color:var(--red)">Error: ${err.message}</p>`, req.adminToken));
+    }
+  });
+
+  router.post('/formulas/:pk/update', auth, async (req, res) => {
+    try {
+      await query('UPDATE formulas SET valor = $1 WHERE clave = $2', [Number(req.body.valor), req.params.pk]);
+      invalidateCache();
+      res.redirect('/admin/formulas?saved=1');
+    } catch (err) {
+      res.status(500).send(layout('Error', `<p style="color:var(--red)">Error: ${err.message}</p>`, req.adminToken));
+    }
+  });
+
+  router.post('/formulas/:pk/delete', auth, async (req, res) => {
+    try {
+      await query('DELETE FROM formulas WHERE clave = $1', [req.params.pk]);
+      invalidateCache();
+      res.redirect('/admin/formulas?deleted=1');
+    } catch (err) {
+      res.status(500).send(layout('Error', `<p style="color:var(--red)">Error: ${err.message}</p>`, req.adminToken));
+    }
+  });
+
+  /* ─── TABLAS GENÉRICAS ─── */
   for (const [table, info] of Object.entries(TABLES)) {
+    if (table === 'formulas') continue;
     const cols = info.cols;
     const pk = info.pk;
     const isNullable = info.nullable || [];
