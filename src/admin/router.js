@@ -490,19 +490,33 @@ if(document.cookie.includes('token=')){fetch('/admin').then(r=>{if(r.ok&&r.url.i
       <div class="sim-form">
         <div class="sim-title">🧮 Simulador de cotización</div>
         <form method="POST" action="/admin/simulador">
-          <div class="sim-grid">
-            <label>Peso <small>kg</small><input type="number" step="any" name="peso_bruto" required value="5"></label>
-            <label>Largo <small>cm</small><input type="number" step="any" name="largo" required value="30"></label>
-            <label>Ancho <small>cm</small><input type="number" step="any" name="ancho" required value="20"></label>
-            <label>Alto <small>cm</small><input type="number" step="any" name="alto" required value="15"></label>
-            <label>Valor <small>R$</small><input type="number" step="any" name="valor_mercancia" required value="500"></label>
-            <label>Tipo<select name="tipo_mercancia"><option value="personal">Personal</option><option value="comercial">Comercial</option></select></label>
-            <label class="full">Origen<select name="ciudad_origen">${ciudades}</select></label>
+          <div class="sim-section">
+            <div class="sim-section-title">📦 Dimensiones y peso</div>
+            <div class="sim-grid">
+              <label>Peso <small>kg</small><input type="number" step="any" name="peso_bruto" required value="5"></label>
+              <label>Largo <small>cm</small><input type="number" step="any" name="largo" required value="30"></label>
+              <label>Ancho <small>cm</small><input type="number" step="any" name="ancho" required value="20"></label>
+              <label>Alto <small>cm</small><input type="number" step="any" name="alto" required value="15"></label>
+            </div>
+          </div>
+          <div class="sim-section">
+            <div class="sim-section-title">📋 Datos del envío</div>
+            <div class="sim-grid">
+              <label>Valor <small>R$</small><input type="number" step="any" name="valor_mercancia" required value="500"></label>
+              <label>Tipo<select name="tipo_mercancia"><option value="personal">Personal</option><option value="comercial">Comercial</option></select></label>
+              <label class="full">Origen<select name="ciudad_origen">${ciudades}</select></label>
+            </div>
           </div>
           <div class="sim-cats">
-            <div class="cats-title">Categorías</div>
-            <div class="cat-search-wrap"><input type="text" class="cat-search" placeholder="Buscar categoría..." oninput="filterCats(this)"></div>
-            <div class="cats-grid" id="cats-grid">${categorias || '<span class="hint">Sin categorías disponibles</span>'}</div>
+            <div class="cats-header" onclick="var b=this.nextElementSibling;b.classList.toggle('open');this.classList.toggle('open')">
+              <span class="cats-title">Categorías</span>
+              <span class="cats-count">${categoriasRaw.length}</span>
+              <span class="cats-arrow">▾</span>
+            </div>
+            <div class="cats-body">
+              <div class="cat-search-wrap"><input type="text" class="cat-search" placeholder="Buscar categoría..." oninput="filterCats(this)"></div>
+              <div class="cats-grid" id="cats-grid">${categorias || '<span class="hint">Sin categorías disponibles</span>'}</div>
+            </div>
           </div>
           <button type="submit" class="sim-btn">🧮 Calcular cotización</button>
         </form>
@@ -516,14 +530,23 @@ if(document.cookie.includes('token=')){fetch('/admin').then(r=>{if(r.ok&&r.url.i
 .sim-layout{display:flex;gap:20px;align-items:flex-start}
 .sim-form{background:#fff;border-radius:var(--radius);box-shadow:var(--shadow);border:1px solid var(--gray-200);padding:24px;flex:1;min-width:0}
 .sim-title{font-size:1rem;font-weight:700;color:var(--gray-800);margin-bottom:16px}
-.sim-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:12px;margin-bottom:16px}
+.sim-section{margin-bottom:16px}
+.sim-section-title{font-size:.78rem;font-weight:600;color:var(--gray-500);margin-bottom:8px;letter-spacing:.02em}
+.sim-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:10px}
 .sim-grid label{display:flex;flex-direction:column;gap:3px;font-size:.72rem;font-weight:600;color:var(--gray-500)}
 .sim-grid label.full{grid-column:1/-1}
 .sim-grid small{color:var(--gray-400);font-weight:400}
 .sim-grid input,.sim-grid select{padding:8px 10px;border:1.5px solid var(--gray-200);border-radius:8px;font-size:.85rem;font-family:inherit;transition:all .2s;background:#fff}
 .sim-grid input:focus,.sim-grid select:focus{outline:none;border-color:var(--blue);box-shadow:0 0 0 3px rgba(59,130,246,.12)}
-.sim-cats{margin-bottom:16px}
-.cats-title{font-size:.78rem;font-weight:600;color:var(--gray-600);margin-bottom:8px}
+.sim-cats{border:1px solid var(--gray-200);border-radius:8px;overflow:hidden;margin-bottom:16px}
+.cats-header{display:flex;align-items:center;gap:8px;padding:10px 12px;background:var(--gray-50);cursor:pointer;user-select:none;transition:background .15s}
+.cats-header:hover{background:var(--gray-100)}
+.cats-header .cats-title{font-size:.8rem;font-weight:600;color:var(--gray-700);flex:1}
+.cats-count{font-size:.72rem;font-weight:600;color:var(--gray-500);background:var(--gray-200);padding:1px 8px;border-radius:10px}
+.cats-arrow{font-size:.7rem;color:var(--gray-400);transition:transform .2s}
+.cats-header.open .cats-arrow{transform:rotate(180deg)}
+.cats-body{padding:12px;display:none}
+.cats-body.open{display:block}
 .cat-search-wrap{margin-bottom:8px}
 .cat-search{width:100%;padding:7px 10px;border:1.5px solid var(--gray-200);border-radius:8px;font-size:.8rem;font-family:inherit;transition:border-color .2s;background:#fff}
 .cat-search:focus{outline:none;border-color:var(--blue);box-shadow:0 0 0 3px rgba(59,130,246,.12)}
@@ -534,9 +557,9 @@ if(document.cookie.includes('token=')){fetch('/admin').then(r=>{if(r.ok&&r.url.i
 .sim-btn{width:100%;padding:10px;background:linear-gradient(135deg,var(--blue),#6366f1);border:none;border-radius:8px;color:#fff;font-size:.85rem;font-weight:600;font-family:inherit;cursor:pointer;transition:all .2s}
 .sim-btn:hover{transform:translateY(-1px);box-shadow:0 4px 16px rgba(59,130,246,.3)}
 .sim-result{width:380px;flex-shrink:0}
-.result-card{background:#fff;border-radius:var(--radius);box-shadow:var(--shadow);border:1px solid var(--gray-200);overflow:hidden;animation:fadeSlide .3s ease}
+.result-card{background:#fff;border-radius:var(--radius);box-shadow:0 2px 8px rgba(0,0,0,.06);border:1px solid var(--gray-200);overflow:hidden;animation:fadeSlide .3s ease}
 @keyframes fadeSlide{from{opacity:0;transform:translateX(20px)}to{opacity:1;transform:translateX(0)}}
-.result-header{padding:14px 18px;background:var(--gray-50);border-bottom:1px solid var(--gray-200)}
+.result-header{padding:14px 18px;background:linear-gradient(135deg,var(--gray-50),#fff);border-bottom:1px solid var(--gray-200)}
 .result-badge{display:inline-block;padding:4px 12px;border-radius:20px;font-size:.75rem;font-weight:600}
 .badge-ok{background:#e8f0fe;color:var(--blue)}
 .badge-trecho{background:#fef3c7;color:#d97706}
