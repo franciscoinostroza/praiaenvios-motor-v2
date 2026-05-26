@@ -4,7 +4,7 @@ import { query } from '../db/pool.js';
 import { invalidateCache } from '../motor/config.js';
 import { cotizarDebug as simular } from '../services/motor.js';
 import { log } from '../utils/log.js';
-import { CATEGORIAS_SEMILLA } from '../utils/categorias-semilla.js';
+import { CATEGORIAS_SEMILLA, SEED_SET } from '../utils/categorias-semilla.js';
 import { invalidarPromptCache } from '../utils/classifier.js';
 
 function auth(req, res, next) {
@@ -153,7 +153,6 @@ td .btn-sm{display:inline-flex;align-items:center;gap:4px;border:none;padding:4p
     <h2>${heading}</h2>
     <p>Panel de administración</p>
   </div>
-  ${bodyHtml}
 </div>
 <script>
 function confirmDelete(msg,form){
@@ -201,6 +200,7 @@ function renderPaginator(page,pages,total,wrap){
   el.innerHTML=h;
 }
 </script>
+${bodyHtml}
 <style>
 .pg-btn{padding:4px 10px;border:1px solid var(--gray-300);background:#fff;border-radius:6px;cursor:pointer;font-size:.78rem;font-family:inherit;transition:all .12s}
 .pg-btn:hover{background:var(--gray-50);border-color:var(--gray-400)}
@@ -1161,11 +1161,14 @@ function confirmModalidad(form){
           ${table === 'categorias' ? `<form class="inline" method="POST" action="/admin/categorias/delete-extra" onsubmit="event.preventDefault();confirmDelete('¿Eliminar todas las categorías adicionales (no incluidas en la semilla)?',this)"><button class="btn-sm btn-del" type="submit" style="font-size:.75rem">🗑️ Eliminar extras</button></form>` : ''}
           <div class="search-wrap">${showSearch ? '<span class="icon">🔍</span><input type="text" placeholder="Buscar..." oninput="filterTable(this)">' : ''}</div>
         </div>`;
+        html += (table === 'categorias' ? `<div style="padding:6px 14px 10px;font-size:.75rem;color:var(--gray-500);line-height:1.5;border-bottom:1px solid var(--gray-200)">🌱 <b>Seed</b> = categorías predefinidas en el sistema. <span style="background:#fef3c7;color:#92400e;padding:1px 6px;border-radius:6px;font-weight:600">⚠️ Extra</span> = categorías agregadas manualmente. El botón <b>"Eliminar extras"</b> borra solo las <b>Extra</b>, dejando intactas las Seed.</div>` : '');
         html += `<table><thead><tr>`;
         for (const col of cols) html += `<th>${col}</th>`;
+        if (table === 'categorias') html += '<th style="width:55px;text-align:center">Origen</th>';
         html += `<th style="width:120px">Acciones</th></tr></thead><tbody>`;
 
         for (const row of rows) {
+          const isSeed = table === 'categorias' && SEED_SET.has(`${row.tipo},${row.categoria}`);
           html += `<tr>`;
           for (const col of cols) {
             const val = row[col] === null ? '' : row[col];
@@ -1177,6 +1180,12 @@ function confirmModalidad(form){
                     : `<input type="text" name="${col}" value="${val.replace(/"/g,'&quot;')}">`}
               </td>`;
             if (col === cols[cols.length - 1]) {
+              if (table === 'categorias') {
+                const badge = isSeed
+                  ? '<span style="font-size:.68rem;background:#dbeafe;color:#1d4ed8;padding:2px 8px;border-radius:10px;font-weight:600">Seed</span>'
+                  : '<span style="font-size:.68rem;background:#fef3c7;color:#92400e;padding:2px 8px;border-radius:10px;font-weight:600">Extra</span>';
+                html += `<td style="text-align:center">${badge}</td>`;
+              }
               html += `<td>
                 <button class="btn-sm btn-save" type="submit">💾</button>
                 </form>
