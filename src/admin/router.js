@@ -131,7 +131,7 @@ td .btn-sm{display:inline-flex;align-items:center;gap:4px;border:none;padding:4p
   .sidebar.open{transform:translateX(0)}
   .side-overlay{display:block;position:fixed;inset:0;z-index:999;background:rgba(0,0,0,.4);opacity:0;pointer-events:none;transition:opacity .25s ease}
   .side-overlay.open{opacity:1;pointer-events:auto}
-  .main{padding:16px;margin-left:0}
+  .main{padding:60px 16px 16px;margin-left:0}
   body.menu-open{overflow:hidden}
   .stats{grid-template-columns:repeat(auto-fill,minmax(130px,1fr))}
   .table-toolbar .search-wrap input{width:140px}
@@ -155,10 +155,10 @@ td .btn-sm{display:inline-flex;align-items:center;gap:4px;border:none;padding:4p
 }
 @media(max-width:480px){
   .hamburger{top:8px;left:8px;width:32px;height:32px;font-size:1rem}
-  .main{padding:10px;padding-top:52px}
-  .main-header{margin-bottom:16px}
-  .main-header h2{font-size:1.05rem}
-  .main-header p{font-size:.78rem}
+  .main{padding:48px 10px 10px}
+  .main-header{margin-bottom:12px}
+  .main-header h2{font-size:1rem}
+  .main-header p{font-size:.75rem}
   .pg-btn{padding:3px 7px;font-size:.7rem}
   td,th{padding:4px 6px;font-size:.7rem}
   td input{padding:2px 5px;font-size:.68rem;min-width:50px}
