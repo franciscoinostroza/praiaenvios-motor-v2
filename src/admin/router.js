@@ -1243,6 +1243,7 @@ function confirmModalidad(form){
 
         for (const row of rows) {
           const isSeed = table === 'categorias' && SEED_SET.has(`${row.tipo},${row.categoria}`);
+          const rowTitle = table === 'categorias' ? (isSeed ? '🌱 Seed - Categoría predefinida' : '⚠️ Extra - Categoría agregada manualmente') : '';
           html += `<tr>`;
           for (const col of cols) {
             const val = row[col] === null ? '' : row[col];
@@ -1250,8 +1251,8 @@ function confirmModalidad(form){
               <form class="inline" method="POST" action="/admin/${table}/${row[pk]}/update" onsubmit="return fetch(this.action,{method:this.method,body:new URLSearchParams(new FormData(this))}).then(()=>{window.location.reload()}).catch(()=>{window.location.reload()}),false">
                 ${col === pk ? `<span style="font-weight:600;color:var(--gray-500)">${val}</span>`
                   : isNumeric[col]
-                    ? `<input type="number" step="any" name="${col}" value="${val}">`
-                    : `<input type="text" name="${col}" value="${val.replace(/"/g,'&quot;')}">`}
+                    ? `<input type="number" step="any" name="${col}" value="${val}"${rowTitle ? ` title="${rowTitle}"` : ''}>`
+                    : `<input type="text" name="${col}" value="${val.replace(/"/g,'&quot;')}"${rowTitle ? ` title="${rowTitle}"` : ''}>`}
               </td>`;
             if (col === cols[cols.length - 1]) {
               if (table === 'categorias') {
