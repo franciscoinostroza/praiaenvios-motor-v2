@@ -4,6 +4,7 @@ import { query } from '../db/pool.js';
 import { invalidateCache } from '../motor/config.js';
 import { cotizarDebug as simular } from '../services/motor.js';
 import { log } from '../utils/log.js';
+import { CATEGORIAS_SEMILLA } from '../utils/categorias-semilla.js';
 
 function auth(req, res, next) {
   const pw = process.env.ADMIN_PASSWORD || 'admin123';
@@ -1021,6 +1022,23 @@ function confirmModalidad(form){
     }
   });
 
+  /* ─── CATEGORÍAS: eliminar extras ─── */
+  router.post('/categorias/delete-extra', auth, async (req, res) => {
+    try {
+      const placeholders = CATEGORIAS_SEMILLA.map((_, i) => `($${i * 2 + 1}, $${i * 2 + 2})`).join(',');
+      const values = CATEGORIAS_SEMILLA.flat();
+      const deleted = await query(
+        `DELETE FROM categorias WHERE (tipo, categoria) NOT IN (${placeholders})`,
+        values
+      );
+      invalidateCache();
+      const count = deleted.rowCount;
+      res.redirect(`/admin/categorias?saved=${encodeURIComponent(`🗑️ ${count} categoría${count !== 1 ? 's' : ''} extra${count !== 1 ? 's' : ''} eliminada${count !== 1 ? 's' : ''}`)}`);
+    } catch (err) {
+      res.status(500).send(layout('Error', `<p style="color:var(--red)">Error: ${err.message}</p>`, req.adminToken));
+    }
+  });
+
   /* ─── TABLAS GENÉRICAS ─── */
   for (const [table, info] of Object.entries(TABLES)) {
     if (table === 'formulas' || table === 'tramos_boa_vista' || table === 'tramos_ganancia' || table === 'modalidades') continue;
@@ -1042,13 +1060,14 @@ function confirmModalidad(form){
         const rows = result.rows;
         const t = req.adminToken;
         const toast = req.query.saved
-          ? '<div class="toast toast-success">✅ Cambios guardados</div>'
+          ? `<div class="toast toast-success">✅ ${req.query.saved === '1' ? 'Cambios guardados' : req.query.saved}</div>`
           : req.query.deleted
-            ? '<div class="toast toast-error">🗑️ Registro eliminado</div>' : '';
+            ? `<div class="toast toast-error">🗑️ ${req.query.deleted === '1' ? 'Registro eliminado' : req.query.deleted}</div>` : '';
 
         let html = `${toast}<div class="table-wrap">`;
         html += `<div class="table-toolbar">
           <span style="font-weight:600;font-size:.85rem">${info.icon} ${info.title}</span>
+          ${table === 'categorias' ? `<form class="inline" method="POST" action="/admin/categorias/delete-extra" onsubmit="event.preventDefault();confirmDelete('¿Eliminar todas las categorías adicionales (no incluidas en la semilla)?',this)"><button class="btn-sm btn-del" type="submit" style="font-size:.75rem">🗑️ Eliminar extras</button></form>` : ''}
           <div class="search-wrap">${showSearch ? '<span class="icon">🔍</span><input type="text" placeholder="Buscar..." oninput="filterTable(this)">' : ''}</div>
         </div>`;
         html += `<table><thead><tr>`;

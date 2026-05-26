@@ -1,4 +1,5 @@
 import { query } from './pool.js';
+import { CATEGORIAS_SEMILLA } from '../utils/categorias-semilla.js';
 
 async function seed() {
   // Tarifas Express
@@ -80,37 +81,7 @@ async function seed() {
   console.log('[seed] formulas ok');
 
   // Categorias
-  const cats = [
-    ['SOLO_AEREO','alcohol'],['SOLO_AEREO','alcoholes'],
-    ['SOLO_AEREO','corrosivo'],['SOLO_AEREO','corrosivos'],
-    ['SOLO_AEREO','bateria'],['SOLO_AEREO','baterias'],
-    ['SOLO_AEREO','batería'],['SOLO_AEREO','baterías'],
-    ['SOLO_AEREO','medicamento'],['SOLO_AEREO','medicamentos'],
-    ['TERRESTRE','quimico'],['TERRESTRE','quimicos'],
-    ['TERRESTRE','químico'],['TERRESTRE','químicos'],
-    ['TERRESTRE','liquido'],['TERRESTRE','liquidos'],
-    ['TERRESTRE','líquido'],['TERRESTRE','líquidos'],
-    ['TERRESTRE','perfume'],['TERRESTRE','perfumes'],
-    ['TERRESTRE','grasa'],['TERRESTRE','grasas'],
-    ['NEUTRAS','ropa'],['NEUTRAS','calzado'],
-    ['NEUTRAS','electrodomestico'],['NEUTRAS','electrodomesticos'],
-    ['NEUTRAS','electrodoméstico'],['NEUTRAS','electrodomésticos'],
-    ['NEUTRAS','electronico'],['NEUTRAS','electronicos'],
-    ['NEUTRAS','electrónico'],['NEUTRAS','electrónicos'],
-    ['NEUTRAS','juguete'],['NEUTRAS','juguetes'],
-    ['NEUTRAS','accesorio'],['NEUTRAS','accesorios'],
-    ['NEUTRAS','herramienta'],['NEUTRAS','herramientas'],
-    ['NEUTRAS','cosmetico'],['NEUTRAS','cosmeticos'],
-    ['NEUTRAS','cosmético'],['NEUTRAS','cosméticos'],
-    ['NEUTRAS','alimento'],['NEUTRAS','alimentos'],
-    ['NEUTRAS','documento'],['NEUTRAS','documentos'],
-    ['NEUTRAS','libro'],['NEUTRAS','libros'],
-    ['NEUTRAS','piezas de carro'],
-    ['NEUTRAS','repuesto'],['NEUTRAS','repuestos'],
-    ['NEUTRAS','zapatos'],
-    ['NEUTRAS','otro'],['NEUTRAS','otros'],['NEUTRAS','general']
-  ];
-  for (const [tipo, cat] of cats) {
+  for (const [tipo, cat] of CATEGORIAS_SEMILLA) {
     await query('INSERT INTO categorias (tipo, categoria) VALUES ($1, $2) ON CONFLICT (tipo, categoria) DO NOTHING', [tipo, cat]);
   }
   console.log('[seed] categorias ok');
