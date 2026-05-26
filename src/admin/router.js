@@ -448,12 +448,13 @@ if(document.cookie.includes('token=')){fetch('/admin').then(r=>{if(r.ok&&r.url.i
   /* ─── SIMULADOR ─── */
   router.get('/simulador', auth, async (req, res) => {
     const t = req.adminToken;
-    let ciudades = '', categorias = '';
+    let ciudades = '', categorias = '', categoriasRaw = [];
     try {
       const z = await query("SELECT ciudad FROM zonas WHERE tipo = 'BASE' ORDER BY ciudad");
       ciudades = z.rows.map(r => `<option value="${r.ciudad}">${r.ciudad}</option>`).join('');
       const c = await query("SELECT DISTINCT categoria FROM categorias WHERE tipo = 'NEUTRAS' ORDER BY categoria");
-      categorias = c.rows.map(r => `<label class="cat-tag"><input type="checkbox" name="cats" value="${r.categoria}"> ${r.categoria}</label>`).join('');
+      categoriasRaw = c.rows.map(r => r.categoria);
+      categorias = categoriasRaw.map(r => `<label class="cat-tag"><input type="checkbox" name="cats" value="${r}"> ${r}</label>`).join('');
     } catch {}
 
     const result = req.query.r ? JSON.parse(Buffer.from(req.query.r.replace(/-/g, '+').replace(/_/g, '/'), 'base64').toString()) : null;
@@ -500,7 +501,8 @@ if(document.cookie.includes('token=')){fetch('/admin').then(r=>{if(r.ok&&r.url.i
           </div>
           <div class="sim-cats">
             <div class="cats-title">Categorías</div>
-            <div class="cats-grid">${categorias || '<span class="hint">Sin categorías disponibles</span>'}</div>
+            <div class="cat-search-wrap"><input type="text" class="cat-search" placeholder="Buscar categoría..." oninput="filterCats(this)"></div>
+            <div class="cats-grid" id="cats-grid">${categorias || '<span class="hint">Sin categorías disponibles</span>'}</div>
           </div>
           <button type="submit" class="sim-btn">🧮 Calcular cotización</button>
         </form>
@@ -508,6 +510,8 @@ if(document.cookie.includes('token=')){fetch('/admin').then(r=>{if(r.ok&&r.url.i
       ${resultHtml ? `<div class="sim-result">${resultHtml}</div>` : ''}
     </div>`;
 
+    const escSim = (s) => String(s == null ? '' : s).replace(/</g,'&lt;').replace(/>/g,'&gt;');
+    const catsJson = escSim(JSON.stringify(categoriasRaw));
     res.send(layout('Simulador', `<style>
 .sim-layout{display:flex;gap:20px;align-items:flex-start}
 .sim-form{background:#fff;border-radius:var(--radius);box-shadow:var(--shadow);border:1px solid var(--gray-200);padding:24px;flex:1;min-width:0}
@@ -520,6 +524,9 @@ if(document.cookie.includes('token=')){fetch('/admin').then(r=>{if(r.ok&&r.url.i
 .sim-grid input:focus,.sim-grid select:focus{outline:none;border-color:var(--blue);box-shadow:0 0 0 3px rgba(59,130,246,.12)}
 .sim-cats{margin-bottom:16px}
 .cats-title{font-size:.78rem;font-weight:600;color:var(--gray-600);margin-bottom:8px}
+.cat-search-wrap{margin-bottom:8px}
+.cat-search{width:100%;padding:7px 10px;border:1.5px solid var(--gray-200);border-radius:8px;font-size:.8rem;font-family:inherit;transition:border-color .2s;background:#fff}
+.cat-search:focus{outline:none;border-color:var(--blue);box-shadow:0 0 0 3px rgba(59,130,246,.12)}
 .cats-grid{display:flex;flex-wrap:wrap;gap:6px}
 .cat-tag{display:inline-flex;align-items:center;gap:5px;padding:4px 10px;background:var(--gray-50);border:1px solid var(--gray-200);border-radius:6px;font-size:.75rem;color:var(--gray-600);cursor:pointer;transition:all .15s}
 .cat-tag:hover{border-color:var(--blue);background:#f0f4ff}
@@ -543,7 +550,16 @@ if(document.cookie.includes('token=')){fetch('/admin').then(r=>{if(r.ok&&r.url.i
 .result-table .total-row td{padding:10px 18px}
 .result-table .total-val{font-size:1.05rem;font-weight:700;color:var(--blue)}
 @media(max-width:900px){.sim-layout{flex-direction:column}.sim-result{width:100%}}
-</style>${form}`, t));
+</style>${form}<script>
+var catsData=${catsJson};
+function filterCats(el){
+  var q=el.value.toLowerCase();
+  var grid=document.getElementById('cats-grid');
+  if(!q){grid.innerHTML=catsData.map(function(c){return '<label class="cat-tag"><input type="checkbox" name="cats" value="'+c+'"> '+c+'</label>'}).join('');return}
+  var filtered=catsData.filter(function(c){return c.toLowerCase().includes(q)});
+  grid.innerHTML=filtered.length?filtered.map(function(c){return '<label class="cat-tag"><input type="checkbox" name="cats" value="'+c+'"> '+c+'</label>'}).join(''):'<span class="hint" style="padding:4px 0">Sin resultados</span>';
+}
+</script>`, t));
   });
 
   router.post('/simulador', auth, async (req, res) => {
