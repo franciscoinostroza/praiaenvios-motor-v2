@@ -11,8 +11,6 @@ export function crearShippo(token, baseUrl) {
       };
 
       console.log('[shippo] request →', JSON.stringify(body));
-      console.log('[shippo] body.address_from →', JSON.stringify(body.address_from));
-      console.log('[shippo] body.address_to →', JSON.stringify(body.address_to));
 
       const res = await fetch(`${apiUrl}/shipments`, {
         method: 'POST',
