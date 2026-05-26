@@ -3,6 +3,20 @@ function extractShippoParams(datos) {
   const paisDestino = datos.pais_destino || '';
   const boxes = datos.boxes || datos.cajas || [];
 
+  const address_from = { country: paisOrigen };
+  const address_to = { country: paisDestino };
+
+  console.log('[format-shippo] datos keys:', Object.keys(datos));
+  if (datos.codigo_postal_origen) { console.log('[format-shippo] zip origen:', datos.codigo_postal_origen); address_from.zip = datos.codigo_postal_origen; }
+  if (datos.codigo_postal_destino) { console.log('[format-shippo] zip dest:', datos.codigo_postal_destino); address_to.zip = datos.codigo_postal_destino; }
+  if (datos.ciudad_origen) address_from.city = datos.ciudad_origen;
+  if (datos.ciudad_destino) address_to.city = datos.ciudad_destino;
+  if (datos.estado_origen) address_from.state = datos.estado_origen;
+  if (datos.estado_destino) address_to.state = datos.estado_destino;
+  if (datos.nombre_origen) { console.log('[format-shippo] name origen:', datos.nombre_origen); address_from.name = datos.nombre_origen; }
+  if (datos.nombre_destino) address_to.name = datos.nombre_destino;
+  console.log('[format-shippo] address_from result:', JSON.stringify(address_from));
+
   const parcels = [];
   for (let i = 0; i < boxes.length; i++) {
     const b = boxes[i];
@@ -27,11 +41,9 @@ function extractShippoParams(datos) {
     });
   }
 
-  return {
-    address_from: { country: paisOrigen },
-    address_to: { country: paisDestino },
-    parcels
-  };
+  const result = { address_from, address_to, parcels };
+  console.log('[format-shippo] final result:', JSON.stringify(result));
+  return result;
 }
 
 const BANDERAS = {
@@ -51,8 +63,8 @@ function formatearMensajeShippo(datos, resultado) {
   const paisDestino = (datos.pais_destino || '').toUpperCase();
 
   let msg = '*Cotización Internacional* 🌎\n\n';
-  msg += `Origen: ${bandera(paisOrigen)} ${paisOrigen}\n`;
-  msg += `Destino: ${bandera(paisDestino)} ${paisDestino}\n`;
+  msg += `Origen: ${bandera(paisOrigen)} ${paisOrigen}${datos.ciudad_origen ? ', ' + datos.ciudad_origen : ''}${datos.codigo_postal_origen ? ' - ' + datos.codigo_postal_origen : ''}\n`;
+  msg += `Destino: ${bandera(paisDestino)} ${paisDestino}${datos.ciudad_destino ? ', ' + datos.ciudad_destino : ''}${datos.codigo_postal_destino ? ' - ' + datos.codigo_postal_destino : ''}\n`;
 
   if (Array.isArray(datos.boxes) && datos.boxes.length > 0) {
     const partes = [];
