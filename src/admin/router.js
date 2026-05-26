@@ -155,16 +155,19 @@ td .btn-sm{display:inline-flex;align-items:center;gap:4px;border:none;padding:4p
 }
 @media(max-width:480px){
   .hamburger{top:8px;left:8px;width:32px;height:32px;font-size:1rem}
-  .main{padding:48px 10px 10px}
-  .main-header{margin-bottom:12px}
-  .main-header h2{font-size:1rem}
-  .main-header p{font-size:.75rem}
+  .main{padding:48px 14px 14px}
+  .main-header{margin-bottom:10px}
+  .main-header h2{font-size:1.05rem}
+  .main-header p{font-size:.78rem}
   .pg-btn{padding:3px 7px;font-size:.7rem}
   td,th{padding:4px 6px;font-size:.7rem}
   td input{padding:2px 5px;font-size:.68rem;min-width:50px}
   td .btn-sm{padding:2px 6px;font-size:.64rem}
-  .stat-card .num{font-size:1rem}
-  .grid{gap:8px}
+  .stat-card{padding:10px 12px}
+  .stat-card .num{font-size:1.15rem}
+  .stats{gap:8px}
+  .grid{gap:8px;padding:0}
+  .card{padding:12px}
   .sidebar{width:220px}
 }
 
@@ -186,19 +189,17 @@ td .btn-sm{display:inline-flex;align-items:center;gap:4px;border:none;padding:4p
     <a href="/admin/logout" onclick="event.preventDefault();fetch('/admin/logout').then(()=>location='/admin/login')">⏻ <span>Cerrar sesión</span></a>
   </div>
 </aside>
-<div class="main">
+  <div class="main">
   <div class="main-header">
     <h2>${heading}</h2>
     <p>Panel de administración</p>
   </div>
-</div>
 <script>
 function toggleSidebar(){
   document.querySelector('.sidebar').classList.toggle('open');
   document.querySelector('.side-overlay').classList.toggle('open');
   document.body.classList.toggle('menu-open');
 }
-// cerrar sidebar al hacer clic en un nav link en móvil
 document.addEventListener('click',function(e){
   var l=e.target.closest('.sidebar-nav a');
   if(l&&window.innerWidth<=768){document.querySelector('.sidebar').classList.remove('open');document.querySelector('.side-overlay').classList.remove('open');document.body.classList.remove('menu-open')}
@@ -237,22 +238,31 @@ function renderPaginator(page,pages,total,wrap){
   if(pages<=1){el.innerHTML='<span style="font-size:.78rem;color:var(--gray-400);padding:8px 0;display:block;text-align:center">' + total + ' registro(s)</span>';return}
   var start=(page-1)*20+1;
   var end=Math.min(page*20,total);
-  var h='<div style="display:flex;align-items:center;justify-content:center;gap:6px;padding:8px 0">';
+  var h='<div style="display:flex;align-items:center;justify-content:center;gap:6px;padding:8px 0;flex-wrap:wrap">';
   h+='<span style="font-size:.78rem;color:var(--gray-500);margin-right:8px">'+start+'-'+end+' de '+total+'</span>';
   if(page>1)h+='<button class="pg-btn" onclick="renderPage('+(page-1)+',this.closest(\\'.table-wrap\\'))">‹ Anterior</button>';
-  for(var i=1;i<=pages;i++){
-    h+='<button class="pg-btn '+(i===page?'pg-act':'')+'" onclick="renderPage('+i+',this.closest(\\'.table-wrap\\'))">'+i+'</button>';
+  var maxVisible=5,range=2,startP=Math.max(1,page-range),endP=Math.min(pages,page+range);
+  if(pages>maxVisible+2){
+    if(startP>2){h+='<button class="pg-btn" onclick="renderPage(1,this.closest(\\'.table-wrap\\'))">1</button><span class="pg-dots">…</span>'}
+    else if(startP===2)h+='<button class="pg-btn" onclick="renderPage(1,this.closest(\\'.table-wrap\\'))">1</button>';
+    for(var i=startP;i<=endP;i++)h+='<button class="pg-btn '+(i===page?'pg-act':'')+'" onclick="renderPage('+i+',this.closest(\\'.table-wrap\\'))">'+i+'</button>';
+    if(endP<pages-1)h+='<span class="pg-dots">…</span><button class="pg-btn" onclick="renderPage('+pages+',this.closest(\\'.table-wrap\\'))">'+pages+'</button>';
+    else if(endP===pages-1)h+='<button class="pg-btn" onclick="renderPage('+pages+',this.closest(\\'.table-wrap\\'))">'+pages+'</button>';
+  }else{
+    for(var i=1;i<=pages;i++)h+='<button class="pg-btn '+(i===page?'pg-act':'')+'" onclick="renderPage('+i+',this.closest(\\'.table-wrap\\'))">'+i+'</button>';
   }
   if(page<pages)h+='<button class="pg-btn" onclick="renderPage('+(page+1)+',this.closest(\\'.table-wrap\\'))">Siguiente ›</button>';
   h+='</div>';
   el.innerHTML=h;
 }
 </script>
-${bodyHtml}
+  ${bodyHtml}
+</div>
 <style>
 .pg-btn{padding:4px 10px;border:1px solid var(--gray-300);background:#fff;border-radius:6px;cursor:pointer;font-size:.78rem;font-family:inherit;transition:all .12s}
 .pg-btn:hover{background:var(--gray-50);border-color:var(--gray-400)}
 .pg-btn.pg-act{background:var(--blue)!important;color:#fff!important;border-color:var(--blue)!important}
+.pg-dots{font-size:.78rem;color:var(--gray-400);padding:0 2px;user-select:none}
 </style>
 </body>
 </html>`;
