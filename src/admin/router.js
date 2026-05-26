@@ -552,12 +552,20 @@ if(document.cookie.includes('token=')){fetch('/admin').then(r=>{if(r.ok&&r.url.i
 @media(max-width:900px){.sim-layout{flex-direction:column}.sim-result{width:100%}}
 </style>${form}<script>
 var catsData=${catsJson};
+var filterTimer;
 function filterCats(el){
-  var q=el.value.toLowerCase();
-  var grid=document.getElementById('cats-grid');
-  if(!q){grid.innerHTML=catsData.map(function(c){return '<label class="cat-tag"><input type="checkbox" name="cats" value="'+c+'"> '+c+'</label>'}).join('');return}
-  var filtered=catsData.filter(function(c){return c.toLowerCase().includes(q)});
-  grid.innerHTML=filtered.length?filtered.map(function(c){return '<label class="cat-tag"><input type="checkbox" name="cats" value="'+c+'"> '+c+'</label>'}).join(''):'<span class="hint" style="padding:4px 0">Sin resultados</span>';
+  clearTimeout(filterTimer);
+  filterTimer=setTimeout(function(){
+    var q=el.value.toLowerCase();
+    var grid=document.getElementById('cats-grid');
+    var checked={};grid.querySelectorAll('input:checked').forEach(function(cb){checked[cb.value]=true});
+    if(!q)grid.innerHTML=catsData.map(function(c){return '<label class="cat-tag"><input type="checkbox" name="cats" value="'+c+'"> '+c+'</label>'}).join('');
+    else{
+      var f=catsData.filter(function(c){return c.toLowerCase().includes(q)});
+      grid.innerHTML=f.length?f.map(function(c){return '<label class="cat-tag"><input type="checkbox" name="cats" value="'+c+'"> '+c+'</label>'}).join(''):'<span class="hint" style="padding:4px 0">Sin resultados</span>';
+    }
+    grid.querySelectorAll('input').forEach(function(cb){if(checked[cb.value])cb.checked=true});
+  },400);
 }
 </script>`, t));
   });
