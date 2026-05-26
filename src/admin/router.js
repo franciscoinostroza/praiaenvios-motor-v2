@@ -5,6 +5,7 @@ import { invalidateCache } from '../motor/config.js';
 import { cotizarDebug as simular } from '../services/motor.js';
 import { log } from '../utils/log.js';
 import { CATEGORIAS_SEMILLA } from '../utils/categorias-semilla.js';
+import { invalidarPromptCache } from '../utils/classifier.js';
 
 function auth(req, res, next) {
   const pw = process.env.ADMIN_PASSWORD || 'admin123';
@@ -162,8 +163,49 @@ function confirmDelete(msg,form){
   d.querySelector('.btn-confirm').onclick=()=>{d.remove();form.submit()};
   document.body.appendChild(d);
 }
-function filterTable(el){const q=el.value.toLowerCase();const rows=el.closest('.table-wrap').querySelector('tbody').children;for(let r of rows){r.style.display=r.innerText.toLowerCase().includes(q)?'':'none'}}
+function filterTable(el){
+  const q=el.value.toLowerCase();
+  const rows=el.closest('.table-wrap').querySelector('tbody').children;
+  for(let r of rows){
+    r.dataset.matched=r.innerText.toLowerCase().includes(q)?'1':'0';
+    r.style.display='';
+  }
+  renderPage(1,el.closest('.table-wrap'));
+}
+function renderPage(page,wrap){
+  var perPage=20;
+  var all=Array.from(wrap.querySelector('tbody').children);
+  var visible=all.filter(function(r){return r.dataset.matched!=='0'});
+  var pages=Math.ceil(visible.length/perPage)||1;
+  if(page>pages)page=pages;
+  all.forEach(function(r){
+    var idx=visible.indexOf(r);
+    var p=idx>=0?Math.floor(idx/perPage)+1:-1;
+    r.style.display=p===page?'':'none';
+  });
+  renderPaginator(page,pages,visible.length,wrap);
+}
+function renderPaginator(page,pages,total,wrap){
+  var el=wrap.querySelector('.paginator');
+  if(pages<=1){el.innerHTML='<span style="font-size:.78rem;color:var(--gray-400);padding:8px 0;display:block;text-align:center">' + total + ' registro(s)</span>';return}
+  var start=(page-1)*20+1;
+  var end=Math.min(page*20,total);
+  var h='<div style="display:flex;align-items:center;justify-content:center;gap:6px;padding:8px 0">';
+  h+='<span style="font-size:.78rem;color:var(--gray-500);margin-right:8px">'+start+'-'+end+' de '+total+'</span>';
+  if(page>1)h+='<button class="pg-btn" onclick="renderPage('+(page-1)+',this.closest(\\'.table-wrap\\'))">‹ Anterior</button>';
+  for(var i=1;i<=pages;i++){
+    h+='<button class="pg-btn '+(i===page?'pg-act':'')+'" onclick="renderPage('+i+',this.closest(\\'.table-wrap\\'))">'+i+'</button>';
+  }
+  if(page<pages)h+='<button class="pg-btn" onclick="renderPage('+(page+1)+',this.closest(\\'.table-wrap\\'))">Siguiente ›</button>';
+  h+='</div>';
+  el.innerHTML=h;
+}
 </script>
+<style>
+.pg-btn{padding:4px 10px;border:1px solid var(--gray-300);background:#fff;border-radius:6px;cursor:pointer;font-size:.78rem;font-family:inherit;transition:all .12s}
+.pg-btn:hover{background:var(--gray-50);border-color:var(--gray-400)}
+.pg-btn.pg-act{background:var(--blue)!important;color:#fff!important;border-color:var(--blue)!important}
+</style>
 </body>
 </html>`;
 }
@@ -185,6 +227,7 @@ function renderNav(active) {
     { label: 'Fórmulas', path: '/admin/formulas', icon: '🧮', key: 'Fórmulas' },
     { divider: true },
     { label: 'Categorías', path: '/admin/categorias', icon: '🏷️', key: 'Categorías' },
+    { label: 'Prompt IA', path: '/admin/prompt-categorias', icon: '🤖', key: 'Prompt' },
     { label: 'Zonas', path: '/admin/zonas', icon: '📍', key: 'Zonas' },
     { divider: true },
     { label: 'Logs', path: '/admin/logs', icon: '📋', key: 'Logs' },
@@ -568,6 +611,54 @@ d.innerHTML='<div class="log-modal">'+
 ${body}`, t));
     } catch (err) {
       res.status(500).send(layout('Logs', `<p style="color:var(--red)">Error: ${err.message}</p>`, t));
+    }
+  });
+
+  /* ─── PROMPT CLASIFICADOR ─── */
+  router.get('/prompt-categorias', auth, async (req, res) => {
+    try {
+      const result = await query("SELECT valor FROM prompts_config WHERE clave = 'clasificador_categorias'");
+      const prompt = result.rows.length > 0 ? result.rows[0].valor : '';
+      const t = req.adminToken;
+      const toast = req.query.saved
+        ? '<div class="toast toast-success">✅ Prompt guardado correctamente</div>'
+        : req.query.error
+          ? '<div class="toast toast-error">❌ Error al guardar el prompt</div>' : '';
+
+      const esc = (s) => String(s == null ? '' : s).replace(/</g, '&lt;').replace(/>/g, '&gt;');
+
+      const body = `${toast}<div class="table-wrap">
+        <div class="table-toolbar"><span style="font-weight:600;font-size:.85rem">🤖 Prompt del Clasificador IA</span></div>
+        <form method="POST" action="/admin/prompt-categorias" onsubmit="return fetch(this.action,{method:this.method,body:new URLSearchParams(new FormData(this))}).then(()=>{window.location.reload()}).catch(()=>{window.location.reload()}),false" style="padding:16px">
+          <div style="margin-bottom:12px">
+            <label style="display:block;font-size:.78rem;font-weight:600;color:var(--gray-500);margin-bottom:6px">System prompt usado por GPT-4o mini para clasificar categorías:</label>
+            <textarea name="prompt" style="width:100%;min-height:420px;padding:12px;border:1px solid var(--gray-300);border-radius:8px;font-family:ui-monospace,monospace;font-size:.78rem;line-height:1.6;resize:vertical;tab-size:2">${esc(prompt)}</textarea>
+          </div>
+          <div style="display:flex;gap:8px;align-items:center">
+            <button class="btn-add" type="submit">💾 Guardar prompt</button>
+            <span style="font-size:.72rem;color:var(--gray-400)">🔁 Se aplica inmediatamente a las próximas clasificaciones</span>
+          </div>
+        </form>
+      </div>`;
+
+      res.send(layout('Prompt Clasificador', body, t));
+    } catch (err) {
+      res.status(500).send(layout('Error', `<p style="color:var(--red)">Error: ${err.message}</p>`, req.adminToken));
+    }
+  });
+
+  router.post('/prompt-categorias', auth, async (req, res) => {
+    try {
+      const prompt = req.body.prompt || '';
+      if (!prompt.trim()) {
+        await query("DELETE FROM prompts_config WHERE clave = 'clasificador_categorias'");
+      } else {
+        await query("INSERT INTO prompts_config (clave, valor) VALUES ('clasificador_categorias', $1) ON CONFLICT (clave) DO UPDATE SET valor = EXCLUDED.valor", [prompt]);
+      }
+      invalidarPromptCache();
+      res.redirect('/admin/prompt-categorias?saved=1');
+    } catch (err) {
+      res.redirect('/admin/prompt-categorias?error=1');
     }
   });
 
@@ -1098,7 +1189,7 @@ function confirmModalidad(form){
           html += `</tr>`;
         }
 
-        html += `</tbody></table></div>`;
+        html += `</tbody></table><div class="paginator"></div></div>`;
 
         html += `<div class="add-form"><h3>➕ Agregar nuevo registro</h3>`;
         html += `<form class="fields" method="POST" action="/admin/${table}/add" onsubmit="return fetch(this.action,{method:this.method,body:new URLSearchParams(new FormData(this))}).then(()=>{window.location.reload()}).catch(()=>{window.location.reload()}),false">`;
@@ -1114,6 +1205,7 @@ function confirmModalidad(form){
         }
         html += `<button class="btn-add" type="submit">➕ Agregar</button>`;
         html += `</form></div>`;
+        html += `<script>renderPage(1,document.querySelector('.table-wrap'))</script>`;
 
         res.send(layout(info.title, html, t));
       } catch (err) {

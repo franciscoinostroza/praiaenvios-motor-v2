@@ -1,5 +1,6 @@
 import { query } from './pool.js';
 import { CATEGORIAS_SEMILLA } from '../utils/categorias-semilla.js';
+import { SYSTEM_PROMPT } from '../utils/classifier.js';
 
 async function seed() {
   // Tarifas Express
@@ -85,6 +86,10 @@ async function seed() {
     await query('INSERT INTO categorias (tipo, categoria) VALUES ($1, $2) ON CONFLICT (tipo, categoria) DO NOTHING', [tipo, cat]);
   }
   console.log('[seed] categorias ok');
+
+  // Prompt clasificador
+  await query("INSERT INTO prompts_config (clave, valor) VALUES ($1, $2) ON CONFLICT (clave) DO NOTHING", ['clasificador_categorias', SYSTEM_PROMPT]);
+  console.log('[seed] prompts_config ok');
 
   // Zonas
   const zonas = [

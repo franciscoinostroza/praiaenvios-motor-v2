@@ -1,6 +1,6 @@
-import { normalizarCategorias } from './categories.js';
+import { normalizarCategoriasConIA } from './categories.js';
 
-export function extractMotorParams(datos) {
+export async function extractMotorParams(datos) {
   var origen = datos.tipo_flujo === 'comprando_desde_venezuela'
     ? 'Curitiba'
     : (datos.origen || 'Curitiba');
@@ -14,7 +14,7 @@ export function extractMotorParams(datos) {
     categorias = ['general'];
   }
 
-  categorias = normalizarCategorias(categorias);
+  categorias = await normalizarCategoriasConIA(categorias);
   datos._categorias_norm = categorias;
 
   var boxes = datos.boxes || datos.cajas || [];

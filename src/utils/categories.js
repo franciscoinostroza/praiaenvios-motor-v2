@@ -1,3 +1,5 @@
+import { clasificarConIA } from './classifier.js';
+
 const TERMINOS_POR_CATEGORIA = {
   electronicos: [
     'electrónica', 'electronica', 'electrónico', 'electronico',
@@ -374,6 +376,25 @@ export function normalizarCategorias(categorias) {
 
     // Paso 5: fallback seguro a general (siempre existe en la planilla)
     if (esNuevo(resultado, 'general')) resultado.push('general');
+  }
+  return resultado.length > 0 ? resultado : ['general'];
+}
+
+export async function normalizarCategoriasConIA(categorias) {
+  var resultado = [];
+  for (var i = 0; i < categorias.length; i++) {
+    var input = categorias[i].trim();
+    var llmResult = await clasificarConIA(input);
+    if (llmResult) {
+      for (var j = 0; j < llmResult.length; j++) {
+        if (!resultado.includes(llmResult[j])) resultado.push(llmResult[j]);
+      }
+    } else {
+      var fallback = normalizarCategorias([input]);
+      for (var k = 0; k < fallback.length; k++) {
+        if (!resultado.includes(fallback[k])) resultado.push(fallback[k]);
+      }
+    }
   }
   return resultado.length > 0 ? resultado : ['general'];
 }

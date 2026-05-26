@@ -61,7 +61,7 @@ async function manejarCotizacion(req, res) {
       });
     }
 
-    const entrada = extractMotorParams(datos);
+    const entrada = await extractMotorParams(datos);
     log('INFO', 'Entrada normalizada', { entrada: JSON.stringify(entrada) }, contacto);
 
     const scrapeResult = await resolverUrls(entrada);

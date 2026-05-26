@@ -80,6 +80,11 @@ CREATE TABLE IF NOT EXISTS cache_urls (
 
 CREATE INDEX IF NOT EXISTS idx_cache_urls_created ON cache_urls(created_at);
 
+CREATE TABLE IF NOT EXISTS prompts_config (
+  clave VARCHAR(100) PRIMARY KEY,
+  valor TEXT NOT NULL
+);
+
 `;
 
 async function migrate() {
