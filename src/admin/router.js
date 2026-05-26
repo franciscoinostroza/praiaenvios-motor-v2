@@ -70,7 +70,7 @@ body{font-family:'Inter',-apple-system,sans-serif;background:var(--gray-50);colo
 .card a:hover{background:var(--blue-hover)}
 
 /* ─── TABLE ─── */
-.table-wrap{background:#fff;border-radius:var(--radius);box-shadow:var(--shadow);border:1px solid var(--gray-200);overflow:hidden}
+.table-wrap{background:#fff;border-radius:var(--radius);box-shadow:var(--shadow);border:1px solid var(--gray-200);overflow-x:auto;-webkit-overflow-scrolling:touch}
 .table-toolbar{display:flex;align-items:center;justify-content:space-between;padding:12px 16px;border-bottom:1px solid var(--gray-200);gap:12px;flex-wrap:wrap}
 .table-toolbar .search-wrap{position:relative}
 .table-toolbar .search-wrap input{padding:6px 12px 6px 32px;border:1px solid var(--gray-300);border-radius:6px;font-size:.8rem;width:220px;font-family:inherit;transition:border-color .15s}
@@ -121,15 +121,51 @@ td .btn-sm{display:inline-flex;align-items:center;gap:4px;border:none;padding:4p
 @keyframes fadeIn{from{opacity:0}to{opacity:1}}
 @keyframes scaleIn{from{opacity:0;transform:scale(.95)}to{opacity:1;transform:scale(1)}}
 
-/* ─── RESPONSIVE ─── */
+/* ─── HAMBURGUESA ─── */
+.hamburger{display:none;position:fixed;top:12px;left:12px;z-index:1001;width:36px;height:36px;background:var(--navy);border:none;border-radius:8px;color:#fff;font-size:1.2rem;cursor:pointer;align-items:center;justify-content:center;transition:background .15s;box-shadow:0 2px 8px rgba(0,0,0,.2)}
+.hamburger:hover{background:var(--navy-hover)}
+.side-overlay{display:none}
 @media(max-width:768px){
-  .sidebar{width:56px}
-  .sidebar-header h1,.sidebar-header .sub,.sidebar-nav a span,.sidebar-nav .label,.sidebar-footer a span{display:none}
-  .sidebar-nav a{padding:10px;justify-content:center;border-left:none}
-  .sidebar-footer a{justify-content:center}
-  .main{padding:16px}
+  .hamburger{display:flex}
+  .sidebar{position:fixed;top:0;left:0;z-index:1000;transform:translateX(-100%);transition:transform .25s ease;box-shadow:4px 0 20px rgba(0,0,0,.2)}
+  .sidebar.open{transform:translateX(0)}
+  .side-overlay{display:block;position:fixed;inset:0;z-index:999;background:rgba(0,0,0,.4);opacity:0;pointer-events:none;transition:opacity .25s ease}
+  .side-overlay.open{opacity:1;pointer-events:auto}
+  .main{padding:16px;margin-left:0}
+  body.menu-open{overflow:hidden}
   .stats{grid-template-columns:repeat(auto-fill,minmax(130px,1fr))}
   .table-toolbar .search-wrap input{width:140px}
+  .grid{grid-template-columns:1fr}
+  td,th{padding:6px 8px;font-size:.75rem}
+  td input{padding:3px 6px;font-size:.72rem;min-width:60px}
+  td .btn-sm{padding:3px 7px;font-size:.68rem}
+  .table-toolbar{flex-direction:column;align-items:stretch;gap:8px;padding:10px 12px}
+  .table-toolbar .search-wrap input{width:100%}
+  .table-toolbar form.inline{width:100%}
+  .table-toolbar form.inline button{width:100%}
+  .add-form{padding:12px}
+  .add-form .fields{flex-direction:column}
+  .add-form label{width:100%}
+  .add-form input,.add-form select{width:100%}
+  .add-form .btn-add{width:100%;text-align:center}
+  .stat-card{padding:12px}
+  .stat-card .num{font-size:1.2rem}
+  .card{padding:12px}
+  .toast{top:auto;bottom:20px;right:20px;left:20px;font-size:.8rem;padding:10px 16px}
+}
+@media(max-width:480px){
+  .hamburger{top:8px;left:8px;width:32px;height:32px;font-size:1rem}
+  .main{padding:10px;padding-top:52px}
+  .main-header{margin-bottom:16px}
+  .main-header h2{font-size:1.05rem}
+  .main-header p{font-size:.78rem}
+  .pg-btn{padding:3px 7px;font-size:.7rem}
+  td,th{padding:4px 6px;font-size:.7rem}
+  td input{padding:2px 5px;font-size:.68rem;min-width:50px}
+  td .btn-sm{padding:2px 6px;font-size:.64rem}
+  .stat-card .num{font-size:1rem}
+  .grid{gap:8px}
+  .sidebar{width:220px}
 }
 
 /* ─── SCROLLBAR ─── */
@@ -138,6 +174,8 @@ td .btn-sm{display:inline-flex;align-items:center;gap:4px;border:none;padding:4p
 </style>
 </head>
 <body>
+<button class="hamburger" onclick="toggleSidebar()" aria-label="Menú">☰</button>
+<div class="side-overlay" onclick="toggleSidebar()"></div>
 <aside class="sidebar">
   <div class="sidebar-header">
     <h1>Admin Panel</h1>
@@ -155,6 +193,16 @@ td .btn-sm{display:inline-flex;align-items:center;gap:4px;border:none;padding:4p
   </div>
 </div>
 <script>
+function toggleSidebar(){
+  document.querySelector('.sidebar').classList.toggle('open');
+  document.querySelector('.side-overlay').classList.toggle('open');
+  document.body.classList.toggle('menu-open');
+}
+// cerrar sidebar al hacer clic en un nav link en móvil
+document.addEventListener('click',function(e){
+  var l=e.target.closest('.sidebar-nav a');
+  if(l&&window.innerWidth<=768){document.querySelector('.sidebar').classList.remove('open');document.querySelector('.side-overlay').classList.remove('open');document.body.classList.remove('menu-open')}
+});
 function confirmDelete(msg,form){
   const d=document.createElement('div');d.className='modal-overlay';
   d.innerHTML='<div class="modal"><h3>🗑️ Confirmar</h3><p>'+(msg||'¿Eliminar este registro?')+'</p><div class="actions"><button class="btn-cancel">Cancelar</button><button class="btn-confirm">Eliminar</button></div></div>';
