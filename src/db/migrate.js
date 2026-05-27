@@ -85,6 +85,15 @@ CREATE TABLE IF NOT EXISTS prompts_config (
   valor TEXT NOT NULL
 );
 
+CREATE TABLE IF NOT EXISTS rate_cache (
+  cache_key TEXT PRIMARY KEY,
+  resultado JSONB NOT NULL,
+  criado_en TIMESTAMPTZ DEFAULT NOW(),
+  expira_en TIMESTAMPTZ DEFAULT NOW() + INTERVAL '1 hour'
+);
+
+CREATE INDEX IF NOT EXISTS idx_rate_cache_expira ON rate_cache(expira_en);
+
 `;
 
 async function migrate() {
