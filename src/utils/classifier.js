@@ -5,7 +5,7 @@ const CATEGORIAS_VALIDAS = new Set([
   'electronicos', 'electrodomesticos', 'ropa', 'calzado', 'accesorios',
   'perfumes', 'cosmeticos', 'repuestos', 'juguetes', 'herramientas',
   'libros', 'alimentos', 'documentos', 'quimicos', 'liquidos',
-  'baterias', 'corrosivos', 'medicamentos', 'alcohol', 'grasa',
+  'baterias', 'corrosivos', 'insumos_medicos', 'medicamentos', 'alcohol', 'grasa',
   'agroavicola', 'general'
 ]);
 
@@ -33,7 +33,8 @@ Categorías disponibles:
 - liquidos: bebidas, refrescos, jugos, aceite, vinagre
 - baterias: baterías, pilas, power banks, baterías externas, pilhas
 - corrosivos: ácido, soda cáustica
-- medicamentos: medicinas, remedios, fármacos, insumos médicos, material médico, jeringas, termómetros
+- insumos_medicos: insumos médicos, suministros médicos, equipos médicos, material médico, instrumental médico, dispositivos médicos, jeringas, termómetros, guantes, mascarillas, vendas, gasas, catéteres, sondas, implantes, prótesis, tensiómetros, glucómetros, oxímetros. Todo tipo de artículos y suministros de uso médico, hospitalario o clínico.
+- medicamentos: medicamentos, medicinas, remedios, fármacos, pastillas, comprimidos, jarabes, cápsulas, inyectables y cualquier producto farmacéutico de consumo humano o animal que se ingiera o aplique como tratamiento.
 - alcohol: alcohol, alcoholes
 - grasa: grasa, grasas, graxa
 - agroavicola: productos agropecuarios, insumos agrícolas, veterinaria, agro

@@ -81,7 +81,8 @@ async function seed() {
   }
   console.log('[seed] formulas ok');
 
-  // Categorias
+  // Categorias — limpiar filas viejas que cambiaron de tipo
+  await query("DELETE FROM categorias WHERE categoria IN ('medicamento', 'medicamentos')");
   for (const [tipo, cat] of CATEGORIAS_SEMILLA) {
     await query('INSERT INTO categorias (tipo, categoria) VALUES ($1, $2) ON CONFLICT (tipo, categoria) DO NOTHING', [tipo, cat]);
   }

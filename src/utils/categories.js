@@ -221,19 +221,35 @@ const TERMINOS_POR_CATEGORIA = {
     'soda cáustica', 'soda caustica',
   ],
 
-  medicamentos: [
-    'medicamento', 'medicamentos',
-    'remedio', 'remedios', 'remédio', 'remédios',
-    'fármaco', 'farmaco', 'fármacos', 'farmacos',
-    'suministros médicos', 'suministros medicos',
-    'insumos médicos', 'insumos medicos',
-    'instrumental médico', 'instrumental medico',
+  insumos_medicos: [
+    'insumo médico', 'insumos médicos', 'insumo medico', 'insumos medicos',
+    'suministro médico', 'suministros médicos', 'suministro medico', 'suministros medicos',
     'equipo médico', 'equipo medico',
     'material médico', 'material medico',
+    'instrumental médico', 'instrumental medico',
     'artículo médico', 'articulo medico',
     'producto médico', 'producto medico',
+    'dispositivo médico', 'dispositivo medico',
     'jeringa', 'jeringas', 'seringa', 'seringas',
     'termómetro', 'termometro', 'termômetro',
+    'guante médico', 'guantes médicos', 'luva cirúrgica',
+    'mascarilla', 'mascarillas', 'máscara cirúrgica',
+    'venda', 'vendas', 'atadura', 'gasa', 'gasas',
+    'catéter', 'cateter', 'sonda', 'sondas',
+    'implante', 'implantes', 'prótesis', 'protesis',
+    'tensiómetro', 'tensiometro', 'glucómetro', 'glucometro',
+    'oxímetro', 'oximetro', 'pulsioxímetro', 'pulsioximetro',
+  ],
+
+  medicamentos: [
+    'medicamento', 'medicamentos',
+    'medicina', 'medicinas',
+    'remedio', 'remedios', 'remédio', 'remédios',
+    'fármaco', 'farmaco', 'fármacos',
+    'pastilla', 'pastillas', 'comprimido', 'comprimidos',
+    'jarabe', 'jarabes', 'xarope', 'xaropes',
+    'cápsula', 'capsula', 'cápsulas', 'capsulas',
+    'inyectable', 'inyectables',
   ],
 
   alcohol: [
