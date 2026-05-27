@@ -50,6 +50,19 @@ async function manejarCotizacion(req, res) {
       });
     }
 
+    // Envío internacional → redirigir al handler de Shippo
+    if (datos.pais_destino) {
+      if (!cotizarShippo) {
+        log('WARN', 'Cotización internacional no disponible (sin SHIPPO_TOKEN)', null, contacto);
+        return res.status(503).json({
+          resultado_final: { error: true, mensaje: 'Cotización internacional no configurada' },
+          mensaje_formateado: '\u274C Cotización internacional no disponible. Contacta a un asesor.'
+        });
+      }
+      log('INFO', 'Cotización internacional detectada → redirigiendo a Shippo', { pais_destino: datos.pais_destino }, contacto);
+      return manejarCotizacionShippo(req, res);
+    }
+
     log('INFO', 'Cotizar datos recibidos', { datos: JSON.stringify(datos) }, contacto);
 
     const validacion = validateMotorInput(datos);
