@@ -271,6 +271,7 @@ function renderPaginator(page,pages,total,wrap){
 function renderNav(active) {
   const items = [
     { label: 'Dashboard', path: '/admin', icon: '📊', key: 'Admin' },
+    { label: 'Panel', path: '/admin/panel', icon: '📖', key: 'Panel' },
     { divider: true },
     { label: 'Simulador', path: '/admin/simulador', icon: '🧮', key: 'Simulador' },
     { divider: true },
@@ -443,6 +444,475 @@ if(document.cookie.includes('token=')){fetch('/admin').then(r=>{if(r.ok&&r.url.i
     ).join('');
     const body = `${statsHtml}<div class="grid">${cardsHtml}</div>`;
     res.send(layout('Admin', body, t));
+  });
+
+  /* ─── PANEL (Wiki viva) ─── */
+  router.get('/panel', auth, async (req, res) => {
+    const t = req.adminToken;
+    try {
+      const [
+        modRows, catRows, expRows, terrRows, formRows,
+        bvRows, ganRows, zonaRows, nac1Rows, nac2Rows,
+        logStats, cacheStats
+      ] = await Promise.all([
+        query('SELECT modalidad, clave, valor FROM modalidades ORDER BY modalidad, clave'),
+        query('SELECT tipo, categoria FROM categorias ORDER BY tipo, categoria'),
+        query('SELECT kg, precio_bs FROM tarifas_express ORDER BY kg'),
+        query('SELECT kg, precio_bs FROM tarifas_terrestre ORDER BY kg'),
+        query('SELECT clave, valor FROM formulas ORDER BY clave'),
+        query('SELECT hasta_cm, precio_bs FROM tramos_boa_vista ORDER BY id'),
+        query('SELECT hasta_kg, usd_kg FROM tramos_ganancia ORDER BY id'),
+        query('SELECT tipo, ciudad FROM zonas ORDER BY tipo, ciudad'),
+        query('SELECT MIN(kg) min_kg, MAX(kg) max_kg, MIN(precio_bs) min_p, MAX(precio_bs) max_p FROM nacional_op1'),
+        query('SELECT MIN(kg) min_kg, MAX(kg) max_kg, MIN(precio_bs) min_p, MAX(precio_bs) max_p FROM nacional_op2'),
+        query(`SELECT
+          (SELECT COUNT(*) FROM logs WHERE nivel='INFO' AND mensaje LIKE '%Cotización exitosa%' AND created_at >= NOW() - INTERVAL '1 day') cotiz,
+          (SELECT COUNT(*) FROM logs WHERE nivel='INFO' AND mensaje LIKE '%Shippo%' AND created_at >= NOW() - INTERVAL '1 day') intl,
+          (SELECT COUNT(*) FROM logs WHERE nivel='ERROR' AND created_at >= NOW() - INTERVAL '1 day') errs,
+          (SELECT created_at FROM logs WHERE nivel='INFO' AND mensaje LIKE '%Cotización exitosa%' AND created_at >= NOW() - INTERVAL '1 day' ORDER BY created_at DESC LIMIT 1) ultima`),
+        query(`SELECT
+          (SELECT COUNT(*) FROM logs WHERE mensaje LIKE '%cache HIT%' AND created_at >= NOW() - INTERVAL '1 day') hits,
+          (SELECT COUNT(*) FROM logs WHERE mensaje LIKE '%cache MISS%' AND created_at >= NOW() - INTERVAL '1 day') misses`)
+      ]);
+
+      const mods = {};
+      for (const r of modRows.rows) {
+        if (!mods[r.modalidad]) mods[r.modalidad] = {};
+        const val = isNaN(Number(r.valor)) ? r.valor : Number(r.valor);
+        mods[r.modalidad][r.clave] = val;
+      }
+
+      const cats = { NEUTRAS: [], TERRESTRE: [], SOLO_AEREO: [] };
+      for (const r of catRows.rows) {
+        if (cats[r.tipo]) cats[r.tipo].push(r.categoria);
+      }
+
+      const forms = {};
+      for (const r of formRows.rows) forms[r.clave] = Number(r.valor);
+
+      const expressTable = expRows.rows.map(r => ({ kg: r.kg, precio: Number(r.precio_bs) }));
+      const terreTable = terrRows.rows.map(r => ({ kg: r.kg, precio: Number(r.precio_bs) }));
+
+      const bvTramos = bvRows.rows.map(r => ({ hasta: r.hasta_cm, precio: Number(r.precio_bs) }));
+      const ganTramos = ganRows.rows.map(r => ({ hasta: r.hasta_kg, usd: Number(r.usd_kg) }));
+
+      const zonas = { BASE: [], PROHIBIDO: [] };
+      for (const r of zonaRows.rows) {
+        if (zonas[r.tipo]) zonas[r.tipo].push(r.ciudad);
+      }
+
+      const nac1 = nac1Rows.rows[0];
+      const nac2 = nac2Rows.rows[0];
+      const stats = logStats.rows[0];
+      const cache = cacheStats.rows[0];
+      const upsStatus = process.env.UPS_CLIENT_ID ? '✅ Conectado' : '⏳ Pendiente';
+      const ultima = stats.ultima ? new Date(stats.ultima).toLocaleString('es-VE', { hour: '2-digit', minute: '2-digit' }) : '—';
+      const version = 'v2.0.0';
+
+      const esc = s => String(s == null ? '' : s).replace(/</g,'&lt;').replace(/>/g,'&gt;');
+
+      // ── helpers ──
+      const statsHtml = () => `<div class="panel-hero">
+        <div class="hero-top">
+          <div class="hero-title">
+            <span class="hero-icon">📖</span>
+            <div>
+              <h1>Panel Praia Envíos</h1>
+              <p class="hero-sub">Wiki del sistema · ${version} · <span class="hero-live">Datos en vivo desde la DB</span></p>
+            </div>
+          </div>
+          <button class="hero-print" onclick="window.print()" title="Imprimir">🖨️</button>
+        </div>
+        <div class="hero-stats">
+          <div class="hs-card"><span class="hs-num">${stats.cotiz || 0}</span><span class="hs-lbl">Cotizaciones hoy</span></div>
+          <div class="hs-card"><span class="hs-num">${stats.intl || 0}</span><span class="hs-lbl">Internacionales</span></div>
+          <div class="hs-card" style="${stats.errs > 0 ? '--hs-clr:var(--red)' : '--hs-clr:var(--green)'}"><span class="hs-num">${stats.errs || 0}</span><span class="hs-lbl">Errores</span></div>
+          <div class="hs-card"><span class="hs-num">${ultima}</span><span class="hs-lbl">Última cotización</span></div>
+          <div class="hs-card"><span class="hs-num">${cache.hits || 0}/${cache.misses || 0}</span><span class="hs-lbl">Caché H/M</span></div>
+        </div>
+      </div>`;
+
+      const jumpMenu = () => `<div class="jump-menu">
+        ${[
+          { id: 'como-funciona', icon: '🚚', label: '¿Cómo funciona?' },
+          { id: 'modalidades', icon: '📦', label: 'Modalidades' },
+          { id: 'formulas', icon: '🧮', label: 'Fórmulas' },
+          { id: 'ejemplo', icon: '📐', label: 'Ejemplo' },
+          { id: 'categorias', icon: '🏷️', label: 'Categorías' },
+          { id: 'internacional', icon: '🌍', label: 'Internacional' },
+          { id: 'tarifas', icon: '📈', label: 'Tarifas' },
+          { id: 'referencia', icon: '📋', label: 'Referencia' },
+          { id: 'db', icon: '🗄️', label: 'Base de Datos' },
+          { id: 'faq', icon: '❓', label: 'FAQ' },
+          { id: 'glosario', icon: '📖', label: 'Glosario' },
+        ].map(i => `<a href="#${i.id}" class="jm-link">${i.icon} ${i.label}</a>`).join('')}
+      </div>`;
+
+      const section = (id, icon, title, content, cls) =>
+        `<section id="${id}" class="panel-section${cls ? ' ' + cls : ''}">
+          <div class="ps-header"><span class="ps-icon">${icon}</span><h2>${esc(title)}</h2></div>
+          <div class="ps-body">${content}</div>
+        </section>`;
+
+      const card = (icon, title, items, accent) =>
+        `<div class="modal-card" style="${accent ? '--mc-accent:' + accent : ''}">
+          <div class="mc-head">${icon} ${esc(title)}</div>
+          <div class="mc-body">${items}</div>
+        </div>`;
+
+      const tag = (tipo) => {
+        const m = { NEUTRAS: ['✅', 'var(--green)'], TERRESTRE: ['🚛', 'var(--amber)'], SOLO_AEREO: ['✈️', 'var(--red)'] };
+        const [ic, clr] = m[tipo] || ['❓', '#94a3b8'];
+        return `<span class="cat-tag" style="--tag-clr:${clr}">${ic} ${tipo}</span>`;
+      };
+
+      // ── sections ──
+      const comoFunciona = `<div class="how-flow">
+        <div class="hf-step"><div class="hf-num">1</div><div class="hf-txt"><strong>Recibe</strong> mensaje del cliente en WhatsApp</div></div>
+        <div class="hf-arr">→</div>
+        <div class="hf-step"><div class="hf-num">2</div><div class="hf-txt"><strong>Interpreta</strong> los datos (JSON o clave=valor)</div></div>
+        <div class="hf-arr">→</div>
+        <div class="hf-step"><div class="hf-num">3</div><div class="hf-txt"><strong>Clasifica</strong> el producto por IA o diccionario</div></div>
+        <div class="hf-arr">→</div>
+        <div class="hf-step"><div class="hf-num">4</div><div class="hf-txt"><strong>Elige</strong> modalidad según categoría</div></div>
+        <div class="hf-arr">→</div>
+        <div class="hf-step"><div class="hf-num">5</div><div class="hf-txt"><strong>Calcula</strong> precio con la fórmula exacta</div></div>
+        <div class="hf-arr">→</div>
+        <div class="hf-step"><div class="hf-num">6</div><div class="hf-txt"><strong>Responde</strong> con precio y plazo al cliente</div></div>
+      </div>
+      <p class="panel-note">El sistema prioriza: <strong>Express</strong> → <strong>Terrestre</strong> → <strong>Aéreo</strong>. Usa la primera modalidad que cumpla todos los requisitos.</p>`;
+
+      const renderLimits = (m) => {
+        const d = mods[m] || {};
+        if (!d.id) return '<p class="hint">Sin datos</p>';
+        return `<table class="info-table">
+          <tr><td>Peso máximo</td><td><strong>${d.peso_max_kg || '—'}</strong> kg</td></tr>
+          <tr><td>Dimensión máxima</td><td><strong>${d.dimension_max_cm || '—'}</strong> cm</td></tr>
+          <tr><td>Valor máximo</td><td><strong>R$ ${d.valor_max_rs || '—'}</strong></td></tr>
+          <tr><td>Tipo mercancía</td><td>${d.id === 3 ? 'Personal o <strong>Comercial</strong>' : 'Solo <strong>Personal</strong>'}</td></tr>
+          <tr><td>Tiempo entrega</td><td><strong>${d.tiempo_entrega_dias || '—'}</strong> días</td></tr>
+        </table>`;
+      };
+
+      const expM = mods.EXPRESS || {};
+      const terreM = mods.TERRESTRE || {};
+      const aereoM = mods.AEREO || {};
+      const aereoTrechoM = mods.AEREO_TRECHO || {};
+
+      const renderPriceTable = (rows, unit) =>
+        rows.length === 0 ? '<p class="hint">(vacío)</p>' :
+        `<div class="ptable-wrap"><table class="ptable"><thead><tr><th>kg</th><th>${esc(unit)}</th><th style="width:40%">Barra</th></tr></thead><tbody>
+        ${rows.map(r => {
+          const maxPrec = Math.max(...rows.map(x => x.precio));
+          const pct = (r.precio / maxPrec) * 100;
+          return `<tr><td>${r.kg}</td><td><strong>R$ ${r.precio.toFixed(2)}</strong></td><td><div class="bar-wrap"><div class="bar" style="width:${pct}%"></div></div></td></tr>`;
+        }).join('')}</tbody></table></div>`;
+
+      const modalidadesHtml = `<div class="modal-grid">
+        ${card('🚀', 'Express · ' + (expM.nombre || ''), `<p class="mc-desc">Envío rápido para productos sin restricción. Electrónicos, ropa, cosméticos, accesorios.</p>${renderLimits('EXPRESS')}` + renderPriceTable(expressTable, 'R$'), '#3b82f6')}
+        ${card('🚛', 'Terrestre · ' + (terreM.nombre || ''), `<p class="mc-desc">Envío económico para categorías restringidas: alimentos, bebidas, líquidos, perfumes.</p>${renderLimits('TERRESTRE')}` + renderPriceTable(terreTable, 'R$'), '#f59e0b')}
+        ${card('✈️', 'Aéreo · ' + (aereoM.nombre || ''), `<p class="mc-desc">Envío por vía aérea. Productos con baterías, alcohol, corrosivos. Acepta comercial.</p>${renderLimits('AEREO')}${aereoTrechoM.tiempo_entrega_dias ? `<p class="mc-info">➕ <strong>Aéreo + Trecho</strong> (Mod. 4): cuando el origen no está en zona BASE. +${aereoTrechoM.tiempo_entrega_dias || '—'} días.</p>` : ''}`, '#8b5cf6')}
+      </div>`;
+
+      const renderFormTable = (filterKeys, label) => {
+        const rows = formRows.rows.filter(r => !filterKeys || filterKeys.includes(r.clave));
+        if (rows.length === 0) return '<p class="hint">(vacío)</p>';
+        return `<table class="info-table">
+          ${rows.map(r => `<tr><td><code>${esc(r.clave)}</code></td><td><strong>${Number(r.valor)}</strong></td></tr>`).join('')}
+        </table>`;
+      };
+
+      const formulasHtml = `<div class="two-col">
+        <div>
+          <h3 style="margin:0 0 8px;font-size:.85rem;color:var(--gray-600)">Fórmulas generales</h3>
+          ${renderFormTable(['divisor_volumetrico','factor_ft3','flete_aereo_por_kg','factor_seguro','factor_empresa_manaus','factor_ganancia','tasa_dolar'])}
+          <br>
+          <h3 style="margin:0 0 8px;font-size:.85rem;color:var(--gray-600)">Componentes de cálculo</h3>
+          <table class="info-table">
+            <tr><td><code>peso_vol = ceil(L×A×A ÷ ${esc(String(forms.divisor_volumetrico || 6000))})</code></td><td>Peso según volumen</td></tr>
+            <tr><td><code>peso_fact = ceil(max(bruto, vol))</code></td><td>El que se cobra (el mayor)</td></tr>
+            <tr><td><code>ft³ = L×A×A × ${forms.factor_ft3 || '0.000035'}</code></td><td>Pies cúbicos</td></tr>
+            <tr><td><code>valor_extra = ceil(ft³ × 8)</code></td><td>Manejo de volumen</td></tr>
+            <tr><td><code>embalaje = ceil(ft³ × 15)</code></td><td>Material de empaque</td></tr>
+            <tr><td><code>ganancia = peso × tarifa_usd × ${forms.factor_ganancia || 6}</code></td><td>Margen de ganancia</td></tr>
+          </table>
+        </div>
+        <div>
+          <h3 style="margin:0 0 8px;font-size:.85rem;color:var(--gray-600)">Fórmula Express</h3>
+          <div class="formula-box">
+            <code>Tarifa(kg) + ValorExtra + Embalaje + Ganancia + CargoFijo + BoaVista</code>
+          </div>
+          <br>
+          <h3 style="margin:0 0 8px;font-size:.85rem;color:var(--gray-600)">Fórmula Terrestre</h3>
+          <div class="formula-box">
+            <code>Tarifa(kg) + ValorExtra + Embalaje + Ganancia + CargoFijo + BoaVista</code>
+          </div>
+          <br>
+          <h3 style="margin:0 0 8px;font-size:.85rem;color:var(--gray-600)">Fórmula Aéreo</h3>
+          <div class="formula-box">
+            <code>Flete + Seguro + EmpresaManaus + ValorExtra + Embalaje + BV + CargoYho + Ganancia + CargoPickup + CargoManausBV</code>
+          </div>
+        </div>
+      </div>`;
+
+      const ejemploHtml = `<div class="example-grid">
+        <div class="eg-data">
+          <table class="info-table">
+            <tr><td>Producto</td><td><strong>Laptop</strong></td></tr>
+            <tr><td>Peso bruto</td><td>2 kg</td></tr>
+            <tr><td>Dimensiones</td><td>30 × 20 × 15 cm</td></tr>
+            <tr><td>Valor</td><td>R$ 500</td></tr>
+            <tr><td>Categoría</td><td><span class="cat-tag" style="--tag-clr:var(--green)">✅ electrónicos</span></td></tr>
+          </table>
+        </div>
+        <div class="eg-steps">
+          <div class="eg-step"><div class="eg-n">1</div><div><code>Peso vol = 30×20×15÷${esc(String(forms.divisor_volumetrico || 6000))} = 1,5 → <strong>2 kg</strong></code></div></div>
+          <div class="eg-step"><div class="eg-n">2</div><div><code>Peso fact = max(2, 2) = <strong>2 kg</strong></code></div></div>
+          <div class="eg-step"><div class="eg-n">3</div><div><code>FT³ = 30×20×15×${forms.factor_ft3 || '0.000035'} = <strong>0,3178</strong></code></div></div>
+          <div class="eg-step"><div class="eg-n">4</div><div><code>ValorExtra = ceil(0,3178×8) = <strong>R$ 3</strong>  |  Embalaje = ceil(0,3178×15) = <strong>R$ 5</strong></code></div></div>
+          <div class="eg-step"><div class="eg-n">5</div><div><code>Ganancia = 2 × $5 USD × ${forms.factor_ganancia || 6} = <strong>R$ 60</strong></code></div></div>
+          <div class="eg-step"><div class="eg-n">6</div><div><code>Express: <strong>R$ ${expressTable[1] ? expressTable[1].precio : '...'} + 3 + 5 + 60 + ${expM.valor_fijo_rs || 20} + BoaVista</strong></code></div></div>
+          <div class="eg-total">
+            <div class="eg-total-item"><span>🚀 Express</span><strong>R$ 264</strong></div>
+            <div class="eg-total-item"><span>✈️ Aéreo</span><strong>R$ 487</strong></div>
+          </div>
+        </div>
+      </div>`;
+
+      const categoriasHtml = () => {
+        const groups = [
+          { tipo: 'NEUTRAS', label: 'Sin restricción (Express, Terrestre o Aéreo)', icon: '✅', clr: 'var(--green)' },
+          { tipo: 'TERRESTRE', label: 'Solo Terrestre (alimentos, líquidos, químicos)', icon: '🚛', clr: 'var(--amber)' },
+          { tipo: 'SOLO_AEREO', label: 'Solo Aéreo (baterías, alcohol, corrosivos)', icon: '✈️', clr: 'var(--red)' },
+        ];
+        return groups.map(g =>
+          `<div class="cat-group">
+            <div class="cg-head" style="--cg-clr:${g.clr}">${g.icon} ${esc(g.label)} <span class="cg-count">${cats[g.tipo]?.length || 0}</span></div>
+            <div class="cg-body">${(cats[g.tipo] || []).map(c => `<span class="cat-pill" style="--pill-clr:${g.clr}">${esc(c)}</span>`).join('') || '<span class="hint">(vacío)</span>'}</div>
+          </div>`
+        ).join('');
+      };
+
+      const internacionalHtml = `<div class="two-col">
+        <div>
+          <h3 style="margin:0 0 8px;font-size:.85rem;color:var(--gray-600)">Flujo internacional</h3>
+          <div class="how-flow" style="flex-wrap:wrap">
+            <div class="hf-step" style="flex:1;min-width:120px"><div class="hf-num">1</div><div class="hf-txt"><strong>Detecta</strong> pais_destino</div></div>
+            <div class="hf-arr" style="flex:0">→</div>
+            <div class="hf-step" style="flex:1;min-width:120px"><div class="hf-num">2</div><div class="hf-txt"><strong>Cachea</strong> o consulta Shippo</div></div>
+            <div class="hf-arr" style="flex:0">→</div>
+            <div class="hf-step" style="flex:1;min-width:120px"><div class="hf-num">3</div><div class="hf-txt"><strong>Devuelve</strong> tasas comparativas</div></div>
+          </div>
+        </div>
+        <div>
+          <table class="info-table">
+            <tr><td>🔄 Caché (1h)</td><td><strong>${cache.hits || 0}</strong> hits · <strong>${cache.misses || 0}</strong> misses hoy</td></tr>
+            <tr><td>🇺🇸 UPS</td><td>${upsStatus}</td></tr>
+          </table>
+          <br>
+          <p class="panel-note" style="margin:0">Si dos clientes piden la misma ruta con las mismas medidas, el segundo <strong>no paga</strong> (usa caché).</p>
+        </div>
+      </div>`;
+
+      const tarifasHtml = `<div class="two-col">
+        <div><h3 style="margin:0 0 8px;font-size:.85rem;color:var(--gray-600)">🚀 Express</h3>${renderPriceTable(expressTable, 'R$')}</div>
+        <div><h3 style="margin:0 0 8px;font-size:.85rem;color:var(--gray-600)">🚛 Terrestre</h3>${renderPriceTable(terreTable, 'R$')}</div>
+      </div>
+      <br>
+      <h3 style="margin:0 0 8px;font-size:.85rem;color:var(--gray-600)">🏠 Nacional Venezuela (Bs/kg)</h3>
+      <table class="info-table" style="max-width:400px">
+        <tr><td>OP1</td><td><strong>R$ ${Number(nac1.min_p).toFixed(2)}</strong> (${nac1.min_kg}kg) → <strong>R$ ${Number(nac1.max_p).toFixed(2)}</strong> (${nac1.max_kg}kg)</td></tr>
+        <tr><td>OP2</td><td><strong>R$ ${Number(nac2.min_p).toFixed(2)}</strong> (${nac2.min_kg}kg) → <strong>R$ ${Number(nac2.max_p).toFixed(2)}</strong> (${nac2.max_kg}kg)</td></tr>
+      </table>`;
+
+      const referenciaHtml = `<div class="two-col">
+        <div>
+          <h3 style="margin:0 0 8px;font-size:.85rem;color:var(--gray-600)">📏 Tramos Boa Vista</h3>
+          <table class="info-table">
+            ${bvTramos.map(r => `<tr><td>${r.hasta !== null ? '≤ ' + r.hasta + ' cm' : '> límite'}</td><td><strong>R$ ${r.precio}</strong></td></tr>`).join('')}
+          </table>
+        </div>
+        <div>
+          <h3 style="margin:0 0 8px;font-size:.85rem;color:var(--gray-600)">📊 Tramos Ganancia</h3>
+          <table class="info-table">
+            ${ganTramos.map(r => `<tr><td>${r.hasta !== null ? '≤ ' + r.hasta + ' kg' : '> límite'}</td><td><strong>$${r.usd}/kg</strong></td></tr>`).join('')}
+          </table>
+        </div>
+      </div>
+      <br>
+      <div class="two-col">
+        <div>
+          <h3 style="margin:0 0 8px;font-size:.85rem;color:var(--gray-600)">📍 Zonas BASE</h3>
+          <div>${zonas.BASE.map(c => `<span class="cat-pill" style="--pill-clr:var(--blue)">${esc(c)}</span>`).join('')}</div>
+        </div>
+        <div>
+          <h3 style="margin:0 0 8px;font-size:.85rem;color:var(--gray-600)">🚫 Zonas PROHIBIDO</h3>
+          <div>${zonas.PROHIBIDO.map(c => `<span class="cat-pill" style="--pill-clr:var(--red)">${esc(c)}</span>`).join('')}</div>
+        </div>
+      </div>`;
+
+      const dbHtml = `<div class="table-wrap" style="margin:0"><table>
+        <thead><tr><th>Tabla</th><th>Función</th></tr></thead>
+        <tbody>
+          ${[['tarifas_express','Precio por kg para Express'],
+            ['tarifas_terrestre','Precio por kg para Terrestre'],
+            ['nacional_op1','Costo nacional Venezuela — operador 1'],
+            ['nacional_op2','Costo nacional Venezuela — operador 2'],
+            ['tramos_boa_vista','Cargos por dimensiones para ruta Boa Vista'],
+            ['tramos_ganancia','Tarifa USD/kg según peso del paquete'],
+            ['modalidades','Configuración de cada modalidad (límites, cargos)'],
+            ['formulas','Constantes del motor de cálculo'],
+            ['categorias','Tipo (NEUTRAS/TERRESTRE/SOLO_AEREO) y nombre'],
+            ['zonas','Ciudades BASE y PROHIBIDO'],
+            ['logs','Registro de eventos del sistema'],
+            ['rate_cache','Caché de tasas Shippo (expira 1h)'],
+            ['prompts_config','Prompts personalizados para la IA clasificadora'],
+            ['cache_urls','Caché de scraping de URLs'],
+          ].map(([t,d]) => `<tr><td><code>${t}</code></td><td>${d}</td></tr>`).join('')}
+        </tbody>
+      </table></div>`;
+
+      const faqHtml = `<div class="faq-list">
+        ${[
+          ['¿Qué productos no se pueden enviar?','Armas, drogas, material explosivo y productos ilegales. Tampoco se aceptan envíos desde Boa Vista o Pacaraima como origen.'],
+          ['¿Cómo se elige Express vs Aéreo?','El motor prueba en orden: Express → Terrestre → Aéreo. La primera que cumpla todos los requisitos (peso, dimensiones, valor, tipo de mercancía, categoría) es la que se usa.'],
+          ['¿Por qué a veces el precio es más alto de lo esperado?','Por el peso volumétrico. Si la caja es grande pero ligera, se cobra por el espacio que ocupa, no por lo que pesa.'],
+          ['¿El costo nacional en Venezuela está incluido?','Sí, el precio final incluye el costo de entrega en Venezuela (el mayor entre OP1 y OP2 para ese peso).'],
+          ['¿Puedo cambiar un precio?','Sí, desde el admin → Tarifas Express o Tarifas Terrestre. Los cambios se reflejan en la siguiente cotización (el motor recarga cada 30 segundos).'],
+          ['¿Cómo agrego una categoría nueva?','Admin → Categorías. Agrega tipo y nombre. Si quieres que la IA la reconozca, edita también el Prompt desde admin → Prompt IA.'],
+          ['¿Cuánto cuesta mantener el sistema?','Railway: Free $0/mes. OpenAI: ~$0.10 cada 1.000 clasificaciones. Shippo: 1¢ por cotización internacional (caché reduce el costo).'],
+          ['¿Se puede rastrear el envío?','Para internacionales vía Shippo, sí. Para domésticos Brasil→Venezuela, se entrega código de seguimiento de la transportista local.'],
+        ].map(([q,a]) => `<details class="faq-item"><summary>${esc(q)}</summary><p>${esc(a)}</p></details>`).join('')}
+      </div>`;
+
+      const glosarioHtml = `<div class="table-wrap" style="margin:0"><table>
+        <thead><tr><th>Término</th><th>Definición</th></tr></thead>
+        <tbody>
+          ${[
+            ['Peso bruto','Lo que marca la báscula. Peso real del paquete.'],
+            ['Peso volumétrico','L×A×A÷6000. El peso según el espacio que ocupa.'],
+            ['Peso facturable','El mayor entre bruto y volumétrico. Es lo que se cobra.'],
+            ['FT³','Pies cúbicos. Medida de volumen para cargos extra.'],
+            ['ValorExtra','Cargo por manejo de paquetes voluminosos.'],
+            ['Embalaje','Costo del material de empaque (caja, relleno, cinta).'],
+            ['Ganancia','Margen de la empresa sobre el envío.'],
+            ['BoaVista','Cargo por ruta terrestre vía Boa Vista (frontera).'],
+            ['Trecho','Recorrido aéreo desde ciudades fuera de la base logística.'],
+            ['Modalidad','Tipo de envío (Express, Terrestre, Aéreo).'],
+            ['Tipo mercancía','Personal (uso propio) o Comercial (para reventa).'],
+            ['NEUTRAS','Categorías sin restricción de modalidad.'],
+            ['TERRESTRE','Categorías que solo pueden ir por tierra.'],
+            ['SOLO_AEREO','Categorías que solo pueden ir por aire.'],
+            ['Shippo','Plataforma intermediaria para cotizaciones internacionales.'],
+            ['UPS','Transportista internacional (próximamente).'],
+            ['IA / OpenAI','Inteligencia artificial que clasifica productos.'],
+          ].map(([t,d]) => `<tr><td><strong>${esc(t)}</strong></td><td>${esc(d)}</td></tr>`).join('')}
+        </tbody>
+      </table></div>`;
+
+      const html = `${statsHtml()}${jumpMenu()}${section('como-funciona','🚚','¿Cómo funciona?', comoFunciona)}
+${section('modalidades','📦','Modalidades de envío', modalidadesHtml)}
+${section('formulas','🧮','Fórmulas de cálculo', formulasHtml)}
+${section('ejemplo','📐','Ejemplo paso a paso — Laptop 2kg', ejemploHtml)}
+${section('categorias','🏷️','Categorías de productos', categoriasHtml())}
+${section('internacional','🌍','Envíos Internacionales', internacionalHtml)}
+${section('tarifas','📈','Tablas de tarifas', tarifasHtml)}
+${section('referencia','📋','Datos de referencia', referenciaHtml)}
+${section('db','🗄️','Base de datos', dbHtml)}
+${section('faq','❓','Preguntas Frecuentes', faqHtml)}
+${section('glosario','📖','Glosario', glosarioHtml)}`;
+
+      res.send(layout('Panel', `<style>
+        /* ─── PANEL STYLES ─── */
+        .panel-hero{background:linear-gradient(135deg,#1e293b,#0f172a);border-radius:14px;padding:24px 28px;margin-bottom:24px;color:#fff}
+        .hero-top{display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:20px}
+        .hero-title{display:flex;align-items:center;gap:16px}
+        .hero-icon{font-size:2rem;background:rgba(255,255,255,.08);width:52px;height:52px;border-radius:14px;display:flex;align-items:center;justify-content:center}
+        .hero-title h1{font-size:1.3rem;font-weight:700;margin:0}
+        .hero-sub{font-size:.78rem;color:rgba(255,255,255,.5);margin-top:2px}
+        .hero-live{color:#22c55e}
+        .hero-print{background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.12);color:#fff;padding:8px 16px;border-radius:8px;cursor:pointer;font-size:.85rem;transition:all .15s}
+        .hero-print:hover{background:rgba(255,255,255,.15)}
+        .hero-stats{display:grid;grid-template-columns:repeat(auto-fill,minmax(130px,1fr));gap:10px}
+        .hs-card{background:rgba(255,255,255,.06);border-radius:10px;padding:12px 14px;border:1px solid rgba(255,255,255,.08);text-align:center}
+        .hs-num{display:block;font-size:1.4rem;font-weight:700;color:var(--hs-clr,#3b82f6);line-height:1.2}
+        .hs-lbl{font-size:.7rem;color:rgba(255,255,255,.5);margin-top:2px;display:block}
+        @media print{.hero-print,.jump-menu{display:none!important}.panel-hero{background:#1e293b!important;-webkit-print-color-adjust:exact;print-color-adjust:exact}.hero-stats{break-inside:avoid}}
+
+        .jump-menu{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:24px;padding:12px 16px;background:#fff;border-radius:10px;border:1px solid var(--gray-200);box-shadow:var(--shadow)}
+        .jm-link{font-size:.75rem;font-weight:500;color:var(--gray-600);text-decoration:none;padding:4px 10px;border-radius:6px;border:1px solid var(--gray-200);transition:all .15s}
+        .jm-link:hover{background:var(--gray-50);border-color:var(--blue);color:var(--blue)}
+
+        .panel-section{margin-bottom:20px}
+        .ps-header{display:flex;align-items:center;gap:10px;padding:14px 18px;background:linear-gradient(135deg,var(--gray-50),#fff);border-radius:10px 10px 0 0;border:1px solid var(--gray-200);border-bottom:none}
+        .ps-icon{font-size:1.2rem}
+        .ps-header h2{font-size:.9rem;font-weight:700;color:var(--gray-700);margin:0}
+        .ps-body{padding:18px;background:#fff;border:1px solid var(--gray-200);border-radius:0 0 10px 10px;overflow-x:auto}
+        .panel-note{font-size:.78rem;color:var(--gray-500);background:var(--gray-50);padding:10px 14px;border-radius:8px;border-left:3px solid var(--blue);margin-top:12px}
+
+        .two-col{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+        @media(max-width:768px){.two-col{grid-template-columns:1fr}}
+
+        .modal-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:14px}
+        .modal-card{border-radius:10px;border:1px solid var(--gray-200);overflow:hidden;transition:box-shadow .2s,transform .15s}
+        .modal-card:hover{box-shadow:0 4px 16px rgba(0,0,0,.08);transform:translateY(-2px)}
+        .mc-head{padding:12px 16px;font-weight:700;font-size:.88rem;color:#fff;background:var(--mc-accent,#3b82f6)}
+        .mc-body{padding:14px 16px}
+        .mc-desc{font-size:.78rem;color:var(--gray-500);margin-bottom:10px;line-height:1.5}
+        .mc-info{font-size:.75rem;color:var(--gray-500);margin-top:10px;padding-top:10px;border-top:1px solid var(--gray-100)}
+
+        .how-flow{display:flex;align-items:center;gap:8px;flex-wrap:nowrap;overflow-x:auto;padding:4px 0}
+        .hf-step{display:flex;align-items:center;gap:6px;background:var(--gray-50);padding:8px 12px;border-radius:8px;border:1px solid var(--gray-200);white-space:nowrap}
+        .hf-num{width:22px;height:22px;border-radius:50%;background:var(--blue);color:#fff;font-size:.7rem;font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+        .hf-txt{font-size:.76rem;color:var(--gray-700)}
+        .hf-arr{color:var(--gray-300);font-weight:700;font-size:1rem;flex-shrink:0}
+
+        .info-table{width:100%;border-collapse:collapse;font-size:.8rem}
+        .info-table td{padding:6px 10px;border-bottom:1px solid var(--gray-100);color:var(--gray-600)}
+        .info-table td:last-child{text-align:right;font-weight:500;color:var(--gray-800)}
+        .info-table code{font-size:.76rem;background:var(--gray-50);padding:2px 6px;border-radius:4px;color:var(--gray-700)}
+
+        .ptable-wrap{overflow-x:auto}
+        .ptable{width:100%;border-collapse:collapse;font-size:.78rem;margin-top:8px}
+        .ptable th{padding:6px 10px;text-align:left;font-weight:600;font-size:.68rem;text-transform:uppercase;color:var(--gray-400);border-bottom:1px solid var(--gray-200)}
+        .ptable td{padding:5px 10px;border-bottom:1px solid var(--gray-100);color:var(--gray-700)}
+        .bar-wrap{background:var(--gray-100);border-radius:10px;height:8px;overflow:hidden}
+        .bar{height:100%;background:linear-gradient(90deg,var(--mc-accent,#3b82f6),#6366f1);border-radius:10px;transition:width .3s}
+
+        .formula-box{background:var(--gray-50);border:1px solid var(--gray-200);border-radius:8px;padding:12px 14px}
+        .formula-box code{font-size:.75rem;color:var(--gray-700);word-break:break-all}
+
+        .example-grid{display:grid;grid-template-columns:1fr 2fr;gap:16px}
+        @media(max-width:768px){.example-grid{grid-template-columns:1fr}}
+        .eg-steps{display:flex;flex-direction:column;gap:6px}
+        .eg-step{display:flex;align-items:flex-start;gap:8px;background:var(--gray-50);border-radius:8px;padding:8px 10px;border:1px solid var(--gray-200);font-size:.76rem}
+        .eg-step code{color:var(--gray-700);word-break:break-all}
+        .eg-n{width:20px;height:20px;border-radius:50%;background:var(--blue);color:#fff;font-size:.65rem;font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+        .eg-total{display:flex;gap:12px;margin-top:4px}
+        .eg-total-item{flex:1;display:flex;justify-content:space-between;padding:10px 14px;border-radius:8px;font-size:.82rem;font-weight:600}
+        .eg-total-item:first-child{background:#e8f0fe;color:var(--blue)}
+        .eg-total-item:last-child{background:#f3e8ff;color:#7c3aed}
+
+        .cat-group{margin-bottom:12px}
+        .cg-head{display:flex;align-items:center;gap:8px;padding:8px 12px;border-radius:8px;margin-bottom:6px;font-size:.78rem;font-weight:600;color:var(--cg-clr);background:color-mix(in srgb,var(--cg-clr) 8%,#fff)}
+        .cg-count{margin-left:auto;font-size:.7rem;background:var(--cg-clr);color:#fff;padding:1px 8px;border-radius:10px}
+        .cg-body{display:flex;flex-wrap:wrap;gap:5px;padding:4px 4px}
+        .cat-pill{font-size:.72rem;padding:3px 10px;border-radius:12px;border:1px solid color-mix(in srgb,var(--pill-clr) 30%,transparent);color:var(--pill-clr);background:color-mix(in srgb,var(--pill-clr) 6%,#fff)}
+        .cat-tag{display:inline-block;font-size:.72rem;padding:2px 8px;border-radius:8px;font-weight:600;color:var(--tag-clr);background:color-mix(in srgb,var(--tag-clr) 10%,#fff)}
+
+        .faq-list{display:flex;flex-direction:column;gap:6px}
+        .faq-item{border:1px solid var(--gray-200);border-radius:8px;overflow:hidden}
+        .faq-item summary{padding:10px 14px;font-size:.82rem;font-weight:600;color:var(--gray-700);cursor:pointer;background:var(--gray-50);transition:background .15s;list-style:none;display:flex;align-items:center;gap:8px}
+        .faq-item summary::-webkit-details-marker{display:none}
+        .faq-item summary::before{content:'❓';font-size:.75rem}
+        .faq-item[open] summary::before{content:'💡'}
+        .faq-item summary:hover{background:var(--gray-100)}
+        .faq-item p{padding:10px 14px;font-size:.78rem;color:var(--gray-600);line-height:1.6;margin:0}
+        .hint{color:var(--gray-400);font-size:.76rem;font-style:italic}
+      </style>${html}`, t));
+    } catch (err) {
+      res.status(500).send(layout('Panel', `<p style="color:var(--red);font-size:.85rem">⚠️ Error al cargar el panel: ${err.message}</p>`, t));
+    }
   });
 
   /* ─── SIMULADOR ─── */
