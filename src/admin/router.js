@@ -780,7 +780,7 @@ if(document.cookie.includes('token=')){fetch('/admin').then(r=>{if(r.ok&&r.url.i
           ['¿El costo nacional en Venezuela está incluido?','Sí, el precio final incluye el costo de entrega en Venezuela (el mayor entre OP1 y OP2 para ese peso).'],
           ['¿Puedo cambiar un precio?','Sí, desde el admin → Tarifas Express o Tarifas Terrestre. Los cambios se reflejan en la siguiente cotización (el motor recarga cada 30 segundos).'],
           ['¿Cómo agrego una categoría nueva?','Admin → Categorías. Agrega tipo y nombre. Si quieres que la IA la reconozca, edita también el Prompt desde admin → Prompt IA.'],
-          ['¿Cuánto cuesta mantener el sistema?','Railway: Free $0/mes. OpenAI: ~$0.10 cada 1.000 clasificaciones. Shippo: 1¢ por cotización internacional (caché reduce el costo).'],
+
           ['¿Se puede rastrear el envío?','Para internacionales vía Shippo, sí. Para domésticos Brasil→Venezuela, se entrega código de seguimiento de la transportista local.'],
         ].map(([q,a]) => `<details class="faq-item"><summary>${esc(q)}</summary><p>${esc(a)}</p></details>`).join('')}
       </div>`;
