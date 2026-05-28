@@ -106,7 +106,7 @@ export function validateMotorInput(data) {
   return { valid: true, error: null };
 }
 
-export function validateShippoInput(data) {
+export function validateUpsInput(data) {
   if (!data) {
     return { valid: false, error: 'No se recibieron datos' };
   }

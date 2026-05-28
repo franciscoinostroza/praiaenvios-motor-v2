@@ -1,24 +1,48 @@
 import express from 'express';
 import { cotizar } from './src/services/motor.js';
-import { crearShippo } from './src/services/shippo.js';
+import { crearUps } from './src/services/ups.js';
 import { resolverUrls } from './src/utils/scraper.js';
 import { extractMotorParams, formatearMensaje } from './src/utils/format.js';
-import { extractShippoParams, formatearMensajeShippo } from './src/utils/format-shippo.js';
-import { parseBody, validateMotorInput, validateShippoInput } from './src/utils/validate.js';
+import { extractUpsParams, formatearMensajeUps } from './src/utils/format-ups.js';
+import { parseBody, validateMotorInput, validateUpsInput } from './src/utils/validate.js';
 import { crearAdminRouter } from './src/admin/router.js';
 import { log } from './src/utils/log.js';
 
 const app = express();
 app.use(express.json());
 
-const SHIPPO_TOKEN = process.env.SHIPPO_TOKEN;
-if (!SHIPPO_TOKEN) {
-  log('WARN', 'SHIPPO_TOKEN no definida — cotizaciones internacionales no disponibles');
-}
-
-let cotizarShippo = null;
-if (SHIPPO_TOKEN) {
-  cotizarShippo = crearShippo(SHIPPO_TOKEN).cotizar;
+let cotizarUps = null;
+try {
+  const cuentas = [];
+  const c1id = process.env.UPS_CUENTA_1_ID;
+  const c1sec = process.env.UPS_CUENTA_1_SECRET;
+  const c1acc = process.env.UPS_CUENTA_1_ACCOUNT;
+  if (c1id && c1sec && c1acc) {
+    cuentas.push({ clientId: c1id, clientSecret: c1sec, account: c1acc, nombre: 'Cuenta 1' });
+  }
+  const c2id = process.env.UPS_CUENTA_2_ID;
+  const c2sec = process.env.UPS_CUENTA_2_SECRET;
+  const c2acc = process.env.UPS_CUENTA_2_ACCOUNT;
+  if (c2id && c2sec && c2acc) {
+    cuentas.push({ clientId: c2id, clientSecret: c2sec, account: c2acc, nombre: 'Cuenta 2' });
+  }
+  if (cuentas.length > 0) {
+    const upsService = crearUps({
+      cuentas,
+      origen: {
+        city: process.env.UPS_ORIGEN_CIUDAD || 'Curitiba',
+        state: process.env.UPS_ORIGEN_ESTADO || 'PR',
+        zip: process.env.UPS_ORIGEN_ZIP || '80000-000',
+        country: process.env.UPS_ORIGEN_PAIS || 'BR'
+      }
+    });
+    cotizarUps = upsService.cotizar;
+    log('INFO', `UPS configurado con ${cuentas.length} cuenta(s)`);
+  } else {
+    log('WARN', 'UPS no configurado — cotizaciones internacionales no disponibles');
+  }
+} catch (e) {
+  log('WARN', 'Error al configurar UPS: ' + e.message);
 }
 
 function extractContacto(body) {
@@ -50,17 +74,16 @@ async function manejarCotizacion(req, res) {
       });
     }
 
-    // Envío internacional → redirigir al handler de Shippo
     if (datos.pais_destino) {
-      if (!cotizarShippo) {
-        log('WARN', 'Cotización internacional no disponible (sin SHIPPO_TOKEN)', null, contacto);
+      if (!cotizarUps) {
+        log('WARN', 'Cotización internacional no disponible (UPS no configurado)', null, contacto);
         return res.status(503).json({
           resultado_final: { error: true, mensaje: 'Cotización internacional no configurada' },
           mensaje_formateado: '\u274C Cotización internacional no disponible. Contacta a un asesor.'
         });
       }
-      log('INFO', 'Cotización internacional detectada → redirigiendo a Shippo', { pais_destino: datos.pais_destino }, contacto);
-      return manejarCotizacionShippo(req, res);
+      log('INFO', 'Cotización internacional detectada → redirigiendo a UPS', { pais_destino: datos.pais_destino }, contacto);
+      return manejarCotizacionUps(req, res);
     }
 
     log('INFO', 'Cotizar datos recibidos', { datos: JSON.stringify(datos) }, contacto);
@@ -144,47 +167,47 @@ async function manejarCotizacion(req, res) {
 app.post('/cotizar', manejarCotizacion);
 app.post('/whapify/cotizar', manejarCotizacion);
 
-async function manejarCotizacionShippo(req, res) {
+async function manejarCotizacionUps(req, res) {
   const contacto = extractContacto(req.body);
   try {
-    if (!cotizarShippo) {
-      log('WARN', 'Shippo no disponible', null, contacto);
+    if (!cotizarUps) {
+      log('WARN', 'UPS no disponible', null, contacto);
       return res.status(503).json({
-        resultado_final: { error: true, mensaje: 'Shippo no configurado' },
-        mensaje_formateado: '\u274C Cotización internacional no disponible. SHIPPO_TOKEN no configurado.'
+        resultado_final: { error: true, mensaje: 'UPS no configurado' },
+        mensaje_formateado: '\u274C Cotización internacional no disponible.'
       });
     }
 
     const datos = parseBody(req.body);
     if (!datos) {
-      log('WARN', 'No se pudieron interpretar los datos (shippo)', null, contacto);
+      log('WARN', 'No se pudieron interpretar los datos (ups)', null, contacto);
       return res.json({
         resultado_final: { error: true, mensaje: 'No se pudieron interpretar los datos del envío.' },
         mensaje_formateado: '\u274C No se pudieron interpretar los datos del envío.'
       });
     }
 
-    log('INFO', 'Cotizar shippo datos recibidos', { datos: JSON.stringify(datos) }, contacto);
+    log('INFO', 'Cotizar UPS datos recibidos', { datos: JSON.stringify(datos) }, contacto);
 
-    const validacion = validateShippoInput(datos);
+    const validacion = validateUpsInput(datos);
     if (!validacion.valid) {
-      log('WARN', 'Validación shippo fallida', { error: validacion.error }, contacto);
+      log('WARN', 'Validación UPS fallida', { error: validacion.error }, contacto);
       return res.json({
         resultado_final: { error: true, mensaje: validacion.error },
         mensaje_formateado: '\u274C ' + validacion.error
       });
     }
 
-    const entrada = extractShippoParams(datos);
-    log('INFO', 'Entrada shippo normalizada', { entrada: JSON.stringify(entrada) }, contacto);
+    const entrada = extractUpsParams(datos);
+    log('INFO', 'Entrada UPS normalizada', { entrada: JSON.stringify(entrada) }, contacto);
 
-    const resultadoShippo = await cotizarShippo(entrada);
-    log('INFO', 'Shippo resultado', { resultado: JSON.stringify(resultadoShippo) }, contacto);
+    const resultadoUps = await cotizarUps(entrada);
+    log('INFO', 'UPS resultado', { resultado: JSON.stringify(resultadoUps) }, contacto);
 
-    const mensaje_formateado = formatearMensajeShippo(datos, resultadoShippo);
-    res.json({ resultado_final: resultadoShippo, mensaje_formateado });
+    const mensaje_formateado = formatearMensajeUps(datos, resultadoUps);
+    res.json({ resultado_final: resultadoUps, mensaje_formateado });
   } catch (err) {
-    log('ERROR', 'Error en cotización shippo', { error: err.message, stack: err.stack?.split('\n')[0] }, contacto);
+    log('ERROR', 'Error en cotización UPS', { error: err.message, stack: err.stack?.split('\n')[0] }, contacto);
     res.status(500).json({
       resultado_final: { error: true, mensaje: 'No se pudo calcular la cotización internacional. Intenta de nuevo.' },
       mensaje_formateado: '\u274C No se pudo calcular la cotización internacional. Intenta de nuevo.'
@@ -192,8 +215,8 @@ async function manejarCotizacionShippo(req, res) {
   }
 }
 
-app.post('/cotizar-shippo', manejarCotizacionShippo);
-app.post('/whapify/cotizar-shippo', manejarCotizacionShippo);
+app.post('/cotizar-ups', manejarCotizacionUps);
+app.post('/whapify/cotizar-ups', manejarCotizacionUps);
 
 app.use('/admin', crearAdminRouter());
 

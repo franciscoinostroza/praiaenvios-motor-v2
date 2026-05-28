@@ -1,4 +1,4 @@
-function extractShippoParams(datos) {
+function extractUpsParams(datos) {
   const paisOrigen = datos.pais_origen || 'BR';
   const paisDestino = datos.pais_destino || '';
   const boxes = datos.boxes || datos.cajas || [];
@@ -53,7 +53,7 @@ function bandera(codigo) {
   return BANDERAS[codigo?.toUpperCase()] || '🌎';
 }
 
-function formatearMensajeShippo(datos, resultado) {
+function formatearMensajeUps(datos, resultado) {
   const rates = resultado.rates || [];
   const paisOrigen = (datos.pais_origen || 'BR').toUpperCase();
   const paisDestino = (datos.pais_destino || '').toUpperCase();
@@ -82,7 +82,7 @@ function formatearMensajeShippo(datos, resultado) {
   for (let i = 0; i < Math.min(rates.length, 5); i++) {
     const r = rates[i];
     const dias = r.days ? ` (~${r.days} días)` : '';
-    msg += `\n${r.provider} — ${r.service}\n`;
+    msg += `\n🇺🇸 UPS — ${r.service}\n`;
     msg += `  💰 ${r.currency} ${r.amount}${dias}\n`;
   }
 
@@ -92,4 +92,4 @@ function formatearMensajeShippo(datos, resultado) {
   return msg;
 }
 
-export { extractShippoParams, formatearMensajeShippo };
+export { extractUpsParams, formatearMensajeUps };

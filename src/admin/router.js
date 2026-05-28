@@ -468,7 +468,7 @@ if(document.cookie.includes('token=')){fetch('/admin').then(r=>{if(r.ok&&r.url.i
         query('SELECT MIN(kg) min_kg, MAX(kg) max_kg, MIN(precio_bs) min_p, MAX(precio_bs) max_p FROM nacional_op2'),
         query(`SELECT
           (SELECT COUNT(*) FROM logs WHERE nivel='INFO' AND mensaje LIKE '%Cotización exitosa%' AND created_at >= NOW() - INTERVAL '1 day') cotiz,
-          (SELECT COUNT(*) FROM logs WHERE nivel='INFO' AND mensaje LIKE '%Shippo%' AND created_at >= NOW() - INTERVAL '1 day') intl,
+          (SELECT COUNT(*) FROM logs WHERE nivel='INFO' AND mensaje LIKE '%UPS%' AND created_at >= NOW() - INTERVAL '1 day') intl,
           (SELECT COUNT(*) FROM logs WHERE nivel='ERROR' AND created_at >= NOW() - INTERVAL '1 day') errs,
           (SELECT created_at FROM logs WHERE nivel='INFO' AND mensaje LIKE '%Cotización exitosa%' AND created_at >= NOW() - INTERVAL '1 day' ORDER BY created_at DESC LIMIT 1) ultima`),
         query(`SELECT
@@ -506,7 +506,7 @@ if(document.cookie.includes('token=')){fetch('/admin').then(r=>{if(r.ok&&r.url.i
       const nac2 = nac2Rows.rows[0];
       const stats = logStats.rows[0];
       const cache = cacheStats.rows[0];
-      const upsStatus = process.env.UPS_CLIENT_ID ? '✅ Conectado' : '⏳ Pendiente';
+      const upsStatus = process.env.UPS_CUENTA_1_ID ? '✅ Conectado' : '⏳ Pendiente';
       const ultima = stats.ultima ? new Date(stats.ultima).toLocaleString('es-VE', { hour: '2-digit', minute: '2-digit' }) : '—';
       const version = 'v2.0.0';
 
@@ -680,7 +680,7 @@ if(document.cookie.includes('token=')){fetch('/admin').then(r=>{if(r.ok&&r.url.i
           <div class="how-flow" style="flex-wrap:wrap">
             <div class="hf-step" style="flex:1;min-width:120px"><div class="hf-num">1</div><div class="hf-txt"><strong>Detecta</strong> pais_destino</div></div>
             <div class="hf-arr" style="flex:0">→</div>
-            <div class="hf-step" style="flex:1;min-width:120px"><div class="hf-num">2</div><div class="hf-txt"><strong>Cachea</strong> o consulta Shippo</div></div>
+            <div class="hf-step" style="flex:1;min-width:120px"><div class="hf-num">2</div><div class="hf-txt"><strong>Cachea</strong> o consulta UPS</div></div>
             <div class="hf-arr" style="flex:0">→</div>
             <div class="hf-step" style="flex:1;min-width:120px"><div class="hf-num">3</div><div class="hf-txt"><strong>Devuelve</strong> tasas comparativas</div></div>
           </div>
@@ -746,7 +746,7 @@ if(document.cookie.includes('token=')){fetch('/admin').then(r=>{if(r.ok&&r.url.i
             ['categorias','Tipo (NEUTRAS/TERRESTRE/SOLO_AEREO) y nombre'],
             ['zonas','Ciudades BASE y PROHIBIDO'],
             ['logs','Registro de eventos del sistema'],
-            ['rate_cache','Caché de tasas Shippo (expira 1h)'],
+            ['rate_cache','Caché de tasas UPS (expira 1h)'],
             ['prompts_config','Prompts personalizados para la IA clasificadora'],
             ['cache_urls','Caché de scraping de URLs'],
           ].map(([t,d]) => `<tr><td><code>${t}</code></td><td>${d}</td></tr>`).join('')}
@@ -762,7 +762,7 @@ if(document.cookie.includes('token=')){fetch('/admin').then(r=>{if(r.ok&&r.url.i
           ['¿Puedo cambiar un precio?','Sí, desde el admin → Tarifas Express o Tarifas Terrestre. Los cambios se reflejan en la siguiente cotización (el motor recarga cada 30 segundos).'],
           ['¿Cómo agrego una categoría nueva?','Admin → Categorías. Agrega tipo y nombre. Si quieres que la IA la reconozca, edita también el Prompt desde admin → Prompt IA.'],
 
-          ['¿Se puede rastrear el envío?','Para internacionales vía Shippo, sí. Para domésticos Brasil→Venezuela, se entrega código de seguimiento de la transportista local.'],
+          ['¿Se puede rastrear el envío?','Para internacionales vía UPS, sí. Para domésticos Brasil→Venezuela, se entrega código de seguimiento de la transportista local.'],
         ].map(([q,a]) => `<details class="faq-item"><summary>${esc(q)}</summary><p>${esc(a)}</p></details>`).join('')}
       </div>`;
 
@@ -784,8 +784,8 @@ if(document.cookie.includes('token=')){fetch('/admin').then(r=>{if(r.ok&&r.url.i
             ['NEUTRAS','Categorías sin restricción de modalidad.'],
             ['TERRESTRE','Categorías que solo pueden ir por tierra.'],
             ['SOLO_AEREO','Categorías que solo pueden ir por aire.'],
-            ['Shippo','Plataforma intermediaria para cotizaciones internacionales.'],
-            ['UPS','Transportista internacional (próximamente).'],
+            ['UPS Cuenta 1 (EW0793)','Para envíos internacionales fuera de Venezuela.'],
+            ['UPS Cuenta 2 (B68686)','Para envíos desde Brasil hacia Venezuela.'],
             ['IA / OpenAI','Inteligencia artificial que clasifica productos.'],
           ].map(([t,d]) => `<tr><td><strong>${esc(t)}</strong></td><td>${esc(d)}</td></tr>`).join('')}
         </tbody>

@@ -11,7 +11,7 @@
 | Cotizaciones hoy | (desde logs) |
 | Envíos internacionales hoy | (desde logs) |
 | Última cotización | (desde logs) |
-| Caché Shippo hits / misses | (desde logs) |
+| Caché UPS hits / misses | (desde logs) |
 | Errores hoy | (desde logs) |
 
 ---
@@ -266,23 +266,33 @@ internacional en vez del motor local.
 
 **Flujo:**
 1. Extrae origen, destino, dimensiones y peso
-2. Genera llave de caché (país + zip + ciudad + medidas)
+2. Genera llave de caché (cuenta + país + zip + ciudad + medidas)
 3. Si existe en caché, devuelve sin costo
-4. Si no, llama a Shippo API
-5. Shippo consulta las transportistas conectadas
-6. Devuelve tasas comparativas con precio y plazo
-7. Guarda en caché por 1 hora
+4. Si no, llama a UPS API con la cuenta según el destino
+5. Devuelve tasas comparativas con precio y plazo
+6. Guarda en caché por 1 hora
+
+### Cuentas UPS
+
+El sistema tiene dos cuentas, cada una para un tipo de destino:
+
+| Cuenta | Para envíos hacia... |
+|---|---|
+| **EW0793** (Cuenta 1) | Cualquier país excepto Venezuela |
+| **B68686** (Cuenta 2) | Venezuela 🇻🇪 |
+
+Cuando llega una cotización, el sistema detecta el país de destino y usa la cuenta correspondiente.
 
 ### Caché de tasas
 
-Para no pagar 1¢ por cada consulta, las tasas se guardan en PostgreSQL:
+Las tasas se guardan en PostgreSQL para evitar consultas repetidas:
 
 ```
-Llave: datos normalizados del envío
+Llave: cuenta + datos normalizados del envío
 Expira: 1 hora desde DB
 ```
 
-Si dos clientes piden la misma ruta con las mismas medidas, el segundo no paga.
+Si dos clientes piden la misma ruta, el segundo obtiene la tasa del caché sin llamar a UPS.
 
 ---
 
@@ -342,7 +352,7 @@ Costo de entrega nacional en Venezuela. Se usa el mayor entre OP1 y OP2.
 | `categorias` | Tipo + nombre de categoría |
 | `zonas` | Ciudades BASE y PROHIBIDO |
 | `logs` | Registro de eventos |
-| `rate_cache` | Caché de tasas Shippo |
+| `rate_cache` | Caché de tasas UPS |
 | `prompts_config` | Prompts para la IA |
 | `cache_urls` | Caché de scraping |
 

@@ -38,8 +38,8 @@ POST /whapify/cotizar          src/utils/validate.js      src/motor/config.js
 |--------|------|-------------|
 | POST | `/cotizar` | Cotización doméstica (formato JSON plano) |
 | POST | `/whapify/cotizar` | Cotización vía webhook Whapify (WhatsApp) |
-| POST | `/cotizar-shippo` | Cotización internacional vía Shippo |
-| POST | `/whapify/cotizar-shippo` | Cotización internacional vía Whapify |
+| POST | `/cotizar-ups` | Cotización internacional vía UPS |
+| POST | `/whapify/cotizar-ups` | Cotización internacional vía Whapify |
 | GET | `/health` | Healthcheck → `{ status: "ok", version: "v2.0.0" }` |
 | GET/POST | `/admin/*` | Panel administrativo |
 
@@ -361,7 +361,7 @@ POST → ejecuta `cotizarDebug()` → redirige a GET con `?r=<base64>` → rende
 ## Railway
 
 - **Dominio:** `praiaenvios-motor-v2.up.railway.app`
-- **Variable de entorno:** `DATABASE_URL` (PostgreSQL), `ADMIN_PASSWORD`, `SHIPPO_TOKEN` (opcional)
+- **Variable de entorno:** `DATABASE_URL` (PostgreSQL), `ADMIN_PASSWORD`, y las credenciales UPS (`UPS_CUENTA_1_ID`, `UPS_CUENTA_1_SECRET`, `UPS_CUENTA_1_ACCOUNT`, `UPS_CUENTA_2_ID`, `UPS_CUENTA_2_SECRET`, `UPS_CUENTA_2_ACCOUNT`)
 
 ### Dockerfile
 

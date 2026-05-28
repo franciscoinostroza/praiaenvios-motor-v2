@@ -1,6 +1,6 @@
 import { query } from '../db/pool.js';
 
-export function generarLlaveShippo(params) {
+export function generarLlaveEnvio(params) {
   const { address_from, address_to, parcels } = params;
   const key = JSON.stringify({
     from: {
