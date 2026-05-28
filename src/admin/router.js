@@ -271,7 +271,6 @@ function renderPaginator(page,pages,total,wrap){
 function renderNav(active) {
   const items = [
     { label: 'Dashboard', path: '/admin', icon: '📊', key: 'Admin' },
-    { label: 'Panel', path: '/admin/panel', icon: '📖', key: 'Panel' },
     { divider: true },
     { label: 'Simulador', path: '/admin/simulador', icon: '🧮', key: 'Simulador' },
     { divider: true },
@@ -290,6 +289,8 @@ function renderNav(active) {
     { label: 'Zonas', path: '/admin/zonas', icon: '📍', key: 'Zonas' },
     { divider: true },
     { label: 'Logs', path: '/admin/logs', icon: '📋', key: 'Logs' },
+    { divider: true },
+    { label: 'Wiki', path: '/admin/panel', icon: '📖', key: 'Wiki' },
   ];
   return items.map(i => {
     if (i.divider) return '<div class="divider"></div>';
@@ -822,7 +823,7 @@ ${section('db','🗄️','Base de datos', dbHtml)}
 ${section('faq','❓','Preguntas Frecuentes', faqHtml)}
 ${section('glosario','📖','Glosario', glosarioHtml)}`;
 
-      res.send(layout('Panel', `<style>
+      res.send(layout('Wiki', `<style>
         /* ─── PANEL STYLES ─── */
         .panel-hero{background:linear-gradient(135deg,#1e293b,#0f172a);border-radius:14px;padding:24px 28px;margin-bottom:24px;color:#fff}
         .hero-top{display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:20px}
@@ -911,7 +912,7 @@ ${section('glosario','📖','Glosario', glosarioHtml)}`;
         .hint{color:var(--gray-400);font-size:.76rem;font-style:italic}
       </style>${html}`, t));
     } catch (err) {
-      res.status(500).send(layout('Panel', `<p style="color:var(--red);font-size:.85rem">⚠️ Error al cargar el panel: ${err.message}</p>`, t));
+      res.status(500).send(layout('Wiki', `<p style="color:var(--red);font-size:.85rem">⚠️ Error al cargar el wiki: ${err.message}</p>`, t));
     }
   });
 
