@@ -513,26 +513,6 @@ if(document.cookie.includes('token=')){fetch('/admin').then(r=>{if(r.ok&&r.url.i
       const esc = s => String(s == null ? '' : s).replace(/</g,'&lt;').replace(/>/g,'&gt;');
 
       // ── helpers ──
-      const statsHtml = () => `<div class="panel-hero">
-        <div class="hero-top">
-          <div class="hero-title">
-            <span class="hero-icon">📖</span>
-            <div>
-              <h1>Panel Praia Envíos</h1>
-              <p class="hero-sub">Wiki del sistema · ${version} · <span class="hero-live">Datos en vivo desde la DB</span></p>
-            </div>
-          </div>
-          <button class="hero-print" onclick="window.print()" title="Imprimir">🖨️</button>
-        </div>
-        <div class="hero-stats">
-          <div class="hs-card"><span class="hs-num">${stats.cotiz || 0}</span><span class="hs-lbl">Cotizaciones hoy</span></div>
-          <div class="hs-card"><span class="hs-num">${stats.intl || 0}</span><span class="hs-lbl">Internacionales</span></div>
-          <div class="hs-card" style="${stats.errs > 0 ? '--hs-clr:var(--red)' : '--hs-clr:var(--green)'}"><span class="hs-num">${stats.errs || 0}</span><span class="hs-lbl">Errores</span></div>
-          <div class="hs-card"><span class="hs-num">${ultima}</span><span class="hs-lbl">Última cotización</span></div>
-          <div class="hs-card"><span class="hs-num">${cache.hits || 0}/${cache.misses || 0}</span><span class="hs-lbl">Caché H/M</span></div>
-        </div>
-      </div>`;
-
       const jumpMenu = () => `<div class="jump-menu">
         ${[
           { id: 'como-funciona', icon: '🚚', label: '¿Cómo funciona?' },
@@ -811,7 +791,7 @@ if(document.cookie.includes('token=')){fetch('/admin').then(r=>{if(r.ok&&r.url.i
         </tbody>
       </table></div>`;
 
-      const html = `${statsHtml()}${jumpMenu()}${section('como-funciona','🚚','¿Cómo funciona?', comoFunciona)}
+      const html = `${jumpMenu()}${section('como-funciona','🚚','¿Cómo funciona?', comoFunciona)}
 ${section('modalidades','📦','Modalidades de envío', modalidadesHtml)}
 ${section('formulas','🧮','Fórmulas de cálculo', formulasHtml)}
 ${section('ejemplo','📐','Ejemplo paso a paso — Laptop 2kg', ejemploHtml)}
@@ -824,21 +804,7 @@ ${section('faq','❓','Preguntas Frecuentes', faqHtml)}
 ${section('glosario','📖','Glosario', glosarioHtml)}`;
 
       res.send(layout('Wiki', `<style>
-        /* ─── PANEL STYLES ─── */
-        .panel-hero{background:linear-gradient(135deg,#1e293b,#0f172a);border-radius:14px;padding:24px 28px;margin-bottom:24px;color:#fff}
-        .hero-top{display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:20px}
-        .hero-title{display:flex;align-items:center;gap:16px}
-        .hero-icon{font-size:2rem;background:rgba(255,255,255,.08);width:52px;height:52px;border-radius:14px;display:flex;align-items:center;justify-content:center}
-        .hero-title h1{font-size:1.3rem;font-weight:700;margin:0}
-        .hero-sub{font-size:.78rem;color:rgba(255,255,255,.5);margin-top:2px}
-        .hero-live{color:#22c55e}
-        .hero-print{background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.12);color:#fff;padding:8px 16px;border-radius:8px;cursor:pointer;font-size:.85rem;transition:all .15s}
-        .hero-print:hover{background:rgba(255,255,255,.15)}
-        .hero-stats{display:grid;grid-template-columns:repeat(auto-fill,minmax(130px,1fr));gap:10px}
-        .hs-card{background:rgba(255,255,255,.06);border-radius:10px;padding:12px 14px;border:1px solid rgba(255,255,255,.08);text-align:center}
-        .hs-num{display:block;font-size:1.4rem;font-weight:700;color:var(--hs-clr,#3b82f6);line-height:1.2}
-        .hs-lbl{font-size:.7rem;color:rgba(255,255,255,.5);margin-top:2px;display:block}
-        @media print{.hero-print,.jump-menu{display:none!important}.panel-hero{background:#1e293b!important;-webkit-print-color-adjust:exact;print-color-adjust:exact}.hero-stats{break-inside:avoid}}
+        /* ─── WIKI STYLES ─── */
 
         .jump-menu{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:24px;padding:12px 16px;background:#fff;border-radius:10px;border:1px solid var(--gray-200);box-shadow:var(--shadow)}
         .jm-link{font-size:.75rem;font-weight:500;color:var(--gray-600);text-decoration:none;padding:4px 10px;border-radius:6px;border:1px solid var(--gray-200);transition:all .15s}
