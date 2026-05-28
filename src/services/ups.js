@@ -4,6 +4,22 @@ const TOKEN_URL = 'https://onlinetools.ups.com/security/v1/oauth/token';
 const RATE_URL = 'https://onlinetools.ups.com/api/rating/v2409/Shop';
 const ORIGEN_DEFAULT = { city: 'Curitiba', state: 'PR', zip: '80000-000', country: 'BR' };
 
+const SERVICIOS_UPS = {
+  '01': 'UPS Next Day Air',
+  '02': 'UPS 2nd Day Air',
+  '03': 'UPS Ground',
+  '07': 'UPS Worldwide Express',
+  '08': 'UPS Worldwide Expedited',
+  '11': 'UPS Standard',
+  '12': 'UPS 3 Day Select',
+  '13': 'UPS Next Day Air Saver',
+  '14': 'UPS Next Day Air Early',
+  '54': 'UPS Worldwide Express Plus',
+  '59': 'UPS 2nd Day Air A.M.',
+  '65': 'UPS Worldwide Saver',
+  '70': 'UPS Access Point Economy'
+};
+
 function crearGestorToken(clientId, clientSecret) {
   let tokenData = null;
   const BASIC = Buffer.from(`${clientId}:${clientSecret}`).toString('base64');
@@ -156,11 +172,12 @@ export function crearUps(config) {
       const arr = Array.isArray(shipments) ? shipments : [shipments];
 
       const rates = arr.filter(Boolean).map(r => {
+        const codigo = r.Service?.Code || '';
         const dias = r.GuaranteedDelivery?.BusinessDaysInTransit
           ? parseInt(r.GuaranteedDelivery.BusinessDaysInTransit) : null;
         return {
           provider: 'UPS',
-          service: r.Service?.Description || r.Service?.Code || 'UPS',
+          service: SERVICIOS_UPS[codigo] || r.Service?.Description || codigo || 'UPS',
           amount: r.TotalCharges?.MonetaryValue || '0',
           currency: r.TotalCharges?.CurrencyCode || 'USD',
           days: dias,
