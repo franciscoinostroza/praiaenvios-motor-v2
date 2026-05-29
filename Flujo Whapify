@@ -1,43 +1,59 @@
 FLUJO WHAPIFY - PRAIA ENVÍOS (versión actual)
+
 Acciones #1 — OpenAI genera texto
+Prompt: Prompt Maestro.txt
+La IA responde ÚNICAMENTE con JSON puro, empezando con {, sin texto extra.
+Ej: {"con_datos":true,"tipo_flujo":"enviando_desde_brasil",...}
 
 Éxito → Acciones #2
 Fallo → Enviar mensaje #2 con "Ocurrió un error. Intenta de nuevo."
 
 Acciones #2 — JavaScript
-
-Detecta si la respuesta es JSON válido
+Extrae el JSON de la respuesta y lo retorna.
 Script:
 
 const texto = `{{respuesta_ia}}`.trim();
-if (texto.startsWith('{')) {
-  return "con_datos";
-} else {
+if (!texto.startsWith('{')) {
   return "sin_datos";
 }
+const match = texto.match(/\{[\s\S]*\}/);
+return match ? match[0] : "sin_datos";
+
+- El valor retornado se guarda en el campo personalizado: decisión
+- Si la respuesta no empieza con { → retorna "sin_datos"
+- Si empieza con { → extrae el JSON y lo retorna
+- decisión = {"con_datos":true,"tipo_flujo":...} o "sin_datos"
 
 Éxito → Condición #1
 Fallo → Enviar mensaje #2 con "Ocurrió un error. Intenta de nuevo."
 
 Condición #1
-
-Si Extraccion contiene con_datos → Acciones #3
+Si decisión contiene con_datos → Acciones #3
 El usuario no cumple ninguna de estas condiciones → Enviar mensaje #2 con {{respuesta_ia}}
 
 Éxito → Acciones #3
 Fallo → Enviar mensaje #2 con "Ocurrió un error. Intenta de nuevo."
 
 Acciones #3 — Solicitud de API Externa
+POST a https://praiaenvios-motor-v2.up.railway.app/whapify/cotizar
+Body:
 
-POST a {{webhook_url}} con {{Extraccion}}
-(Usa la URL del webhook: https://praiaenvios-motor-v2.up.railway.app/whapify/cotizar)
+{
+  "sessionId": "{{phone}}",
+  "contacto": "{{contact.first_name}}",
+  "message": "{{respuesta_ia}}"
+}
+
+Respuesta: JSON completo del servidor
+Mapping JSONPath: mensaje_formateado → resultado_webhook
 Éxito → Enviar mensaje #5 con {{resultado_webhook}}
 Fallo → Enviar mensaje #2 con "Ocurrió un error. Intenta de nuevo."
 
 Enviar mensaje #5 (resultado exitoso)
-
-Envía {{resultado_webhook}} al cliente con la cotización
+Envía {{resultado_webhook}} al cliente con la cotización formateada
 
 Iniciar Flujo #6 — Nuevo Flujo
-
 Se activa después de enviar el resultado
+
+---
+Ver documentación completa en FLUJO_COMPLETO.md
