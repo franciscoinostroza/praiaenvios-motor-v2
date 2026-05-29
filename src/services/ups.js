@@ -64,7 +64,7 @@ export function crearUps(config) {
     if (pd === 'VE') {
       return cuentas.find(c => c.account === 'B68686') || cuentas[cuentas.length - 1] || cuentas[0];
     }
-    return cuentas.find(c => c.account === 'EW0793') || cuentas[0];
+    return cuentas.find(c => c.account === 'B68686') || cuentas[0];
   }
 
   return {
