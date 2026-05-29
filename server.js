@@ -166,17 +166,7 @@ async function manejarCotizacion(req, res) {
 
 app.post('/cotizar', manejarCotizacion);
 
-app.post('/whapify/cotizar', async (req, res) => {
-  const _json = res.json.bind(res);
-  res.json = function(data) {
-    if (data && typeof data === 'object' && data.mensaje_formateado) {
-      res.removeHeader('Content-Type');
-      return res.type('text/plain').send(data.mensaje_formateado);
-    }
-    return _json(data);
-  };
-  await manejarCotizacion(req, res);
-});
+app.post('/whapify/cotizar', manejarCotizacion);
 
 async function manejarCotizacionUps(req, res) {
   const contacto = extractContacto(req.body);
