@@ -1,0 +1,70 @@
+FLUJO WHAPIFY - PRAIA ENVÍOS (versión actual)
+Acciones #1 — OpenAI genera texto
+
+Éxito → Acciones #2
+Fallo → Enviar mensaje #2 con {{respuesta_ia}}
+
+Acciones #2 — JavaScript
+
+Detecta si la respuesta contiene [DATOS]
+Script:
+
+const texto = `{{respuesta_ia}}`;
+if (texto.includes("DATOS")) {
+  return "con_datos";
+} else {
+  return "sin_datos";
+}
+
+Éxito → Condición #1
+Fallo → Enviar mensaje #2 con {{respuesta_ia}}
+
+Condición #1
+
+Si Extraccion contiene con_datos → Acciones #3
+El usuario no cumple ninguna de estas condiciones → Enviar mensaje #2 con {{respuesta_ia}}
+
+Acciones #2 — JavaScript
+
+Script:
+const texto = `{{respuesta_ia}}`;
+const lineas = texto.split('\n');
+let jsonString = '';
+for (let i = 0; i < lineas.length; i++) {
+  if (lineas[i].includes('DATOS')) {
+    const partes = lineas[i].split('DATOS');
+    if (partes.length > 1) {
+      jsonString = partes[1].trim();
+    }
+    break;
+  }
+}
+if (!jsonString) {
+  for (let i = 0; i < lineas.length - 1; i++) {
+    if (lineas[i].includes('DATOS') && lineas[i + 1]) {
+      jsonString = lineas[i + 1].trim();
+      break;
+    }
+  }
+}
+const match = jsonString.match(/\{[\s\S]*\}/);
+if (match) jsonString = match[0];
+return jsonString;
+
+Extrae el JSON limpio de [DATOS] y lo guarda en Extracción
+Éxito → Acciones #3
+Fallo → Enviar mensaje #5 con {{respuesta_ia}}
+
+Acciones #3 — Solicitud de API Externa
+
+POST a Railway con {{Extraccion}}
+Éxito → Enviar mensaje #5 con {{resultado_webhook}}
+Fallo → Enviar mensaje #3 con {{respuesta_ia}}
+
+Enviar mensaje #5 (resultado exitoso)
+
+Envía {{resultado_webhook}} al cliente con la cotización
+
+Iniciar Flujo #6 — Nuevo Flujo
+
+Se activa después de enviar el resultado

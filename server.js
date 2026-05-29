@@ -215,9 +215,6 @@ async function manejarCotizacionUps(req, res) {
   }
 }
 
-app.post('/cotizar-ups', manejarCotizacionUps);
-app.post('/whapify/cotizar-ups', manejarCotizacionUps);
-
 app.use('/admin', crearAdminRouter());
 
 app.get('/health', (_, res) => res.json({ status: 'ok', version: 'v2.0.0' }));

@@ -38,8 +38,7 @@ POST /whapify/cotizar          src/utils/validate.js      src/motor/config.js
 |--------|------|-------------|
 | POST | `/cotizar` | Cotización doméstica (formato JSON plano) |
 | POST | `/whapify/cotizar` | Cotización vía webhook Whapify (WhatsApp) |
-| POST | `/cotizar-ups` | Cotización internacional vía UPS |
-| POST | `/whapify/cotizar-ups` | Cotización internacional vía Whapify |
+| POST | `/whapify/cotizar` | Cotización doméstica e internacional (detecta auto) |
 | GET | `/health` | Healthcheck → `{ status: "ok", version: "v2.0.0" }` |
 | GET/POST | `/admin/*` | Panel administrativo |
 
