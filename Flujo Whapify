@@ -2,64 +2,37 @@ FLUJO WHAPIFY - PRAIA ENVÍOS (versión actual)
 Acciones #1 — OpenAI genera texto
 
 Éxito → Acciones #2
-Fallo → Enviar mensaje #2 con {{respuesta_ia}}
+Fallo → Enviar mensaje #2 con "Ocurrió un error. Intenta de nuevo."
 
 Acciones #2 — JavaScript
 
-Detecta si la respuesta contiene [DATOS]
+Detecta si la respuesta es JSON válido
 Script:
 
-const texto = `{{respuesta_ia}}`;
-if (texto.includes("DATOS")) {
+const texto = `{{respuesta_ia}}`.trim();
+if (texto.startsWith('{')) {
   return "con_datos";
 } else {
   return "sin_datos";
 }
 
 Éxito → Condición #1
-Fallo → Enviar mensaje #2 con {{respuesta_ia}}
+Fallo → Enviar mensaje #2 con "Ocurrió un error. Intenta de nuevo."
 
 Condición #1
 
 Si Extraccion contiene con_datos → Acciones #3
 El usuario no cumple ninguna de estas condiciones → Enviar mensaje #2 con {{respuesta_ia}}
 
-Acciones #2 — JavaScript
-
-Script:
-const texto = `{{respuesta_ia}}`;
-const lineas = texto.split('\n');
-let jsonString = '';
-for (let i = 0; i < lineas.length; i++) {
-  if (lineas[i].includes('DATOS')) {
-    const partes = lineas[i].split('DATOS');
-    if (partes.length > 1) {
-      jsonString = partes[1].trim();
-    }
-    break;
-  }
-}
-if (!jsonString) {
-  for (let i = 0; i < lineas.length - 1; i++) {
-    if (lineas[i].includes('DATOS') && lineas[i + 1]) {
-      jsonString = lineas[i + 1].trim();
-      break;
-    }
-  }
-}
-const match = jsonString.match(/\{[\s\S]*\}/);
-if (match) jsonString = match[0];
-return jsonString;
-
-Extrae el JSON limpio de [DATOS] y lo guarda en Extracción
 Éxito → Acciones #3
-Fallo → Enviar mensaje #5 con {{respuesta_ia}}
+Fallo → Enviar mensaje #2 con "Ocurrió un error. Intenta de nuevo."
 
 Acciones #3 — Solicitud de API Externa
 
-POST a Railway con {{Extraccion}}
+POST a {{webhook_url}} con {{Extraccion}}
+(Usa la URL del webhook: https://praiaenvios-motor-v2.up.railway.app/whapify/cotizar)
 Éxito → Enviar mensaje #5 con {{resultado_webhook}}
-Fallo → Enviar mensaje #3 con {{respuesta_ia}}
+Fallo → Enviar mensaje #2 con "Ocurrió un error. Intenta de nuevo."
 
 Enviar mensaje #5 (resultado exitoso)
 
