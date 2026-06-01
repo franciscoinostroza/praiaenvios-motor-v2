@@ -1815,15 +1815,27 @@ function confirmModalidad(form){
 
   /* ─── MENSAJES (plantillas) ─── */
   const INFO_MENSAJES = {
-    mensaje_domestico_brasil: { icon: '🇧🇷', title: 'Mensaje Doméstico — Brasil', desc: 'Cotización desde Brasil (con PIX, R$ + USD)' },
-    mensaje_domestico_venezuela: { icon: '🇻🇪', title: 'Mensaje Doméstico — Venezuela', desc: 'Cotización comprando desde Venezuela (solo USD, sin PIX)' },
-    mensaje_internacional: { icon: '🌎', title: 'Mensaje Internacional (UPS)', desc: 'Cotización internacional con tasas UPS' }
+    mensaje_domestico_brasil: { icon: '🇧🇷', title: 'Doméstico — Brasil (ES)', desc: 'Cotización desde Brasil — Español', grupo: 'ES' },
+    mensaje_domestico_venezuela: { icon: '🇻🇪', title: 'Doméstico — Venezuela (ES)', desc: 'Cotización comprando desde Venezuela — Español', grupo: 'ES' },
+    mensaje_internacional: { icon: '🌎', title: 'Internacional UPS (ES)', desc: 'Cotización internacional — Español', grupo: 'ES' },
+    mensaje_domestico_brasil_pt: { icon: '🇧🇷', title: 'Doméstico — Brasil (PT)', desc: 'Cotização desde o Brasil — Português', grupo: 'PT' },
+    mensaje_domestico_venezuela_pt: { icon: '🇻🇪', title: 'Doméstico — Venezuela (PT)', desc: 'Cotização comprando da Venezuela — Português', grupo: 'PT' },
+    mensaje_internacional_pt: { icon: '🌎', title: 'Internacional UPS (PT)', desc: 'Cotização internacional — Português', grupo: 'PT' },
+    mensaje_domestico_brasil_en: { icon: '🇧🇷', title: 'Domestic — Brazil (EN)', desc: 'Quote from Brazil — English', grupo: 'EN' },
+    mensaje_domestico_venezuela_en: { icon: '🇻🇪', title: 'Domestic — Venezuela (EN)', desc: 'Quote buying from Venezuela — English', grupo: 'EN' },
+    mensaje_internacional_en: { icon: '🌎', title: 'International UPS (EN)', desc: 'International quote — English', grupo: 'EN' }
   };
 
   const DICTAMENES = {
-    mensaje_domestico_brasil: 'Usa {{origen}}, {{destino}}, {{categoria}}, {{cajas}}, {{modalidad}}, {{total_reales}}, {{total_usd}}, {{tiempo}}, {{fecha_entrega}}, {{agencia}}, {{costo_nacional}}, {{metodos_pago}}, {{footer}}',
-    mensaje_domestico_venezuela: 'Usa {{origen}}, {{destino}}, {{categoria}}, {{cajas}}, {{modalidad}}, {{total}}, {{tiempo}}, {{fecha_entrega}}, {{agencia}}, {{costo_nacional}}, {{metodos_pago}}, {{footer}}',
-    mensaje_internacional: 'Usa {{origen_linea}}, {{destino_linea}}, {{paquete}}, {{opciones_envio}}, {{sin_cotizaciones}}, {{metodos_pago}}, {{footer}}'
+    mensaje_domestico_brasil: '{{origen}} {{destino}} {{categoria}} {{cajas}} {{modalidad}} {{total_reales}} {{total_usd}} {{tiempo}} {{fecha_entrega}} {{agencia}} {{costo_nacional}} {{metodos_pago}} {{footer}}',
+    mensaje_domestico_venezuela: '{{origen}} {{destino}} {{categoria}} {{cajas}} {{modalidad}} {{total}} {{tiempo}} {{fecha_entrega}} {{agencia}} {{costo_nacional}} {{metodos_pago}} {{footer}}',
+    mensaje_internacional: '{{origen_linea}} {{destino_linea}} {{paquete}} {{opciones_envio}} {{sin_cotizaciones}} {{metodos_pago}} {{footer}}',
+    mensaje_domestico_brasil_pt: '{{origen}} {{destino}} {{categoria}} {{cajas}} {{modalidad}} {{total_reales}} {{total_usd}} {{tiempo}} {{fecha_entrega}} {{agencia}} {{costo_nacional}} {{metodos_pago}} {{footer}}',
+    mensaje_domestico_venezuela_pt: '{{origen}} {{destino}} {{categoria}} {{cajas}} {{modalidad}} {{total}} {{tiempo}} {{fecha_entrega}} {{agencia}} {{costo_nacional}} {{metodos_pago}} {{footer}}',
+    mensaje_internacional_pt: '{{origen_linea}} {{destino_linea}} {{paquete}} {{opciones_envio}} {{sin_cotizaciones}} {{metodos_pago}} {{footer}}',
+    mensaje_domestico_brasil_en: '{{origen}} {{destino}} {{categoria}} {{cajas}} {{modalidad}} {{total_reales}} {{total_usd}} {{tiempo}} {{fecha_entrega}} {{agencia}} {{costo_nacional}} {{metodos_pago}} {{footer}}',
+    mensaje_domestico_venezuela_en: '{{origen}} {{destino}} {{categoria}} {{cajas}} {{modalidad}} {{total}} {{tiempo}} {{fecha_entrega}} {{agencia}} {{costo_nacional}} {{metodos_pago}} {{footer}}',
+    mensaje_internacional_en: '{{origen_linea}} {{destino_linea}} {{paquete}} {{opciones_envio}} {{sin_cotizaciones}} {{metodos_pago}} {{footer}}'
   };
 
   router.get('/mensajes', auth, async (req, res) => {
@@ -1846,33 +1858,46 @@ function confirmModalidad(form){
     for (const r of rows) dbMap[r.clave] = r;
 
     let html = toast;
-    html += '<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(320px,1fr));gap:14px">';
 
+    var grupos = { ES: [], PT: [], EN: [] };
     for (const [clave, info] of Object.entries(INFO_MENSAJES)) {
-      const dbRow = dbMap[clave];
-      const preview = dbRow ? dbRow.valor.substring(0, 120).replace(/\n/g, '↵ ') : '(usando plantilla por defecto)';
-      const updated = dbRow && dbRow.updated_at ? new Date(dbRow.updated_at).toLocaleString('es-VE') : '—';
-
-      html += `<div class="card" style="display:flex;flex-direction:column">
-        <h3>${info.icon} ${esc(info.title)}</h3>
-        <p>${esc(info.desc)}</p>
-        <div style="font-size:.7rem;color:var(--gray-400);background:var(--gray-50);padding:8px 10px;border-radius:6px;margin-bottom:10px;font-family:monospace;white-space:pre-wrap;word-break:break-word;max-height:80px;overflow:hidden;line-height:1.4">${esc(preview)}${preview.length >= 120 ? '…' : ''}</div>
-        <div style="margin-top:auto;display:flex;gap:8px;align-items:center;flex-wrap:wrap">
-          <a href="/admin/mensajes/${clave}" style="font-size:.75rem">✏️ Editar</a>
-          <form method="POST" action="/admin/mensajes/${clave}/restaurar" onsubmit="event.preventDefault();confirmDelete('¿Restaurar plantilla ${clave} a su valor por defecto?',this)" style="display:inline">
-            <button class="btn-sm btn-del" type="submit" style="font-size:.72rem">↩️ Restaurar</button>
-          </form>
-          <span style="font-size:.65rem;color:var(--gray-400);margin-left:auto">${updated}</span>
-        </div>
-      </div>`;
+      if (grupos[info.grupo]) grupos[info.grupo].push({ clave, info });
     }
 
-    html += '</div>';
+    var etiquetas = { ES: '🇪🇸 Español', PT: '🇧🇷 Português', EN: '🇺🇸 English' };
+
+    for (var g of ['ES', 'PT', 'EN']) {
+      var items = grupos[g] || [];
+      if (items.length === 0) continue;
+      html += '<div style="margin-top:20px;margin-bottom:10px;font-size:.85rem;font-weight:700;color:var(--gray-600);display:flex;align-items:center;gap:8px">' + etiquetas[g] + ' <span style="font-size:.7rem;font-weight:400;color:var(--gray-400)">' + items.length + ' plantilla(s)</span></div>';
+      html += '<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(320px,1fr));gap:14px">';
+      for (var item of items) {
+        var clave = item.clave;
+        var info = item.info;
+        var dbRow = dbMap[clave];
+        var preview = dbRow ? dbRow.valor.substring(0, 120).replace(/\n/g, '↵ ') : '(usando plantilla por defecto)';
+        var updated = dbRow && dbRow.updated_at ? new Date(dbRow.updated_at).toLocaleString('es-VE') : '—';
+
+        html += '<div class="card" style="display:flex;flex-direction:column">';
+        html += '<h3>' + info.icon + ' ' + esc(info.title) + '</h3>';
+        html += '<p>' + esc(info.desc) + '</p>';
+        html += '<div style="font-size:.7rem;color:var(--gray-400);background:var(--gray-50);padding:8px 10px;border-radius:6px;margin-bottom:10px;font-family:monospace;white-space:pre-wrap;word-break:break-word;max-height:80px;overflow:hidden;line-height:1.4">' + esc(preview) + (preview.length >= 120 ? '…' : '') + '</div>';
+        html += '<div style="margin-top:auto;display:flex;gap:8px;align-items:center;flex-wrap:wrap">';
+        html += '<a href="/admin/mensajes/' + clave + '" style="font-size:.75rem">✏️ Editar</a>';
+        html += '<form method="POST" action="/admin/mensajes/' + clave + '/restaurar" onsubmit="event.preventDefault();confirmDelete(\'¿Restaurar plantilla ' + clave + ' a su valor por defecto?\',this)" style="display:inline">';
+        html += '<button class="btn-sm btn-del" type="submit" style="font-size:.72rem">↩️ Restaurar</button>';
+        html += '</form>';
+        html += '<span style="font-size:.65rem;color:var(--gray-400);margin-left:auto">' + updated + '</span>';
+        html += '</div></div>';
+      }
+      html += '</div>';
+    }
 
     html += '<div style="margin-top:20px;padding:14px 18px;background:#f0f4ff;border:1px solid #bfdbfe;border-radius:10px;font-size:.8rem;color:var(--gray-700);line-height:1.6">';
     html += '💡 Las plantillas usan variables <code>{{variable}}</code> y condicionales <code>{{#if variable}}...{{/if}}</code>. ';
     html += 'Si no hay plantilla guardada en la BD, se usa la plantilla por defecto del sistema.<br>';
-    html += '📖 <strong>Cambia libremente</strong> textos, emojis y estructura. Las variables se reemplazan automáticamente.</div>';
+    html += '📖 <strong>Cambia libremente</strong> textos, emojis y estructura. Las variables se reemplazan automáticamente.<br>';
+    html += '🌐 El sistema selecciona automáticamente la plantilla según el campo <code>idioma</code> del JSON de entrada (<code>es</code>, <code>pt</code>, <code>en</code>). Si no está presente, usa Español.</div>';
 
     res.send(layout('Mensajes', html, t));
   });

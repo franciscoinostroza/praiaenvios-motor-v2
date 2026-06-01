@@ -55,48 +55,84 @@ function bandera(codigo) {
   return BANDERAS[codigo?.toUpperCase()] || '🌎';
 }
 
+function escogerTextosUps(lang) {
+  if (lang === 'pt') return {
+    origen: 'Origem',
+    destino: 'Destino',
+    caja: 'Caixa',
+    paquete: 'Pacote',
+    sin_cot: 'Nenhuma cotação encontrada para esta rota.',
+    dias: 'dias',
+    metodos: 'PIX, Zelle, Binance USDT, Cartão, PayPal',
+    footer: '_Escreva *Menu* para voltar ao início._'
+  };
+  if (lang === 'en') return {
+    origen: 'Origin',
+    destino: 'Destination',
+    caja: 'Box',
+    paquete: 'Package',
+    sin_cot: 'No quotes found for this route.',
+    dias: 'days',
+    metodos: 'PIX, Zelle, Binance USDT, Card, PayPal',
+    footer: '_Write *Menu* to go back to the start._'
+  };
+  return {
+    origen: 'Origen',
+    destino: 'Destino',
+    caja: 'Caja',
+    paquete: 'Paquete',
+    sin_cot: 'No se encontraron cotizaciones para esta ruta.',
+    dias: 'días',
+    metodos: 'PIX, Zelle, Binance USDT, Tarjeta, PayPal',
+    footer: '_Escribe *Menú* para volver al inicio._'
+  };
+}
+
 async function formatearMensajeUps(datos, resultado) {
+  var lang = datos.idioma === 'pt' || datos.idioma === 'en' ? datos.idioma : 'es';
+  var t = escogerTextosUps(lang);
+
   const rates = resultado.rates || [];
   const paisOrigen = (datos.pais_origen || 'BR').toUpperCase();
   const paisDestino = (datos.pais_destino || '').toUpperCase();
 
-  var origenLinea = `Origen: ${bandera(paisOrigen)} ${paisOrigen}${datos.ciudad_origen ? ', ' + datos.ciudad_origen : ''}${datos.codigo_postal_origen ? ' - ' + datos.codigo_postal_origen : ''}`;
-  var destinoLinea = `Destino: ${bandera(paisDestino)} ${paisDestino}${datos.ciudad_destino ? ', ' + datos.ciudad_destino : ''}${datos.codigo_postal_destino ? ' - ' + datos.codigo_postal_destino : ''}`;
+  var origenLinea = t.origen + ': ' + bandera(paisOrigen) + ' ' + paisOrigen + (datos.ciudad_origen ? ', ' + datos.ciudad_origen : '') + (datos.codigo_postal_origen ? ' - ' + datos.codigo_postal_origen : '');
+  var destinoLinea = t.destino + ': ' + bandera(paisDestino) + ' ' + paisDestino + (datos.ciudad_destino ? ', ' + datos.ciudad_destino : '') + (datos.codigo_postal_destino ? ' - ' + datos.codigo_postal_destino : '');
 
   var paquete = '';
   if (Array.isArray(datos.boxes) && datos.boxes.length > 0) {
     const partes = [];
     for (let i = 0; i < datos.boxes.length; i++) {
       const c = datos.boxes[i];
-      partes.push(`Caja ${i + 1}: ${c.largo}x${c.ancho}x${c.alto} cm, ${c.peso_bruto} kg${c.valor_mercancia ? ', R$ ' + c.valor_mercancia : ''}`);
+      partes.push(t.caja + ' ' + (i + 1) + ': ' + c.largo + 'x' + c.ancho + 'x' + c.alto + ' cm, ' + c.peso_bruto + ' kg' + (c.valor_mercancia ? ', R$ ' + c.valor_mercancia : ''));
     }
-    paquete = 'Paquete: ' + partes.join(' | ');
+    paquete = t.paquete + ': ' + partes.join(' | ');
   }
 
   var opcionesEnvio = '';
   var sinCotizaciones = '';
   if (rates.length === 0) {
-    sinCotizaciones = 'No se encontraron cotizaciones para esta ruta.';
+    sinCotizaciones = t.sin_cot;
   } else {
     for (let i = 0; i < Math.min(rates.length, 5); i++) {
       const r = rates[i];
-      const dias = r.days ? ` (~${r.days} días)` : '';
-      opcionesEnvio += `🇺🇸 UPS — ${r.service}\n`;
-      opcionesEnvio += `  💰 ${r.currency} ${r.amount}${dias}\n`;
+      const dias = r.days ? ' (~' + r.days + ' ' + t.dias + ')' : '';
+      opcionesEnvio += '🇺🇸 UPS — ' + r.service + '\n';
+      opcionesEnvio += '  💰 ' + r.currency + ' ' + r.amount + dias + '\n';
       if (i < Math.min(rates.length, 5) - 1) opcionesEnvio += '\n';
     }
   }
 
-  var footer = '_Escribe *Menú* para volver al inicio._';
+  var sufijo = lang === 'es' ? '' : '_' + lang;
 
-  return await renderizarPlantilla('mensaje_internacional', {
+  return await renderizarPlantilla('mensaje_internacional' + sufijo, {
     origen_linea: origenLinea,
     destino_linea: destinoLinea,
     paquete: paquete,
     opciones_envio: opcionesEnvio,
     sin_cotizaciones: sinCotizaciones,
-    metodos_pago: 'PIX, Zelle, Binance USDT, Tarjeta, PayPal',
-    footer: footer
+    metodos_pago: t.metodos,
+    footer: t.footer
   });
 }
 
