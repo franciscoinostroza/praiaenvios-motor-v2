@@ -141,6 +141,15 @@ async function manejarCotizacion(req, res) {
       });
     }
 
+    var cajasCount = Array.isArray(datos.boxes) ? datos.boxes.length : (datos.numero_cajas || cajasResult.length);
+    var detalleCajas = datos.resumen_cajas || '';
+    var valorTotalMerc = datos.valor_total_mercancia || 0;
+    var recolectaAplica = datos.recolecta && datos.recolecta.solicitada ? true : false;
+    var valorRecolecta = datos.recolecta && datos.recolecta.valor_recolecta ? datos.recolecta.valor_recolecta : '';
+    var trechoAplica = resultadoMotor.cajas && resultadoMotor.cajas.some(function(c) { return c.con_trecho; }) ? true : false;
+    var valorTrecho = resultadoMotor.valor_trecho || '';
+    var observacion = datos.observaciones || '';
+
     const resultado_final = {
       modalidad: modalidad,
       total_reales: total_reales,
@@ -148,7 +157,15 @@ async function manejarCotizacion(req, res) {
       costo_nacional_bs: resultadoMotor.costo_nacional || 0,
       tiempo_estimado: resultadoMotor.tiempo_entrega || '',
       fecha_estimada: resultadoMotor.fecha_entrega || '',
-      cajas: cajasResult
+      cajas: cajasResult,
+      numero_cajas: cajasCount,
+      detalle_cajas: detalleCajas,
+      valor_total_mercancia: valorTotalMerc,
+      recolecta_aplica: recolectaAplica,
+      valor_recolecta: valorRecolecta,
+      trecho_aplica: trechoAplica,
+      valor_trecho: valorTrecho,
+      observacion: observacion
     };
 
     const mensaje_formateado = await formatearMensaje(datos, resultadoMotor);

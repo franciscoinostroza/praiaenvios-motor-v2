@@ -83,7 +83,7 @@ function escogerTextosUps(lang) {
     paquete: 'Paquete',
     sin_cot: 'No se encontraron cotizaciones para esta ruta.',
     dias: 'días',
-    metodos: 'PIX, Zelle, Binance USDT, Tarjeta, PayPal',
+    metodos: 'PIX, Zelle, Binance USDT, Tarjeta de Crédito, PayPal',
     footer: '_Escribe *Menú* para volver al inicio._'
   };
 }

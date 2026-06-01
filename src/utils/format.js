@@ -44,30 +44,30 @@ var TEXTOS = {
     trecho: 'incluye trecho',
     modalidad_aplicada: 'Modalidad aplicada',
     origen_ve: 'Curitiba (salida logística)',
-    agencia_default: '• Tu envío será entregado para retiro en la agencia más cercana a tu destino.',
-    metodos_br: 'PIX, Zelle, Binance USDT, Tarjeta, PayPal',
-    metodos_ve: 'Zelle, Binance USDT, Tarjeta, PayPal',
-    footer: '_Escribe *Menú* para volver al inicio._'
+    agencia_default: '* Tu envío será entregado para retiro en la agencia más cercana a tu destino.',
+    metodos_br: 'PIX, Zelle, Binance USDT, Tarjeta de Crédito, PayPal',
+    metodos_ve: 'Zelle, Binance USDT, Tarjeta de Crédito, PayPal',
+    footer: 'Escribe Menú para volver al inicio o dime qué producto, caja o dirección deseas cambiar para cotizar nuevamente.'
   },
   pt: {
     caja: 'Caixa',
     trecho: 'inclui trecho',
     modalidad_aplicada: 'Modalidade aplicada',
     origen_ve: 'Curitiba (saída logística)',
-    agencia_default: '• Sua encomenda será entregue para retirada na agência mais próxima do seu destino.',
-    metodos_br: 'PIX, Zelle, Binance USDT, Cartão, PayPal',
-    metodos_ve: 'Zelle, Binance USDT, Cartão, PayPal',
-    footer: '_Escreva *Menu* para voltar ao início._'
+    agencia_default: '* Sua encomenda será entregue para retirada na agência mais próxima do seu destino.',
+    metodos_br: 'PIX, Zelle, Binance USDT, Cartão de Crédito, PayPal',
+    metodos_ve: 'Zelle, Binance USDT, Cartão de Crédito, PayPal',
+    footer: 'Escreva Menu para voltar ao início ou diga qual produto, caixa ou endereço deseja alterar para cotar novamente.'
   },
   en: {
     caja: 'Box',
     trecho: 'includes leg',
     modalidad_aplicada: 'Applied shipping method',
     origen_ve: 'Curitiba (logistics departure)',
-    agencia_default: '• Your shipment will be delivered for pickup at the nearest agency to your destination.',
-    metodos_br: 'PIX, Zelle, Binance USDT, Card, PayPal',
-    metodos_ve: 'Zelle, Binance USDT, Card, PayPal',
-    footer: '_Write *Menu* to go back to the start._'
+    agencia_default: '* Your shipment will be delivered for pickup at the nearest agency to your destination.',
+    metodos_br: 'PIX, Zelle, Binance USDT, Credit Card, PayPal',
+    metodos_ve: 'Zelle, Binance USDT, Credit Card, PayPal',
+    footer: 'Write Menu to go back to the beginning or tell me which product, box or address you want to change to quote again.'
   }
 };
 
@@ -88,6 +88,10 @@ export async function formatearMensaje(datos, resultadoMotor) {
     ? t.origen_ve
     : (datos.origen || '');
 
+  var direccionOrigen = datos.direccion_origen || '';
+
+  var ciudadBaseCalculo = datos.origen_base_calculo || origen;
+
   var categoria = Array.isArray(datos._categorias_norm)
     ? datos._categorias_norm.join(', ')
     : (datos.categoria || (Array.isArray(datos.categorias) ? datos.categorias.join(', ') : '') || '');
@@ -99,15 +103,21 @@ export async function formatearMensaje(datos, resultadoMotor) {
       var c = datos.boxes[i];
       partes.push(t.caja + ' ' + (i + 1) + ': ' + c.largo + 'x' + c.ancho + 'x' + c.alto + ' cm, ' + c.peso_bruto + ' kg, R$ ' + c.valor_mercancia);
     }
-    cajas = partes.join('\n• ');
+    cajas = partes.join('\n* ');
   }
+
+  var numeroCajas = Array.isArray(datos.boxes) ? datos.boxes.length : (datos.numero_cajas || 0);
+  var detalleCajas = datos.resumen_cajas || '';
+  var valorTotalMercancia = datos.valor_total_mercancia || 0;
 
   var costo = resultadoMotor.costo_nacional || 0;
   var costoFormateado = costo.toLocaleString('es-VE', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 
   var agencia = '';
+  var agenciaTipo = '';
   if (datos.agencia && datos.agencia.direccion) {
-    agencia = '• ' + datos.agencia.direccion + ' (' + (datos.agencia.tipo === 1 ? '1' : '2') + ')';
+    agencia = datos.agencia.direccion;
+    agenciaTipo = datos.agencia.tipo === 1 ? '1' : '2';
   } else {
     agencia = t.agencia_default;
   }
@@ -118,15 +128,15 @@ export async function formatearMensaje(datos, resultadoMotor) {
       var cb = resultadoMotor.cajas[j];
       var modalidadCaja = { 1: 'Modalidad 1', 2: 'Modalidad 2', 3: 'Modalidad 3', 4: 'Modalidad 4' }[cb.modalidad] || cb.nombre_modalidad;
       var trechoTxt = cb.con_trecho ? ' (' + t.trecho + ')' : '';
-      modalidadTexto += '• ' + t.caja + ' ' + cb.caja + ': ' + modalidadCaja + ' — R$ ' + cb.total + trechoTxt + '\n';
+      modalidadTexto += '* ' + t.caja + ' ' + cb.caja + ': ' + modalidadCaja + ' — R$ ' + cb.total + trechoTxt + '\n';
     }
   } else {
-    modalidadTexto = '• ' + t.modalidad_aplicada + ': ' + modalidadNombre;
+    modalidadTexto = '* ' + t.modalidad_aplicada + ': ' + modalidadNombre;
   }
 
   var totalTexto = esVenezuela
-    ? '• Total: $' + total_usd + ' USD'
-    : '• Total: R$ ' + total_reales + '\n• Equivalente: $' + total_usd + ' USD';
+    ? '* Total en Dólares: $' + total_usd + ' USD'
+    : '* Total en Reales: R$ ' + total_reales + '\n* Total en Dólares: $' + total_usd + ' USD';
 
   var metodosPago = esVenezuela ? t.metodos_ve : t.metodos_br;
 
@@ -137,11 +147,16 @@ export async function formatearMensaje(datos, resultadoMotor) {
 
   return await renderizarPlantilla(clave, {
     origen: origen,
+    direccion_origen: direccionOrigen,
+    ciudad_base_calculo: ciudadBaseCalculo,
     destino: datos.destino_ciudad || '',
     direccion_destino: datos.direccion_destino || '',
     tipo_mercancia: datos.tipo_mercancia || '',
     categoria: categoria,
     cajas: cajas,
+    numero_cajas: numeroCajas,
+    detalle_cajas: detalleCajas,
+    valor_total_mercancia: valorTotalMercancia,
     modalidad: modalidadTexto,
     total: totalTexto,
     total_reales: total_reales,
@@ -149,6 +164,7 @@ export async function formatearMensaje(datos, resultadoMotor) {
     tiempo: resultadoMotor.tiempo_entrega || '',
     fecha_entrega: fechaEntrega,
     agencia: agencia,
+    agencia_tipo: agenciaTipo,
     costo_nacional: costoFormateado,
     metodos_pago: metodosPago,
     footer: t.footer

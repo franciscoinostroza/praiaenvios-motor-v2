@@ -6,51 +6,58 @@ const CACHE_TTL_MS = 30000;
 
 const PLANTILLAS_DEFAULT = {
   /* ─── ESPAÑOL ─── */
-  mensaje_domestico_brasil: '*Cotización Praia Envíos* 🇧🇷➡️🇻🇪\n\n\
-🔎 *DATOS DEL ENVÍO*\n\
-• Origen: {{origen}}{{#if destino}}\n\
-• Destino: {{destino}}{{/if}}{{#if direccion_destino}}\n\
-• Dirección destino: {{direccion_destino}}{{/if}}{{#if tipo_mercancia}}\n\
-• Tipo de mercancía: {{tipo_mercancia}}{{/if}}\n\
-• Categoría: {{categoria}}{{#if cajas}}\n\
-• {{cajas}}{{/if}}\n\n\
+  mensaje_domestico_brasil: '🔎 *DATOS DEL ENVÍO*\n\
+* Ciudad de Origen: {{origen}}\n\
+* Dirección de Origen: {{direccion_origen}}\n\
+* Ciudad Base de Cálculo: {{ciudad_base_calculo}}\n\
+* Ciudad de Destino: {{destino}}\n\
+* Dirección de Destino: {{direccion_destino}}\n\
+* Producto que envías: {{categoria}}\n\
+* Tipo de Envío: {{tipo_mercancia}}\n\
+* Cantidad de Cajas: {{numero_cajas}}\n\
+* Detalle de Cajas: {{detalle_cajas}}\n\
+* Valor total declarado: {{valor_total_mercancia}} R$\n\n\
 🚀 *MODALIDAD*\n\
-{{modalidad}}\n\n\
-💰 *RESULTADO FINAL*\n\
-• Total: R$ {{total_reales}}\n\
-• Equivalente: ${{total_usd}} USD\n\n\
+* Modalidad aplicada: {{modalidad}}\n\n\
+💰 *VALOR A PAGAR*\n\
+* Total en Reales: R$ {{total_reales}}\n\
+* Total en Dólares: ${{total_usd}} USD\n\n\
 📦 *TIEMPO DE ENTREGA*\n\
-• Tiempo estimado: {{tiempo}}{{#if fecha_entrega}}\n\
-• Fecha estimada de entrega: {{fecha_entrega}}{{/if}}\n\n\
-📍 *ENTREGA EN VENEZUELA*\n\
-{{agencia}}\n\n\
+* Tiempo estimado aproximado: {{tiempo}} días\n\
+* Fecha estimada de entrega: {{fecha_entrega}}\n\n\
+📍 *DIRECCIÓN DE ENTREGA EN VENEZUELA*\n\
+* {{agencia}}{{#if agencia_tipo}} ({{agencia_tipo}}){{/if}}\n\n\
 🇻🇪 *COSTO NACIONAL*\n\
-• Costo nacional aproximado: Bs {{costo_nacional}}\n\
+* Costo nacional aproximado: Bs {{costo_nacional}}\n\
 Este costo deberás pagarlo en Venezuela a tasa oficial del Banco Central de Venezuela y lo pagarás a la empresa local que realizará el transporte, ya que no te cobramos este trecho en reales. De esa forma ahorras pagando en moneda local, bolívares.\n\n\
-💳 *MÉTODOS DE PAGO:* {{metodos_pago}}\n\n\
+💳 *MÉTODOS DE PAGO*\n\
+{{metodos_pago}}\n\n\
 {{footer}}',
 
-  mensaje_domestico_venezuela: '*Cotización Praia Envíos* 🇧🇷➡️🇻🇪\n\n\
-🔎 *DATOS DEL ENVÍO*\n\
-• Origen: {{origen}}{{#if destino}}\n\
-• Destino: {{destino}}{{/if}}{{#if direccion_destino}}\n\
-• Dirección destino: {{direccion_destino}}{{/if}}{{#if tipo_mercancia}}\n\
-• Tipo de mercancía: {{tipo_mercancia}}{{/if}}\n\
-• Categoría: {{categoria}}{{#if cajas}}\n\
-• {{cajas}}{{/if}}\n\n\
+  mensaje_domestico_venezuela: '🔎 *DATOS DEL ENVÍO*\n\
+* Ciudad de Origen: {{origen}}\n\
+* Dirección de Origen: {{direccion_origen}}\n\
+* Ciudad de Destino: {{destino}}\n\
+* Dirección de Destino: {{direccion_destino}}\n\
+* Producto que envías: {{categoria}}\n\
+* Tipo de Envío: {{tipo_mercancia}}\n\
+* Cantidad de Cajas: {{numero_cajas}}\n\
+* Detalle de Cajas: {{detalle_cajas}}\n\
+* Valor total declarado: {{valor_total_mercancia}} R$\n\n\
 🚀 *MODALIDAD*\n\
-{{modalidad}}\n\n\
-💰 *RESULTADO FINAL*\n\
+* Modalidad aplicada: {{modalidad}}\n\n\
+💰 *VALOR A PAGAR*\n\
 {{total}}\n\n\
 📦 *TIEMPO DE ENTREGA*\n\
-• Tiempo estimado: {{tiempo}}{{#if fecha_entrega}}\n\
-• Fecha estimada de entrega: {{fecha_entrega}}{{/if}}\n\n\
-📍 *ENTREGA EN VENEZUELA*\n\
-{{agencia}}\n\n\
+* Tiempo estimado aproximado: {{tiempo}} días\n\
+* Fecha estimada de entrega: {{fecha_entrega}}\n\n\
+📍 *DIRECCIÓN DE ENTREGA EN VENEZUELA*\n\
+* {{agencia}}{{#if agencia_tipo}} ({{agencia_tipo}}){{/if}}\n\n\
 🇻🇪 *COSTO NACIONAL*\n\
-• Costo nacional aproximado: Bs {{costo_nacional}}\n\
+* Costo nacional aproximado: Bs {{costo_nacional}}\n\
 Este costo deberás pagarlo en Venezuela a tasa oficial del Banco Central de Venezuela y lo pagarás a la empresa local que realizará el transporte, ya que no te cobramos este trecho en reales. De esa forma ahorras pagando en moneda local, bolívares.\n\n\
-💳 *MÉTODOS DE PAGO:* {{metodos_pago}}\n\n\
+💳 *MÉTODOS DE PAGO*\n\
+{{metodos_pago}}\n\n\
 {{footer}}',
 
   mensaje_internacional: '*Cotización Internacional* 🌎\n\n\
@@ -64,51 +71,58 @@ Este costo deberás pagarlo en Venezuela a tasa oficial del Banco Central de Ven
 {{footer}}',
 
   /* ─── PORTUGUÊS ─── */
-  mensaje_domestico_brasil_pt: '*Cotação Praia Envíos* 🇧🇷➡️🇻🇪\n\n\
-🔎 *DADOS DO ENVIO*\n\
-• Origem: {{origen}}{{#if destino}}\n\
-• Destino: {{destino}}{{/if}}{{#if direccion_destino}}\n\
-• Endereço destino: {{direccion_destino}}{{/if}}{{#if tipo_mercancia}}\n\
-• Tipo de mercadoria: {{tipo_mercancia}}{{/if}}\n\
-• Categoria: {{categoria}}{{#if cajas}}\n\
-• {{cajas}}{{/if}}\n\n\
+  mensaje_domestico_brasil_pt: '🔎 *DADOS DO ENVIO*\n\
+* Cidade de Origem: {{origen}}\n\
+* Endereço de Origem: {{direccion_origen}}\n\
+* Cidade Base de Cálculo: {{ciudad_base_calculo}}\n\
+* Cidade de Destino: {{destino}}\n\
+* Endereço de Destino: {{direccion_destino}}\n\
+* Produto que você envia: {{categoria}}\n\
+* Tipo de Envio: {{tipo_mercancia}}\n\
+* Quantidade de Caixas: {{numero_cajas}}\n\
+* Detalhe das Caixas: {{detalle_cajas}}\n\
+* Valor total declarado: {{valor_total_mercancia}} R$\n\n\
 🚀 *MODALIDADE*\n\
-{{modalidad}}\n\n\
-💰 *RESULTADO FINAL*\n\
-• Total: R$ {{total_reales}}\n\
-• Equivalente: ${{total_usd}} USD\n\n\
+* Modalidade aplicada: {{modalidad}}\n\n\
+💰 *VALOR A PAGAR*\n\
+* Total em Reais: R$ {{total_reales}}\n\
+* Total em Dólares: ${{total_usd}} USD\n\n\
 📦 *PRAZO DE ENTREGA*\n\
-• Prazo estimado: {{tiempo}}{{#if fecha_entrega}}\n\
-• Data prevista de entrega: {{fecha_entrega}}{{/if}}\n\n\
-📍 *ENTREGA NA VENEZUELA*\n\
-{{agencia}}\n\n\
+* Prazo estimado aproximado: {{tiempo}} dias\n\
+* Data estimada de entrega: {{fecha_entrega}}\n\n\
+📍 *ENDEREÇO DE ENTREGA NA VENEZUELA*\n\
+* {{agencia}}{{#if agencia_tipo}} ({{agencia_tipo}}){{/if}}\n\n\
 🇻🇪 *CUSTO NACIONAL*\n\
-• Custo nacional aproximado: Bs {{costo_nacional}}\n\
-Este custo deverá ser pago na Venezuela com a taxa oficial do Banco Central da Venezuela e você pagará à empresa local que realizará o transporte, já que não cobramos este trecho em reais. Dessa forma você economiza pagando em moeda local, bolívares.\n\n\
-💳 *MÉTODOS DE PAGAMENTO:* {{metodos_pago}}\n\n\
+* Custo nacional aproximado: Bs {{costo_nacional}}\n\
+Este custo deverá ser pago na Venezuela pela taxa oficial do Banco Central da Venezuela e será pago à empresa local que realizará o transporte, já que não cobramos esse trecho em reais. Dessa forma, você economiza pagando em moeda local, bolívares.\n\n\
+💳 *FORMAS DE PAGAMENTO*\n\
+{{metodos_pago}}\n\n\
 {{footer}}',
 
-  mensaje_domestico_venezuela_pt: '*Cotação Praia Envíos* 🇧🇷➡️🇻🇪\n\n\
-🔎 *DADOS DO ENVIO*\n\
-• Origem: {{origen}}{{#if destino}}\n\
-• Destino: {{destino}}{{/if}}{{#if direccion_destino}}\n\
-• Endereço destino: {{direccion_destino}}{{/if}}{{#if tipo_mercancia}}\n\
-• Tipo de mercadoria: {{tipo_mercancia}}{{/if}}\n\
-• Categoria: {{categoria}}{{#if cajas}}\n\
-• {{cajas}}{{/if}}\n\n\
+  mensaje_domestico_venezuela_pt: '🔎 *DADOS DO ENVIO*\n\
+* Cidade de Origem: {{origen}}\n\
+* Endereço de Origem: {{direccion_origen}}\n\
+* Cidade de Destino: {{destino}}\n\
+* Endereço de Destino: {{direccion_destino}}\n\
+* Produto que você envia: {{categoria}}\n\
+* Tipo de Envio: {{tipo_mercancia}}\n\
+* Quantidade de Caixas: {{numero_cajas}}\n\
+* Detalhe das Caixas: {{detalle_cajas}}\n\
+* Valor total declarado: {{valor_total_mercancia}} R$\n\n\
 🚀 *MODALIDADE*\n\
-{{modalidad}}\n\n\
-💰 *RESULTADO FINAL*\n\
+* Modalidade aplicada: {{modalidad}}\n\n\
+💰 *VALOR A PAGAR*\n\
 {{total}}\n\n\
 📦 *PRAZO DE ENTREGA*\n\
-• Prazo estimado: {{tiempo}}{{#if fecha_entrega}}\n\
-• Data prevista de entrega: {{fecha_entrega}}{{/if}}\n\n\
-📍 *ENTREGA NA VENEZUELA*\n\
-{{agencia}}\n\n\
+* Prazo estimado aproximado: {{tiempo}} dias\n\
+* Data estimada de entrega: {{fecha_entrega}}\n\n\
+📍 *ENDEREÇO DE ENTREGA NA VENEZUELA*\n\
+* {{agencia}}{{#if agencia_tipo}} ({{agencia_tipo}}){{/if}}\n\n\
 🇻🇪 *CUSTO NACIONAL*\n\
-• Custo nacional aproximado: Bs {{costo_nacional}}\n\
-Este custo deverá ser pago na Venezuela com a taxa oficial do Banco Central da Venezuela e você pagará à empresa local que realizará o transporte, já que não cobramos este trecho em reais. Dessa forma você economiza pagando em moeda local, bolívares.\n\n\
-💳 *MÉTODOS DE PAGAMENTO:* {{metodos_pago}}\n\n\
+* Custo nacional aproximado: Bs {{costo_nacional}}\n\
+Este custo deverá ser pago na Venezuela pela taxa oficial do Banco Central da Venezuela e será pago à empresa local que realizará o transporte, já que não cobramos esse trecho em reais. Dessa forma, você economiza pagando em moeda local, bolívares.\n\n\
+💳 *FORMAS DE PAGAMENTO*\n\
+{{metodos_pago}}\n\n\
 {{footer}}',
 
   mensaje_internacional_pt: '*Cotação Internacional* 🌎\n\n\
@@ -118,55 +132,62 @@ Este custo deverá ser pago na Venezuela com a taxa oficial do Banco Central da 
 *OPÇÕES DE ENVIO*\n\
 {{opciones_envio}}{{/if}}{{#if sin_cotizaciones}}\n\
 {{sin_cotizaciones}}{{/if}}\n\n\
-💳 *MÉTODOS DE PAGAMENTO:* {{metodos_pago}}\n\n\
+💳 *FORMAS DE PAGAMENTO:* {{metodos_pago}}\n\n\
 {{footer}}',
 
   /* ─── ENGLISH ─── */
-  mensaje_domestico_brasil_en: '*Praia Envíos Quote* 🇧🇷➡️🇻🇪\n\n\
-🔎 *SHIPMENT DETAILS*\n\
-• Origin: {{origen}}{{#if destino}}\n\
-• Destination: {{destino}}{{/if}}{{#if direccion_destino}}\n\
-• Destination address: {{direccion_destino}}{{/if}}{{#if tipo_mercancia}}\n\
-• Type of goods: {{tipo_mercancia}}{{/if}}\n\
-• Category: {{categoria}}{{#if cajas}}\n\
-• {{cajas}}{{/if}}\n\n\
-🚀 *SHIPPING METHOD*\n\
-{{modalidad}}\n\n\
-💰 *FINAL RESULT*\n\
-• Total: R$ {{total_reales}}\n\
-• Equivalent: ${{total_usd}} USD\n\n\
+  mensaje_domestico_brasil_en: '🔎 *SHIPMENT DETAILS*\n\
+* Origin City: {{origen}}\n\
+* Origin Address: {{direccion_origen}}\n\
+* Base Calculation City: {{ciudad_base_calculo}}\n\
+* Destination City: {{destino}}\n\
+* Destination Address: {{direccion_destino}}\n\
+* Product you are sending: {{categoria}}\n\
+* Shipment Type: {{tipo_mercancia}}\n\
+* Number of Boxes: {{numero_cajas}}\n\
+* Box Details: {{detalle_cajas}}\n\
+* Total declared value: {{valor_total_mercancia}} R$\n\n\
+🚀 *MODALITY*\n\
+* Applied modality: {{modalidad}}\n\n\
+💰 *AMOUNT TO PAY*\n\
+* Total in Brazilian Reais: R$ {{total_reales}}\n\
+* Total in US Dollars: ${{total_usd}} USD\n\n\
 📦 *DELIVERY TIME*\n\
-• Estimated time: {{tiempo}}{{#if fecha_entrega}}\n\
-• Estimated delivery date: {{fecha_entrega}}{{/if}}\n\n\
-📍 *DELIVERY IN VENEZUELA*\n\
-{{agencia}}\n\n\
+* Approximate estimated time: {{tiempo}} days\n\
+* Estimated delivery date: {{fecha_entrega}}\n\n\
+📍 *DELIVERY ADDRESS IN VENEZUELA*\n\
+* {{agencia}}{{#if agencia_tipo}} ({{agencia_tipo}}){{/if}}\n\n\
 🇻🇪 *NATIONAL COST*\n\
-• Approximate national cost: Bs {{costo_nacional}}\n\
-This cost must be paid in Venezuela at the official exchange rate of the Central Bank of Venezuela and you will pay it to the local company that will carry out the transport, since we do not charge this leg in reais. This way you save by paying in local currency, bolívars.\n\n\
-💳 *PAYMENT METHODS:* {{metodos_pago}}\n\n\
+* Approximate national cost: Bs {{costo_nacional}}\n\
+This cost must be paid in Venezuela at the official rate of the Central Bank of Venezuela and paid to the local company that will handle the domestic transport, since we do not charge this leg in Brazilian reais. This way, you save by paying in local currency, bolivars.\n\n\
+💳 *PAYMENT METHODS*\n\
+{{metodos_pago}}\n\n\
 {{footer}}',
 
-  mensaje_domestico_venezuela_en: '*Praia Envíos Quote* 🇧🇷➡️🇻🇪\n\n\
-🔎 *SHIPMENT DETAILS*\n\
-• Origin: {{origen}}{{#if destino}}\n\
-• Destination: {{destino}}{{/if}}{{#if direccion_destino}}\n\
-• Destination address: {{direccion_destino}}{{/if}}{{#if tipo_mercancia}}\n\
-• Type of goods: {{tipo_mercancia}}{{/if}}\n\
-• Category: {{categoria}}{{#if cajas}}\n\
-• {{cajas}}{{/if}}\n\n\
-🚀 *SHIPPING METHOD*\n\
-{{modalidad}}\n\n\
-💰 *FINAL RESULT*\n\
+  mensaje_domestico_venezuela_en: '🔎 *SHIPMENT DETAILS*\n\
+* Origin City: {{origen}}\n\
+* Origin Address: {{direccion_origen}}\n\
+* Destination City: {{destino}}\n\
+* Destination Address: {{direccion_destino}}\n\
+* Product you are sending: {{categoria}}\n\
+* Shipment Type: {{tipo_mercancia}}\n\
+* Number of Boxes: {{numero_cajas}}\n\
+* Box Details: {{detalle_cajas}}\n\
+* Total declared value: {{valor_total_mercancia}} R$\n\n\
+🚀 *MODALITY*\n\
+* Applied modality: {{modalidad}}\n\n\
+💰 *AMOUNT TO PAY*\n\
 {{total}}\n\n\
 📦 *DELIVERY TIME*\n\
-• Estimated time: {{tiempo}}{{#if fecha_entrega}}\n\
-• Estimated delivery date: {{fecha_entrega}}{{/if}}\n\n\
-📍 *DELIVERY IN VENEZUELA*\n\
-{{agencia}}\n\n\
+* Approximate estimated time: {{tiempo}} days\n\
+* Estimated delivery date: {{fecha_entrega}}\n\n\
+📍 *DELIVERY ADDRESS IN VENEZUELA*\n\
+* {{agencia}}{{#if agencia_tipo}} ({{agencia_tipo}}){{/if}}\n\n\
 🇻🇪 *NATIONAL COST*\n\
-• Approximate national cost: Bs {{costo_nacional}}\n\
-This cost must be paid in Venezuela at the official exchange rate of the Central Bank of Venezuela and you will pay it to the local company that will carry out the transport, since we do not charge this leg in reais. This way you save by paying in local currency, bolívars.\n\n\
-💳 *PAYMENT METHODS:* {{metodos_pago}}\n\n\
+* Approximate national cost: Bs {{costo_nacional}}\n\
+This cost must be paid in Venezuela at the official rate of the Central Bank of Venezuela and paid to the local company that will handle the domestic transport, since we do not charge this leg in Brazilian reais. This way, you save by paying in local currency, bolivars.\n\n\
+💳 *PAYMENT METHODS*\n\
+{{metodos_pago}}\n\n\
 {{footer}}',
 
   mensaje_internacional_en: '*International Quote* 🌎\n\n\

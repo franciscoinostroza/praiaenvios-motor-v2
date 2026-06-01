@@ -412,7 +412,7 @@ No uses valores con separador de miles. Correcto: 1500. Incorrecto: 1.500.
 No uses `null`. Usa `""`, `0`, `false` o `[]` cuando no aplique.
 
 CLAVES RAÍZ OBLIGATORIAS:
-El JSON final debe incluir SIEMPRE estas 21 claves raíz, en este orden recomendado:
+El JSON final debe incluir SIEMPRE estas 20 claves raíz, en este orden recomendado:
 1. `schema_version`
 2. `tipo_flujo`
 3. `origen`
@@ -432,8 +432,7 @@ El JSON final debe incluir SIEMPRE estas 21 claves raíz, en este orden recomend
 17. `boxes`
 18. `recolecta`
 19. `trecho`
-20. `idioma`
-21. `observaciones`
+20. `observaciones`
 
 TIPOS DE DATOS OBLIGATORIOS:
 - `schema_version`: string fijo `opcion_3_v3_completo`.
@@ -455,7 +454,6 @@ TIPOS DE DATOS OBLIGATORIOS:
 - `boxes`: array con una entrada por caja.
 - `recolecta`: objeto completo aunque no aplique.
 - `trecho`: objeto completo aunque no aplique.
-- `idioma`: string con código ISO 639-1 del idioma detectado: `"es"`, `"pt"` o `"en"`.
 - `observaciones`: string. Si no hay observaciones, usar `""`.
 
 OBJETO `agencia` OBLIGATORIO:
@@ -527,7 +525,6 @@ PLANTILLA BASE DEL JSON:
     "tiempo_adicional_dias": 0,
     "observacion": ""
   },
-  "idioma": "es",
   "observaciones": ""
 }
 
