@@ -82,8 +82,8 @@ body{font-family:'Inter',-apple-system,sans-serif;background:var(--gray-50);colo
 .q-card:hover{box-shadow:0 4px 14px rgba(0,0,0,.08);transform:translateY(-1px)}
 .q-card .q-icon{font-size:1.3rem;width:38px;height:38px;display:flex;align-items:center;justify-content:center;background:var(--gray-50);border-radius:8px;flex-shrink:0}
 .q-card .q-body{flex:1;min-width:0}
-.q-card .q-title{font-size:.85rem;font-weight:600;color:var(--gray-700)}
-.q-card .q-desc{font-size:.73rem;color:var(--gray-500);margin-top:2px}
+.q-card .q-title{display:block;font-size:.85rem;font-weight:600;color:var(--gray-700)}
+.q-card .q-desc{display:block;font-size:.73rem;color:var(--gray-500);margin-top:2px}
 .q-card .q-arrow{font-size:.8rem;color:var(--gray-400);flex-shrink:0;font-weight:600;transition:color .2s}
 .q-card:hover .q-arrow{color:var(--blue)}
 .q-card.sim{background:linear-gradient(135deg,#f8faff,#fff);border-left-color:#3b82f6}
