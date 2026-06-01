@@ -228,6 +228,11 @@ async function seed() {
     ['semillas de', 'semillas', ''],
     ['artículo religioso', 'religiosos', ''],
     ['articulo religioso', 'religiosos', ''],
+    ['electronica', 'electronica', ''],
+    ['electronicos', 'electronica', ''],
+    ['eletrônica', 'electronica', ''],
+    ['eletrônico', 'electronica', ''],
+    ['eletronicos', 'electronica', ''],
   ];
   for (const [termino, categoria, restricciones] of MAPEO_INICIAL) {
     await query(
@@ -239,10 +244,10 @@ async function seed() {
 
   // Actualizar nombres de modalidades con nomenclatura mixta
   const NOMBRES_MODALIDADES = {
-    EXPRESS: 'Modalidad 1 — Express — SEDEX',
-    TERRESTRE: 'Modalidad 2 — Terrestre — PAC',
-    AEREO: 'Modalidad 3 — Aéreo — LATAM',
-    AEREO_TRECHO: 'Modalidad 4 — Aéreo + Trecho — LATAM Trecho'
+    EXPRESS: 'Modalidad 1',
+    TERRESTRE: 'Modalidad 2',
+    AEREO: 'Modalidad 3',
+    AEREO_TRECHO: 'Modalidad 4'
   };
   for (const [mod, nombre] of Object.entries(NOMBRES_MODALIDADES)) {
     await query(
