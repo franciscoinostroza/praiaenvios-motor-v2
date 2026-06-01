@@ -574,7 +574,7 @@ if(document.cookie.includes('token=')){fetch('/admin').then(r=>{if(r.ok&&r.url.i
         { key: 'mapeo-categorias', icon: '📖', name: 'Mapeo de Categorías', desc: 'Términos → categorías' },
         { key: 'categorias', icon: '🏷️', name: 'Categorías', desc: 'Vocabulario para el clasificador IA' },
         { key: 'prompt-categorias', icon: '🤖', name: 'Prompt Clasificador', desc: 'System prompt GPT-4o mini' },
-        { key: 'mensajes', icon: '💬', name: 'Mensajes', desc: 'Plantillas de respuesta ES/PT/EN' },
+        { key: 'mensajes', icon: '💬', name: 'Mensaje Final', desc: 'Plantillas de respuesta ES/PT/EN' },
       ]},
     ];
 
