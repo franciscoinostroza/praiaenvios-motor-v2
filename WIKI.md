@@ -34,24 +34,21 @@ El servidor extrae los campos del mensaje. Acepta:
 - Objeto `json_datos` anidado
 
 **Paso 3 — Clasificar el producto**
-El sistema determina la categoría usando dos sistemas en cascada:
+El sistema determina la categoría usando tres capas en cascada:
 
-1. **IA (OpenAI GPT-4o mini)** — envía el texto del producto a OpenAI y recibe un
-   array JSON de categorías. Ej: `["electronicos", "baterias"]`
-2. **Diccionario local** — si la IA falla o no hay API key, usa un diccionario con
-   ~900 términos en español/portugués con fuzzy matching (distancia Levenshtein)
+1. **Mapeo de Categorías** (prioridad máxima) — busca el término exacto del
+   producto en `mapeo_categorias`. Si existe, usa esa categoría directamente.
+2. **IA (OpenAI GPT-4o mini)** — si no hay mapeo, envía el texto a OpenAI y
+   recibe un array JSON de categorías. Ej: `["electronicos", "baterias"]`
+3. **Diccionario local** — si la IA falla o no hay API key, usa un diccionario
+   con ~900 términos en español/portugués con fuzzy matching.
 
-**Paso 4 — Elegir modalidad**
-Según la categoría, el motor selecciona qué tipo de envío ofrecer:
+**Paso 4 — Elegir servicio**
+Según la categoría, el motor consulta la **Matriz de Servicios**
+(categoria_servicios) y elige el primer servicio que tenga todas las
+categorías del producto en 🟢 Verde o 🟡 Amarillo.
 
-| Tipo de categoría | Modalidades disponibles |
-|---|---|
-| **NEUTRAS** | Express o Terrestre o Aéreo |
-| **TERRESTRE** | Solo Terrestre (alimentos, líquidos) |
-| **SOLO_AEREO** | Solo Aéreo (baterías, alcohol) |
-
-El orden de prioridad es: Express → Terrestre → Aéreo.
-La primera modalidad que cumpla todos los requisitos es la que se usa.
+El orden de prioridad es: **SEDEX → PAC → LATAM**.
 
 **Paso 5 — Calcular precio** (ver sección Fórmulas)
 
@@ -67,7 +64,7 @@ Devuelve un mensaje formateado con:
 
 ## 📦 Modalidades de envío
 
-### 🚀 Express (Modalidad 1)
+### 🚀 Express (Modalidad 1) — SEDEX
 
 | Propiedad | Valor |
 |---|---|
@@ -78,8 +75,8 @@ Devuelve un mensaje formateado con:
 | Valor máximo | desde DB |
 | Tipo de mercancía | Solo personal |
 
-**¿Qué productos califican?** Solo categorías NEUTRAS que no estén en TERRESTRE
-ni SOLO_AEREO. Ej: electrónicos, ropa, cosméticos, libros.
+**¿Qué productos califican?** Los que tengan 🟢 o 🟡 para SEDEX en la
+Matriz de Servicios. Ej: electrónicos, ropa, cosméticos, libros.
 
 **Fórmula:**
 ```
@@ -87,7 +84,7 @@ Express = Tarifa(kg_facturable) + ValorExtra(ft³) + Embalaje(ft³)
          + Ganancia(peso) + CargoFijo + BoaVista(dimensiones)
 ```
 
-### 🚛 Terrestre (Modalidad 2)
+### 🚛 Terrestre (Modalidad 2) — PAC
 
 | Propiedad | Valor |
 |---|---|
@@ -98,7 +95,8 @@ Express = Tarifa(kg_facturable) + ValorExtra(ft³) + Embalaje(ft³)
 | Valor máximo | desde DB |
 | Tipo de mercancía | Solo personal |
 
-**¿Qué productos califican?** Solo categorías TERRESTRE. Ej: alimentos,
+**¿Qué productos califican?** Los que tengan 🟢 o 🟡 para PAC en la
+Matriz de Servicios (cuando SEDEX no está disponible). Ej: alimentos,
 bebidas, perfumes, líquidos, químicos.
 
 **Fórmula:**
@@ -107,7 +105,7 @@ Terrestre = Tarifa(kg) + ValorExtra(ft³) + Embalaje(ft³)
            + Ganancia(peso) + CargoFijo + BoaVista(dimensiones)
 ```
 
-### ✈️ Aéreo (Modalidad 3)
+### ✈️ Aéreo (Modalidad 3) — LATAM
 
 | Propiedad | Valor |
 |---|---|
@@ -115,8 +113,8 @@ Terrestre = Tarifa(kg) + ValorExtra(ft³) + Embalaje(ft³)
 | Tiempo entrega | desde DB |
 | Tipo de mercancía | Personal o comercial |
 
-**¿Qué productos califican?** Cualquiera que no cumpla Express ni Terrestre.
-Es el fallback por defecto.
+**¿Qué productos califican?** Los que tengan 🟢 o 🟡 para LATAM en la
+Matriz de Servicios. Es el fallback si SEDEX y PAC no están disponibles.
 
 **Fórmula:**
 ```
@@ -224,33 +222,44 @@ AÉREO   = ceil(2×9,50) + ceil(500×0,007)
 
 ### ¿Cómo se clasifica un producto?
 
-El sistema usa **dos motores** en cascada:
+El sistema usa **tres capas** en cascada:
 
-1. **OpenAI GPT-4o mini** (si hay API key):
+1. **Mapeo de Categorías** (prioridad máxima):
+   - Admin → Mapeo de Categorías
+   - Busca el término exacto del producto en la tabla `mapeo_categorias`
+   - Si existe, usa esa categoría directamente (salta IA y diccionario)
+
+2. **OpenAI GPT-4o mini** (si hay API key):
    - Envía el texto del producto
    - Recibe un array JSON de categorías
    - Cachea resultado para no repetir llamadas
    - Tiempo de respuesta: ~500ms por llamada
 
-2. **Diccionario local** (fallback si la IA falla):
+3. **Diccionario local** (fallback si la IA falla):
    - ~900 términos en español y portugués
    - Busca: exacto → sin acentos → singular → Levenshtein
    - Soporta conectores (y, e, con, de, /, -)
    - Detecta typos comunes (0 → o)
 
-### Tipos de categoría
+### Matriz de Servicios (categoria_servicios)
 
-| Tipo | Significado | Modalidades |
-|---|---|---|
-| **NEUTRAS** | Sin restricción | Express, Terrestre o Aéreo |
-| **TERRESTRE** | Solo por tierra | Terrestre únicamente |
-| **SOLO_AEREO** | Solo por aire | Aéreo únicamente |
+Una vez clasificado, el motor consulta la **Matriz de Categorías × Servicio**
+para decidir qué servicio usar:
 
-*(Lista completa desde DB)*
+| Estado | Significado |
+|---|---|
+| 🟢 **Verde** | Servicio permitido para esta categoría |
+| 🟡 **Amarillo** | Permitido con documentación extra |
+| 🔴 **Rojo** | No permitido |
+
+El motor prueba servicios en orden **SEDEX → PAC → LATAM** y usa el primero
+donde todas las categorías del producto estén en 🟢 o 🟡.
+
+*(Matriz completa configurable desde Admin → Matriz de Servicios)*
 
 ### Reglas especiales para baterías
 
-- Producto ES una batería/power bank → categoría "baterias" (SOLO_AEREO)
+- Producto ES una batería/power bank → categoría "baterias"
 - Producto CONTIENE baterías (celular, laptop, drone) → agrega "baterias"
 - Producto USA baterías externas no incluidas → NO agrega "baterias"
 - Baterías de auto → categoría "repuestos" (a menos que se envíen sueltas)
@@ -347,9 +356,12 @@ Costo de entrega nacional en Venezuela. Se usa el mayor entre OP1 y OP2.
 | `nacional_op2` | Costo nacional Venezuela OP2 |
 | `tramos_boa_vista` | Cargos por dimensiones ruta BV |
 | `tramos_ganancia` | Tarifa USD/kg según peso |
-| `modalidades` | Configuración de cada modalidad |
+| `modalidades` | Configuración de cada modalidad (límites, cargos, nombre) |
 | `formulas` | Constantes del motor |
-| `categorias` | Tipo + nombre de categoría |
+| `categorias` | Vocabulario de categorías para el clasificador IA |
+| `categoria_servicios` | Matriz de servicios (🟢🟡🔴 por categoría × servicio) |
+| `mapeo_categorias` | Mapeo de términos de producto → categoría (prioridad máxima) |
+| `plantillas_mensajes` | Plantillas de respuesta para WhatsApp (ES/PT/EN) |
 | `zonas` | Ciudades BASE y PROHIBIDO |
 | `logs` | Registro de eventos |
 | `rate_cache` | Caché de tasas UPS |
@@ -364,8 +376,9 @@ Costo de entrega nacional en Venezuela. Se usa el mayor entre OP1 y OP2.
 Armas, drogas, material explosivo, productos ilegales.
 No se aceptan envíos desde Boa Vista o Pacaraima.
 
-**¿Cómo se elige la modalidad?**
-Express → Terrestre → Aéreo. La primera que cumpla todos los requisitos.
+**¿Cómo se elige el servicio?**
+SEDEX → PAC → LATAM. El primero donde todas las categorías estén en 🟢 o 🟡
+en la Matriz de Servicios.
 
 **¿Por qué a veces el precio es más alto?**
 Probablemente por peso volumétrico. Si la caja es grande pero ligera,
@@ -378,7 +391,10 @@ Sí, el precio final incluye entrega en Venezuela.
 Sí, desde admin → Tarifas Express / Terrestre. Reflejado en 30s.
 
 **¿Cómo agrego una categoría?**
-Admin → Categorías. Si quieres que la IA la reconozca, edita el Prompt.
+1. Admin → Categorías (agrega vocabulario para el clasificador IA).
+2. Admin → Matriz de Servicios (configura qué servicios la aceptan).
+3. Admin → Mapeo de Categorías (opcional: mapea términos específicos).
+4. Si quieres que la IA la reconozca, edita el Prompt desde Prompt Clasificador.
 
 ---
 
@@ -395,10 +411,18 @@ Admin → Categorías. Si quieres que la IA la reconozca, edita el Prompt.
 | **Ganancia** | Margen de la empresa |
 | **BoaVista** | Cargo por ruta terrestre vía Boa Vista |
 | **Trecho** | Recorrido desde ciudades fuera de la base logística |
-| **Modalidad** | Tipo de envío (Express, Terrestre, Aéreo) |
-| **NEUTRAS** | Sin restricción de modalidad |
-| **TERRESTRE** | Solo por tierra |
-| **SOLO_AEREO** | Solo por aire |
+| **Modalidad** | Tipo de envío (Modalidad 1/Express/SEDEX, 2/Terrestre/PAC, 3/Aéreo/LATAM, 4/Aéreo+Trecho/LATAM Trecho) |
+| **Matriz de Servicios** | Tabla `categoria_servicios` — define qué servicios aceptan cada categoría |
+| **Mapeo de Categorías** | Tabla `mapeo_categorias` — mapea términos exactos de producto a categorías |
+| **SEDEX** | Servicio Express (Modalidad 1), primera opción del motor |
+| **PAC** | Servicio Terrestre (Modalidad 2), segunda opción del motor |
+| **LATAM** | Servicio Aéreo (Modalidad 3), tercera opción del motor |
+| **🟢 Verde** | Servicio permitido para esta categoría |
+| **🟡 Amarillo** | Servicio permitido con documentación extra |
+| **🔴 Rojo** | Servicio NO permitido para esta categoría |
+| **NEUTRAS** | (Antiguo) Sin restricción — reemplazado por Matriz de Servicios |
+| **TERRESTRE** | (Antiguo) Solo por tierra — reemplazado por Matriz de Servicios |
+| **SOLO_AEREO** | (Antiguo) Solo por aire — reemplazado por Matriz de Servicios |
 
 ---
 

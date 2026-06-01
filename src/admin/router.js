@@ -280,16 +280,16 @@ function renderNav(active) {
     { label: 'Nacional OP1', path: '/admin/nacional_op1', icon: '🏠', key: 'Nacional OP1 (MRW)' },
     { label: 'Nacional OP2', path: '/admin/nacional_op2', icon: '🏠', key: 'Nacional OP2 (LAE)' },
     { divider: true },
-    { label: 'Tramos BV', path: '/admin/tramos_boa_vista', icon: '📏', key: 'Tramos Boa Vista' },
-    { label: 'Tramos Gan.', path: '/admin/tramos_ganancia', icon: '📊', key: 'Tramos Ganancia' },
+    { label: 'Tramos Boa Vista', path: '/admin/tramos_boa_vista', icon: '📏', key: 'Tramos Boa Vista' },
+    { label: 'Tramos Ganancia', path: '/admin/tramos_ganancia', icon: '📊', key: 'Tramos Ganancia' },
     { label: 'Modalidades', path: '/admin/modalidades', icon: '📋', key: 'Modalidades' },
     { label: 'Fórmulas', path: '/admin/formulas', icon: '🧮', key: 'Fórmulas' },
     { divider: true },
-    { label: 'Prompt IA', path: '/admin/prompt-categorias', icon: '🤖', key: 'Prompt' },
+    { label: 'Prompt Clasificador', path: '/admin/prompt-categorias', icon: '🤖', key: 'Prompt Clasificador' },
     { label: 'Zonas', path: '/admin/zonas', icon: '📍', key: 'Zonas' },
     { divider: true },
-    { label: 'Matriz Servicios', path: '/admin/categoria-servicios', icon: '🚦', key: 'Matriz Servicios' },
-    { label: 'Mapeo Categorías', path: '/admin/mapeo-categorias', icon: '📖', key: 'Mapeo Categorías' },
+    { label: 'Matriz de Servicios', path: '/admin/categoria-servicios', icon: '🚦', key: 'Matriz de Servicios' },
+    { label: 'Mapeo de Categorías', path: '/admin/mapeo-categorias', icon: '📖', key: 'Mapeo de Categorías' },
     { divider: true },
     { label: 'Mensajes', path: '/admin/mensajes', icon: '💬', key: 'Mensajes' },
     { divider: true },
@@ -420,15 +420,18 @@ if(document.cookie.includes('token=')){fetch('/admin').then(r=>{if(r.ok&&r.url.i
   router.get('/', auth, async (req, res) => {
     const t = req.adminToken;
     const tables = [
-      { key: 'tarifas_express', icon: '💰', name: 'Tarifas Express', desc: 'Precios por kg — Modalidad 1' },
-      { key: 'tarifas_terrestre', icon: '🚚', name: 'Tarifas Terrestre', desc: 'Precios por kg — Modalidad 2' },
+      { key: 'tarifas_express', icon: '💰', name: 'Tarifas Express', desc: 'Precios por kg — Modalidad 1 — Express — SEDEX' },
+      { key: 'tarifas_terrestre', icon: '🚚', name: 'Tarifas Terrestre', desc: 'Precios por kg — Modalidad 2 — Terrestre — PAC' },
       { key: 'nacional_op1', icon: '🏠', name: 'Nacional OP1', desc: 'Costo nacional MRW' },
       { key: 'nacional_op2', icon: '🏠', name: 'Nacional OP2', desc: 'Costo nacional LAE' },
       { key: 'tramos_boa_vista', icon: '📏', name: 'Tramos Boa Vista', desc: 'Suma dimensiones → precio' },
       { key: 'tramos_ganancia', icon: '📊', name: 'Tramos Ganancia', desc: 'Peso → USD/kg' },
       { key: 'modalidades', icon: '📋', name: 'Modalidades', desc: 'Configuración de cada modalidad' },
       { key: 'formulas', icon: '🧮', name: 'Fórmulas', desc: 'Constantes del motor — descripción incluida' },
-      { key: 'categorias', icon: '🏷️', name: 'Categorías', desc: 'Vocabulario de categorías' },
+      { key: 'categorias', icon: '🏷️', name: 'Categorías', desc: 'Vocabulario para el clasificador IA' },
+      { key: 'categoria-servicios', table: 'categoria_servicios', icon: '🚦', name: 'Matriz de Servicios', desc: 'Categorías × SEDEX / PAC / LATAM' },
+      { key: 'mapeo-categorias', table: 'mapeo_categorias', icon: '📖', name: 'Mapeo de Categorías', desc: 'Términos de producto → categorías' },
+      { key: 'mensajes', table: 'plantillas_mensajes', icon: '💬', name: 'Mensajes', desc: 'Plantillas de respuesta (ES/PT/EN)' },
       { key: 'zonas', icon: '📍', name: 'Zonas', desc: 'Base y orígenes prohibidos' },
     ];
     let logsStatHtml = '';
@@ -438,7 +441,7 @@ if(document.cookie.includes('token=')){fetch('/admin').then(r=>{if(r.ok&&r.url.i
     } catch {}
     let statsHtml = '';
     try {
-      const counts = await Promise.all(tables.map(t => query(`SELECT COUNT(*) c FROM ${t.key}`)));
+      const counts = await Promise.all(tables.map(t => query(`SELECT COUNT(*) c FROM ${t.table || t.key}`)));
       statsHtml = '<div class="stats">' + tables.map((t, i) =>
         `<div class="stat-card"><div class="num">${counts[i].rows[0].c}</div><div class="label">${t.icon} ${t.name}</div></div>`
       ).join('') + logsStatHtml + '</div>';
@@ -457,12 +460,13 @@ if(document.cookie.includes('token=')){fetch('/admin').then(r=>{if(r.ok&&r.url.i
     const t = req.adminToken;
     try {
       const [
-        modRows, catRows, expRows, terrRows, formRows,
+        modRows, catRows, matRows, expRows, terrRows, formRows,
         bvRows, ganRows, zonaRows, nac1Rows, nac2Rows,
         logStats, cacheStats
       ] = await Promise.all([
         query('SELECT modalidad, clave, valor FROM modalidades ORDER BY modalidad, clave'),
         query('SELECT tipo, categoria FROM categorias ORDER BY tipo, categoria'),
+        query('SELECT * FROM categoria_servicios ORDER BY categoria, servicio'),
         query('SELECT kg, precio_bs FROM tarifas_express ORDER BY kg'),
         query('SELECT kg, precio_bs FROM tarifas_terrestre ORDER BY kg'),
         query('SELECT clave, valor FROM formulas ORDER BY clave'),
@@ -492,6 +496,13 @@ if(document.cookie.includes('token=')){fetch('/admin').then(r=>{if(r.ok&&r.url.i
       for (const r of catRows.rows) {
         if (cats[r.tipo]) cats[r.tipo].push(r.categoria);
       }
+
+      const matriz = {};
+      for (const r of matRows.rows) {
+        if (!matriz[r.categoria]) matriz[r.categoria] = {};
+        matriz[r.categoria][r.servicio] = { estado: r.estado, doc: r.documentacion || '' };
+      }
+      const SERVICIOS_MATRIZ = ['sedex', 'pac', 'latam'];
 
       const forms = {};
       for (const r of formRows.rows) forms[r.clave] = Number(r.valor);
@@ -525,6 +536,7 @@ if(document.cookie.includes('token=')){fetch('/admin').then(r=>{if(r.ok&&r.url.i
           { id: 'formulas', icon: '🧮', label: 'Fórmulas' },
           { id: 'ejemplo', icon: '📐', label: 'Ejemplo' },
           { id: 'categorias', icon: '🏷️', label: 'Categorías' },
+          { id: 'matriz', icon: '🚦', label: 'Matriz de Servicios' },
           { id: 'internacional', icon: '🌍', label: 'Internacional' },
           { id: 'tarifas', icon: '📈', label: 'Tarifas' },
           { id: 'referencia', icon: '📋', label: 'Referencia' },
@@ -546,27 +558,21 @@ if(document.cookie.includes('token=')){fetch('/admin').then(r=>{if(r.ok&&r.url.i
           <div class="mc-body">${items}</div>
         </div>`;
 
-      const tag = (tipo) => {
-        const m = { NEUTRAS: ['✅', 'var(--green)'], TERRESTRE: ['🚛', 'var(--amber)'], SOLO_AEREO: ['✈️', 'var(--red)'] };
-        const [ic, clr] = m[tipo] || ['❓', '#94a3b8'];
-        return `<span class="cat-tag" style="--tag-clr:${clr}">${ic} ${tipo}</span>`;
-      };
-
       // ── sections ──
       const comoFunciona = `<div class="how-flow">
         <div class="hf-step"><div class="hf-num">1</div><div class="hf-txt"><strong>Recibe</strong> mensaje del cliente en WhatsApp</div></div>
         <div class="hf-arr">→</div>
         <div class="hf-step"><div class="hf-num">2</div><div class="hf-txt"><strong>Interpreta</strong> los datos (JSON o clave=valor)</div></div>
         <div class="hf-arr">→</div>
-        <div class="hf-step"><div class="hf-num">3</div><div class="hf-txt"><strong>Clasifica</strong> el producto por IA o diccionario</div></div>
+        <div class="hf-step"><div class="hf-num">3</div><div class="hf-txt"><strong>Clasifica</strong> el producto: primero busca en <b>Mapeo de Categorías</b>, si no encuentra usa IA (OpenAI), y si falla usa diccionario local</div></div>
         <div class="hf-arr">→</div>
-        <div class="hf-step"><div class="hf-num">4</div><div class="hf-txt"><strong>Elige</strong> modalidad según categoría</div></div>
+        <div class="hf-step"><div class="hf-num">4</div><div class="hf-txt"><strong>Elige</strong> servicio según la <b>Matriz de Categorías × Servicio</b> (semáforos 🟢🟡🔴)</div></div>
         <div class="hf-arr">→</div>
         <div class="hf-step"><div class="hf-num">5</div><div class="hf-txt"><strong>Calcula</strong> precio con la fórmula exacta</div></div>
         <div class="hf-arr">→</div>
         <div class="hf-step"><div class="hf-num">6</div><div class="hf-txt"><strong>Responde</strong> con precio y plazo al cliente</div></div>
       </div>
-      <p class="panel-note">El sistema prioriza: <strong>Express</strong> → <strong>Terrestre</strong> → <strong>Aéreo</strong>. Usa la primera modalidad que cumpla todos los requisitos.</p>`;
+      <p class="panel-note">El motor prueba servicios en orden: <strong>SEDEX</strong> → <strong>PAC</strong> → <strong>LATAM</strong>. Usa el primer servicio que tenga todas las categorías del producto en 🟢 Verde o 🟡 Amarillo en la <b>Matriz de Servicios</b>.</p>`;
 
       const renderLimits = (m) => {
         const d = mods[m] || {};
@@ -666,17 +672,23 @@ if(document.cookie.includes('token=')){fetch('/admin').then(r=>{if(r.ok&&r.url.i
       </div>`;
 
       const categoriasHtml = () => {
-        const groups = [
-          { tipo: 'NEUTRAS', label: 'Sin restricción (Express, Terrestre o Aéreo)', icon: '✅', clr: 'var(--green)' },
-          { tipo: 'TERRESTRE', label: 'Solo Terrestre (alimentos, líquidos, químicos)', icon: '🚛', clr: 'var(--amber)' },
-          { tipo: 'SOLO_AEREO', label: 'Solo Aéreo (baterías, alcohol, corrosivos)', icon: '✈️', clr: 'var(--red)' },
-        ];
-        return groups.map(g =>
-          `<div class="cat-group">
-            <div class="cg-head" style="--cg-clr:${g.clr}">${g.icon} ${esc(g.label)} <span class="cg-count">${cats[g.tipo]?.length || 0}</span></div>
-            <div class="cg-body">${(cats[g.tipo] || []).map(c => `<span class="cat-pill" style="--pill-clr:${g.clr}">${esc(c)}</span>`).join('') || '<span class="hint">(vacío)</span>'}</div>
-          </div>`
-        ).join('');
+        const estadoIcono = { verde: '🟢', amarillo: '🟡', rojo: '🔴' };
+        const categoriasList = Object.keys(matriz).sort();
+        if (categoriasList.length === 0) return '<p class="hint">(vacío — configurar en Matriz de Servicios)</p>';
+        let html = `<div style="margin-bottom:12px;font-size:.8rem;color:var(--gray-500)">📋 <b>${categoriasList.length}</b> categorías activas en la matriz. Cada semáforo muestra si el servicio acepta esa categoría.</div>`;
+        html += '<div class="table-wrap" style="margin:0"><table><thead><tr><th>Categoría</th><th style="text-align:center;text-transform:uppercase">🟢 sedex</th><th style="text-align:center;text-transform:uppercase">🚚 pac</th><th style="text-align:center;text-transform:uppercase">✈️ latam</th><th>Documentación</th></tr></thead><tbody>';
+        for (const cat of categoriasList) {
+          html += '<tr><td><b>' + esc(cat) + '</b></td>';
+          for (const s of SERVICIOS_MATRIZ) {
+            const celda = matriz[cat] && matriz[cat][s];
+            const icono = estadoIcono[celda ? celda.estado : 'rojo'];
+            html += '<td style="text-align:center;font-size:1.1rem">' + icono + '</td>';
+          }
+          const doc = matriz[cat] && matriz[cat].sedex ? matriz[cat].sedex.doc : '';
+          html += '<td style="font-size:.75rem;color:var(--gray-500)">' + esc(doc) + '</td></tr>';
+        }
+        html += '</tbody></table></div>';
+        return html;
       };
 
       const internacionalHtml = `<div class="two-col">
@@ -710,6 +722,16 @@ if(document.cookie.includes('token=')){fetch('/admin').then(r=>{if(r.ok&&r.url.i
         <tr><td>OP1</td><td><strong>R$ ${Number(nac1.min_p).toFixed(2)}</strong> (${nac1.min_kg}kg) → <strong>R$ ${Number(nac1.max_p).toFixed(2)}</strong> (${nac1.max_kg}kg)</td></tr>
         <tr><td>OP2</td><td><strong>R$ ${Number(nac2.min_p).toFixed(2)}</strong> (${nac2.min_kg}kg) → <strong>R$ ${Number(nac2.max_p).toFixed(2)}</strong> (${nac2.max_kg}kg)</td></tr>
       </table>`;
+
+      const matrizHtml = `<div style="padding:4px 0">
+        <p style="font-size:.85rem;color:var(--gray-700);line-height:1.6;margin-bottom:14px">La <b>Matriz de Categorías × Servicio</b> define qué servicios de envío aceptan cada categoría de producto. El motor prueba servicios en orden <b>SEDEX → PAC → LATAM</b> y usa el primero donde todas las categorías estén en 🟢 o 🟡.</p>
+        <div style="display:flex;gap:16px;flex-wrap:wrap;margin-bottom:14px">
+          <span style="font-size:.8rem;padding:4px 10px;background:#ecfdf5;color:#065f46;border-radius:6px;font-weight:500">🟢 Verde = Permitido sin documentos</span>
+          <span style="font-size:.8rem;padding:4px 10px;background:#fef3c7;color:#92400e;border-radius:6px;font-weight:500">🟡 Amarillo = Permitido con documentación</span>
+          <span style="font-size:.8rem;padding:4px 10px;background:#fef2f2;color:#991b1b;border-radius:6px;font-weight:500">🔴 Rojo = No permitido</span>
+        </div>
+        <p style="font-size:.8rem;color:var(--gray-500)">📋 Las categorías <b>${Object.keys(matriz).length}</b> activas se pueden editar desde <a href="/admin/categoria-servicios" style="color:var(--blue);text-decoration:underline">Admin → Matriz de Servicios</a>.</p>
+      </div>`;
 
       const referenciaHtml = `<div class="two-col">
         <div>
@@ -746,9 +768,12 @@ if(document.cookie.includes('token=')){fetch('/admin').then(r=>{if(r.ok&&r.url.i
             ['nacional_op2','Costo nacional Venezuela — operador 2'],
             ['tramos_boa_vista','Cargos por dimensiones para ruta Boa Vista'],
             ['tramos_ganancia','Tarifa USD/kg según peso del paquete'],
-            ['modalidades','Configuración de cada modalidad (límites, cargos)'],
+            ['modalidades','Configuración de cada modalidad (límites, cargos, nombre)'],
             ['formulas','Constantes del motor de cálculo'],
-            ['categorias','Tipo (NEUTRAS/TERRESTRE/SOLO_AEREO) y nombre'],
+            ['categorias','Vocabulario de categorías para el clasificador IA'],
+            ['categoria_servicios','Matriz de servicios: qué servicio acepta cada categoría (🟢🟡🔴)'],
+            ['mapeo_categorias','Mapeo de términos de producto → categoría (prioridad máxima)'],
+            ['plantillas_mensajes','Plantillas de respuesta para WhatsApp (ES/PT/EN)'],
             ['zonas','Ciudades BASE y PROHIBIDO'],
             ['logs','Registro de eventos del sistema'],
             ['rate_cache','Caché de tasas UPS (expira 1h)'],
@@ -761,11 +786,11 @@ if(document.cookie.includes('token=')){fetch('/admin').then(r=>{if(r.ok&&r.url.i
       const faqHtml = `<div class="faq-list">
         ${[
           ['¿Qué productos no se pueden enviar?','Armas, drogas, material explosivo y productos ilegales. Tampoco se aceptan envíos desde Boa Vista o Pacaraima como origen.'],
-          ['¿Cómo se elige Express vs Aéreo?','El motor prueba en orden: Express → Terrestre → Aéreo. La primera que cumpla todos los requisitos (peso, dimensiones, valor, tipo de mercancía, categoría) es la que se usa.'],
+          ['¿Cómo se elige el servicio?','El motor prueba en orden: <b>SEDEX → PAC → LATAM</b>. Usa el primer servicio que tenga todas las categorías del producto en 🟢 Verde o 🟡 Amarillo en la <b>Matriz de Servicios</b>.'],
           ['¿Por qué a veces el precio es más alto de lo esperado?','Por el peso volumétrico. Si la caja es grande pero ligera, se cobra por el espacio que ocupa, no por lo que pesa.'],
           ['¿El costo nacional en Venezuela está incluido?','Sí, el precio final incluye el costo de entrega en Venezuela (el mayor entre OP1 y OP2 para ese peso).'],
           ['¿Puedo cambiar un precio?','Sí, desde el admin → Tarifas Express o Tarifas Terrestre. Los cambios se reflejan en la siguiente cotización (el motor recarga cada 30 segundos).'],
-          ['¿Cómo agrego una categoría nueva?','Admin → Categorías. Agrega tipo y nombre. Si quieres que la IA la reconozca, edita también el Prompt desde admin → Prompt IA.'],
+          ['¿Cómo agrego una categoría nueva?','Admin → Categorías (vocabulario). Si quieres que la IA la reconozca, edita el Prompt desde admin → Prompt Clasificador. Luego ve a Matriz de Servicios para configurar qué servicios la aceptan y a Mapeo de Categorías si quieres mapear términos específicos.'],
 
           ['¿Se puede rastrear el envío?','Para internacionales vía UPS, sí. Para domésticos Brasil→Venezuela, se entrega código de seguimiento de la transportista local.'],
         ].map(([q,a]) => `<details class="faq-item"><summary>${esc(q)}</summary><p>${esc(a)}</p></details>`).join('')}
@@ -784,14 +809,22 @@ if(document.cookie.includes('token=')){fetch('/admin').then(r=>{if(r.ok&&r.url.i
             ['Ganancia','Margen de la empresa sobre el envío.'],
             ['BoaVista','Cargo por ruta terrestre vía Boa Vista (frontera).'],
             ['Trecho','Recorrido aéreo desde ciudades fuera de la base logística.'],
-            ['Modalidad','Tipo de envío (Express, Terrestre, Aéreo).'],
+            ['Modalidad','Tipo de envío: 1 (Express/SEDEX), 2 (Terrestre/PAC), 3 (Aéreo/LATAM), 4 (Aéreo+Trecho).'],
             ['Tipo mercancía','Personal (uso propio) o Comercial (para reventa).'],
-            ['NEUTRAS','Categorías sin restricción de modalidad.'],
-            ['TERRESTRE','Categorías que solo pueden ir por tierra.'],
-            ['SOLO_AEREO','Categorías que solo pueden ir por aire.'],
+            ['Matriz de Servicios','Tabla categoria_servicios: define qué servicios (SEDEX/PAC/LATAM) aceptan cada categoría.'],
+            ['Mapeo de Categorías','Tabla mapeo_categorias: asigna términos de producto exactos a categorías (prioridad máxima).'],
+            ['SEDEX','Servicio Express — primera opción del motor.'],
+            ['PAC','Servicio Terrestre — segunda opción del motor.'],
+            ['LATAM','Servicio Aéreo — tercera y última opción del motor.'],
+            ['🟢 Verde','Servicio permitido para esta categoría.'],
+            ['🟡 Amarillo','Servicio permitido pero requiere documentación extra.'],
+            ['🔴 Rojo','Servicio NO permitido para esta categoría.'],
+            ['NEUTRAS','(Antiguo) Categorías sin restricción — reemplazado por Matriz de Servicios.'],
+            ['TERRESTRE','(Antiguo) Categorías solo por tierra — reemplazado por Matriz de Servicios.'],
+            ['SOLO_AEREO','(Antiguo) Categorías solo por aire — reemplazado por Matriz de Servicios.'],
             ['UPS Cuenta 1 (EW0793)','Para envíos internacionales fuera de Venezuela.'],
             ['UPS Cuenta 2 (B68686)','Para envíos desde Brasil hacia Venezuela.'],
-            ['IA / OpenAI','Inteligencia artificial que clasifica productos.'],
+            ['IA / OpenAI','Inteligencia artificial que clasifica productos (GPT-4o mini).'],
           ].map(([t,d]) => `<tr><td><strong>${esc(t)}</strong></td><td>${esc(d)}</td></tr>`).join('')}
         </tbody>
       </table></div>`;
@@ -803,6 +836,7 @@ ${section('ejemplo','📐','Ejemplo paso a paso — Laptop 2kg', ejemploHtml)}
 ${section('categorias','🏷️','Categorías de productos', categoriasHtml())}
 ${section('internacional','🌍','Envíos Internacionales', internacionalHtml)}
 ${section('tarifas','📈','Tablas de tarifas', tarifasHtml)}
+${section('matriz','🚦','Matriz de Servicios', matrizHtml)}
 ${section('referencia','📋','Datos de referencia', referenciaHtml)}
 ${section('db','🗄️','Base de datos', dbHtml)}
 ${section('faq','❓','Preguntas Frecuentes', faqHtml)}
@@ -894,7 +928,7 @@ ${section('glosario','📖','Glosario', glosarioHtml)}`;
     try {
       const z = await query("SELECT ciudad FROM zonas WHERE tipo = 'BASE' ORDER BY ciudad");
       ciudades = z.rows.map(r => `<option value="${r.ciudad}">${r.ciudad}</option>`).join('');
-      const c = await query("SELECT DISTINCT categoria FROM categorias WHERE tipo = 'NEUTRAS' ORDER BY categoria");
+      const c = await query("SELECT DISTINCT categoria FROM categoria_servicios ORDER BY categoria");
       categoriasRaw = c.rows.map(r => r.categoria);
       categorias = categoriasRaw.map(r => `<label class="cat-tag"><input type="checkbox" name="cats" value="${r}"> ${r}</label>`).join('');
     } catch {}
@@ -1708,7 +1742,7 @@ function confirmModalidad(form){
           ${table === 'categorias' ? `<form class="inline" method="POST" action="/admin/categorias/delete-extra" onsubmit="event.preventDefault();confirmDelete('¿Eliminar todas las categorías adicionales (no incluidas en la semilla)?',this)"><button class="btn-sm btn-del" type="submit" style="font-size:.75rem">🗑️ Eliminar extras</button></form>` : ''}
           <div class="search-wrap">${showSearch ? '<span class="icon">🔍</span><input type="text" placeholder="Buscar..." oninput="filterTable(this)">' : ''}</div>
         </div>`;
-        html += (table === 'categorias' ? `<div style="padding:6px 14px 10px;font-size:.75rem;color:var(--gray-500);line-height:1.5;border-bottom:1px solid var(--gray-200)">🌱 <b>Seed</b> = categorías predefinidas en el sistema. <span style="background:#fef3c7;color:#92400e;padding:1px 6px;border-radius:6px;font-weight:600">⚠️ Extra</span> = categorías agregadas manualmente. El botón <b>"Eliminar extras"</b> borra solo las <b>Extra</b>, dejando intactas las Seed.</div>` : '');
+        html += (table === 'categorias' ? `<div style="padding:6px 14px 10px;font-size:.75rem;color:var(--gray-500);line-height:1.5;border-bottom:1px solid var(--gray-200)">📋 <b>Nota:</b> Esta tabla es vocabulario para el clasificador IA. La <b>elegibilidad de servicios</b> se configura en <a href="/admin/categoria-servicios" style="color:var(--blue)">🚦 Matriz de Servicios</a> y el <b>mapeo término→categoría</b> en <a href="/admin/mapeo-categorias" style="color:var(--blue)">📖 Mapeo de Categorías</a>.<br>🌱 <b>Seed</b> = categorías predefinidas. <span style="background:#fef3c7;color:#92400e;padding:1px 6px;border-radius:6px;font-weight:600">⚠️ Extra</span> = agregadas manualmente. El botón <b>"Eliminar extras"</b> borra solo las <b>Extra</b>.</div>` : '');
         html += `<table><thead><tr>`;
         for (const col of cols) html += `<th>${col}</th>`;
         if (table === 'categorias') html += '<th style="width:55px;text-align:center">Origen</th>';

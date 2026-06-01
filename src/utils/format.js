@@ -82,7 +82,7 @@ export async function formatearMensaje(datos, resultadoMotor) {
 
   var modalidad = resultadoMotor.modalidad
     || (resultadoMotor.cajas && resultadoMotor.cajas.length > 0 ? resultadoMotor.cajas[0].modalidad : undefined);
-  var modalidadNombre = { 1: 'Modalidad 1', 2: 'Modalidad 2', 3: 'Modalidad 3', 4: 'Modalidad 4' }[modalidad] || modalidad;
+  var modalidadNombre = { 1: 'Modalidad 1 — Express — SEDEX', 2: 'Modalidad 2 — Terrestre — PAC', 3: 'Modalidad 3 — Aéreo — LATAM', 4: 'Modalidad 4 — Aéreo + Trecho — LATAM Trecho' }[modalidad] || modalidad;
 
   var origen = esVenezuela
     ? t.origen_ve

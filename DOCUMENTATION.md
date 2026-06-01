@@ -207,7 +207,7 @@ https://mercadolibre.com/...
    - Si falla el scraping, marca `scrapeFailed` (no bloquea, el usuario puede reintentar con datos directos)
    - Si `cantidad > 1`, expande a caja estándar que quepa el volumen total
 5. **`cotizar(params)`** — ejecuta motor de pricing:
-   - Selecciona modalidad (Express → Terrestre → Aéreo)
+   - Selecciona servicio según Matriz de Servicios (SEDEX → PAC → LATAM)
    - Calcula todos los componentes
    - Determina si requiere trecho (origen remoto)
    - Calcula costo nacional
