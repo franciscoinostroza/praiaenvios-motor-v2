@@ -76,15 +76,23 @@ body{font-family:'Inter',-apple-system,sans-serif;background:var(--gray-50);colo
 .hero-card:nth-child(3){border-left-color:#f59e0b}
 .hero-card:nth-child(4){border-left-color:#ef4444}
 
-/* ─── QUICK ACTIONS ─── */
-.quick-actions{display:flex;gap:8px;margin-bottom:20px;flex-wrap:wrap}
-.qa-btn{display:inline-flex;align-items:center;gap:6px;padding:8px 16px;border-radius:8px;font-size:.8rem;font-weight:600;text-decoration:none;transition:all .15s;border:none;cursor:pointer;font-family:inherit}
-.qa-btn.primary{background:var(--blue);color:#fff}
-.qa-btn.primary:hover{background:var(--blue-hover);transform:translateY(-1px)}
-.qa-btn.secondary{background:var(--gray-100);color:var(--gray-700);border:1px solid var(--gray-200)}
-.qa-btn.secondary:hover{background:var(--gray-200);transform:translateY(-1px)}
-.qa-btn.warning{background:#fef3c7;color:#92400e;border:1px solid #fde68a}
-.qa-btn.warning:hover{background:#fde68a;transform:translateY(-1px)}
+/* ─── QUICK CARDS ─── */
+.quick-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:24px}
+.q-card{background:#fff;border-radius:var(--radius);padding:14px 18px;box-shadow:var(--shadow);border:1px solid var(--gray-200);display:flex;align-items:center;gap:14px;text-decoration:none;transition:box-shadow .2s,border-color .2s,transform .15s}
+.q-card:hover{border-color:var(--blue);box-shadow:0 4px 12px rgba(59,130,246,.12);transform:translateY(-1px)}
+.q-card .q-icon{font-size:1.4rem;flex-shrink:0;width:36px;text-align:center}
+.q-card .q-body{flex:1;min-width:0}
+.q-card .q-title{font-size:.82rem;font-weight:600;color:var(--gray-700)}
+.q-card .q-desc{font-size:.72rem;color:var(--gray-500);margin-top:1px}
+.q-card .q-link{font-size:.72rem;font-weight:600;color:var(--blue);flex-shrink:0;white-space:nowrap}
+.q-card:hover .q-link{text-decoration:underline}
+.q-card.q-logos{border-left:3px solid #ef4444}
+.q-card.q-logos:hover{border-left-color:#ef4444;border-color:#fecaca}
+
+@media(max-width:768px){
+  .quick-grid{grid-template-columns:1fr;gap:8px}
+  .q-card{padding:12px 14px;gap:10px}
+}
 
 /* ─── TIMELINE ─── */
 .timeline{background:#fff;border-radius:var(--radius);box-shadow:var(--shadow);border:1px solid var(--gray-200);margin-bottom:24px;overflow:hidden}
@@ -188,8 +196,8 @@ td .btn-sm{display:inline-flex;align-items:center;gap:4px;border:none;padding:4p
   .hero{grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:10px}
   .hero-card{padding:12px 14px}
   .hero-card .h-num{font-size:1.25rem}
-  .quick-actions{gap:6px}
-  .qa-btn{padding:6px 12px;font-size:.75rem}
+  .quick-grid{gap:8px}
+  .q-card{padding:12px 14px;gap:10px}
   .timeline-body{max-height:none}
   .table-toolbar .search-wrap input{width:140px}
   .grid{grid-template-columns:1fr}
@@ -528,11 +536,12 @@ if(document.cookie.includes('token=')){fetch('/admin').then(r=>{if(r.ok&&r.url.i
       <div class="hero-card"><div class="h-icon">⚠️</div><div class="h-num" style="color:${heroData.errHoy > 0 ? 'var(--red)' : 'var(--green)'}">${heroData.errHoy}</div><div class="h-label">Errores hoy</div>${heroData.ultErr ? `<div class="h-sub red">${timeAgo(heroData.ultErr.time)}: ${esc(heroData.ultErr.msg.slice(0,50))}</div>` : '<div class="h-sub green">Sin errores</div>'}</div>
     </div>`;
 
-    // ── quick actions ──
-    const actionsHtml = `<div class="quick-actions">
-      <a href="/admin/simulador" class="qa-btn primary">🧮 Simulador</a>
-      <a href="/admin/panel" class="qa-btn secondary">📖 Wiki</a>
-      <a href="/admin/logs?nivel=ERROR" class="qa-btn ${heroData.errHoy > 0 ? 'warning' : 'secondary'}">📋 Logs de error</a>
+    // ── quick cards ──
+    const errBadge = heroData.errHoy > 0 ? ` <span style="color:var(--red)">· ${heroData.errHoy} hoy</span>` : '';
+    const actionsHtml = `<div class="quick-grid">
+      <a href="/admin/simulador" class="q-card"><span class="q-icon">🧮</span><span class="q-body"><span class="q-title">Simulador</span><span class="q-desc">Prueba el motor con datos reales</span></span><span class="q-link">Abrir →</span></a>
+      <a href="/admin/panel" class="q-card"><span class="q-icon">📖</span><span class="q-body"><span class="q-title">Wiki</span><span class="q-desc">Documentación viva del sistema</span></span><span class="q-link">Abrir →</span></a>
+      <a href="/admin/logs?nivel=ERROR" class="q-card${heroData.errHoy > 0 ? ' q-logos' : ''}"><span class="q-icon">📋</span><span class="q-body"><span class="q-title">Logs de Error</span><span class="q-desc">Últimos errores${errBadge}</span></span><span class="q-link">Ver →</span></a>
     </div>`;
 
     // ── timeline ──
