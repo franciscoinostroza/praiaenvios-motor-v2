@@ -80,7 +80,7 @@ body{font-family:'Inter',-apple-system,sans-serif;background:var(--gray-50);colo
 .quick-grid{display:flex;gap:12px;flex-wrap:wrap;margin-bottom:24px}
 .q-card{flex:1;min-width:250px;background:#fff;border-radius:12px;padding:16px 20px;box-shadow:var(--shadow);border:1px solid var(--gray-200);border-left:4px solid var(--gray-300);display:flex;align-items:center;gap:14px;text-decoration:none;transition:all .2s}
 .q-card:hover{box-shadow:0 4px 14px rgba(0,0,0,.08);transform:translateY(-1px)}
-.q-card .q-icon{font-size:1.5rem;width:40px;text-align:center;flex-shrink:0}
+.q-card .q-icon{font-size:1.3rem;width:38px;height:38px;display:flex;align-items:center;justify-content:center;background:var(--gray-50);border-radius:8px;flex-shrink:0}
 .q-card .q-body{flex:1;min-width:0}
 .q-card .q-title{font-size:.85rem;font-weight:600;color:var(--gray-700)}
 .q-card .q-desc{font-size:.73rem;color:var(--gray-500);margin-top:2px}
@@ -99,7 +99,7 @@ body{font-family:'Inter',-apple-system,sans-serif;background:var(--gray-50);colo
 .msg-card:hover{box-shadow:0 4px 12px rgba(0,0,0,.08)}
 .msg-card h3{font-size:.85rem;font-weight:600;color:var(--gray-700);margin-bottom:2px}
 .msg-card .msg-desc{font-size:.73rem;color:var(--gray-500);margin-bottom:10px}
-.msg-card .msg-preview{font-size:.7rem;color:var(--gray-500);background:var(--gray-50);padding:10px 12px;border-radius:8px;font-family:ui-monospace,monospace;line-height:1.5;white-space:pre-wrap;word-break:break-word;max-height:90px;overflow:hidden;margin-bottom:12px;border:1px solid var(--gray-100)}
+.msg-card .msg-preview{font-size:.68rem;color:var(--gray-400);padding:8px 10px;border-radius:6px;line-height:1.5;white-space:pre-wrap;word-break:break-word;max-height:60px;overflow:hidden;margin-bottom:10px;border:1px solid var(--gray-100)}
 .msg-card .msg-footer{display:flex;align-items:center;gap:8px;margin-top:auto;flex-wrap:wrap}
 .msg-card .msg-date{font-size:.65rem;color:var(--gray-400);margin-left:auto}
 .msg-card.es{border-top-color:#3b82f6}
@@ -107,6 +107,11 @@ body{font-family:'Inter',-apple-system,sans-serif;background:var(--gray-50);colo
 .msg-card.en{border-top-color:#8b5cf6}
 .msg-info{margin-top:20px;padding:14px 18px;background:#f0f4ff;border:1px solid #bfdbfe;border-radius:10px;font-size:.8rem;color:var(--gray-700);line-height:1.6}
 .msg-info code{background:var(--gray-200);padding:1px 5px;border-radius:4px;font-size:.75rem}
+
+.lang-badge{display:inline-block;padding:1px 6px;border-radius:4px;font-size:.6rem;font-weight:700;letter-spacing:.5px;vertical-align:middle;margin-right:5px}
+.lang-badge.es{background:#dbeafe;color:#1d40ed}
+.lang-badge.pt{background:#dcfce7;color:#15803d}
+.lang-badge.en{background:#f3e8ff;color:#7c3aed}
 
 @media(max-width:768px){
   .quick-grid{grid-template-columns:1fr;gap:8px}
@@ -2234,15 +2239,15 @@ function confirmModalidad(form){
 
   /* ─── MENSAJES (plantillas) ─── */
   const INFO_MENSAJES = {
-    mensaje_domestico_brasil: { icon: '🇧🇷', title: 'Doméstico — Brasil (ES)', desc: 'Cotización desde Brasil — Español', grupo: 'ES' },
-    mensaje_domestico_venezuela: { icon: '🇻🇪', title: 'Doméstico — Venezuela (ES)', desc: 'Cotización comprando desde Venezuela — Español', grupo: 'ES' },
-    mensaje_internacional: { icon: '🌎', title: 'Internacional UPS (ES)', desc: 'Cotización internacional — Español', grupo: 'ES' },
-    mensaje_domestico_brasil_pt: { icon: '🇧🇷', title: 'Doméstico — Brasil (PT)', desc: 'Cotização desde o Brasil — Português', grupo: 'PT' },
-    mensaje_domestico_venezuela_pt: { icon: '🇻🇪', title: 'Doméstico — Venezuela (PT)', desc: 'Cotização comprando da Venezuela — Português', grupo: 'PT' },
-    mensaje_internacional_pt: { icon: '🌎', title: 'Internacional UPS (PT)', desc: 'Cotização internacional — Português', grupo: 'PT' },
-    mensaje_domestico_brasil_en: { icon: '🇧🇷', title: 'Domestic — Brazil (EN)', desc: 'Quote from Brazil — English', grupo: 'EN' },
-    mensaje_domestico_venezuela_en: { icon: '🇻🇪', title: 'Domestic — Venezuela (EN)', desc: 'Quote buying from Venezuela — English', grupo: 'EN' },
-    mensaje_internacional_en: { icon: '🌎', title: 'International UPS (EN)', desc: 'International quote — English', grupo: 'EN' }
+    mensaje_domestico_brasil: { icon: '', title: 'Doméstico — Brasil (ES)', desc: 'Cotización desde Brasil — Español', grupo: 'ES' },
+    mensaje_domestico_venezuela: { icon: '', title: 'Doméstico — Venezuela (ES)', desc: 'Cotización comprando desde Venezuela — Español', grupo: 'ES' },
+    mensaje_internacional: { icon: '', title: 'Internacional UPS (ES)', desc: 'Cotización internacional — Español', grupo: 'ES' },
+    mensaje_domestico_brasil_pt: { icon: '', title: 'Doméstico — Brasil (PT)', desc: 'Cotização desde o Brasil — Português', grupo: 'PT' },
+    mensaje_domestico_venezuela_pt: { icon: '', title: 'Doméstico — Venezuela (PT)', desc: 'Cotização comprando da Venezuela — Português', grupo: 'PT' },
+    mensaje_internacional_pt: { icon: '', title: 'Internacional UPS (PT)', desc: 'Cotização internacional — Português', grupo: 'PT' },
+    mensaje_domestico_brasil_en: { icon: '', title: 'Domestic — Brazil (EN)', desc: 'Quote from Brazil — English', grupo: 'EN' },
+    mensaje_domestico_venezuela_en: { icon: '', title: 'Domestic — Venezuela (EN)', desc: 'Quote buying from Venezuela — English', grupo: 'EN' },
+    mensaje_internacional_en: { icon: '', title: 'International UPS (EN)', desc: 'International quote — English', grupo: 'EN' }
   };
 
   const DICTAMENES = {
@@ -2283,23 +2288,23 @@ function confirmModalidad(form){
       if (grupos[info.grupo]) grupos[info.grupo].push({ clave, info });
     }
 
-    var etiquetas = { ES: '🇪🇸 Español', PT: '🇧🇷 Português', EN: '🇺🇸 English' };
+    var etiquetasLabel = { ES: 'Español', PT: 'Português', EN: 'English' };
     var clasesGrupo = { ES: 'es', PT: 'pt', EN: 'en' };
 
     for (var g of ['ES', 'PT', 'EN']) {
       var items = grupos[g] || [];
       if (items.length === 0) continue;
-      html += '<div class="msg-group">' + etiquetas[g] + ' <span class="msg-count">' + items.length + ' plantilla(s)</span></div>';
+      html += '<div class="msg-group"><span class="lang-badge ' + g.toLowerCase() + '">' + g + '</span> ' + etiquetasLabel[g] + ' <span class="msg-count">' + items.length + ' plantilla(s)</span></div>';
       html += '<div class="msg-grid">';
       for (var item of items) {
         var clave = item.clave;
         var info = item.info;
         var dbRow = dbMap[clave];
-        var preview = dbRow ? dbRow.valor.substring(0, 120).replace(/\n/g, '↵ ') : '(usando plantilla por defecto)';
+        var preview = dbRow ? dbRow.valor.substring(0, 120) : '(usando plantilla por defecto)';
         var updated = dbRow && dbRow.updated_at ? new Date(dbRow.updated_at).toLocaleString('es-VE') : '—';
 
         html += '<div class="msg-card ' + clasesGrupo[g] + '">';
-        html += '<h3>' + info.icon + ' ' + esc(info.title) + '</h3>';
+        html += '<h3><span class="lang-badge ' + g.toLowerCase() + '">' + g + '</span> ' + esc(info.title) + '</h3>';
         html += '<div class="msg-desc">' + esc(info.desc) + '</div>';
         html += '<div class="msg-preview">' + esc(preview) + (preview.length >= 120 ? '…' : '') + '</div>';
         html += '<div class="msg-footer">';
@@ -2314,10 +2319,6 @@ function confirmModalidad(form){
     }
 
     html += '<div class="msg-info">';
-    html += '💡 Las plantillas usan variables <code>{{variable}}</code> y condicionales <code>{{#if variable}}...{{/if}}</code>. ';
-    html += 'Si no hay plantilla guardada en la BD, se usa la plantilla por defecto del sistema.<br>';
-    html += '📖 <strong>Cambia libremente</strong> textos, emojis y estructura. Las variables se reemplazan automáticamente.<br>';
-    html += '🌐 El sistema selecciona automáticamente la plantilla según el campo <code>idioma</code> del JSON de entrada (<code>es</code>, <code>pt</code>, <code>en</code>). Si no está presente, usa Español.</div>';
     html += '💡 Las plantillas usan variables <code>{{variable}}</code> y condicionales <code>{{#if variable}}...{{/if}}</code>. ';
     html += 'Si no hay plantilla guardada en la BD, se usa la plantilla por defecto del sistema.<br>';
     html += '📖 <strong>Cambia libremente</strong> textos, emojis y estructura. Las variables se reemplazan automáticamente.<br>';
@@ -2350,7 +2351,7 @@ function confirmModalidad(form){
 
     const body = `${toast}<div class="table-wrap">
       <div class="table-toolbar" style="flex-wrap:wrap;gap:8px">
-        <span style="font-weight:600;font-size:.85rem">${info.icon} ${esc(info.title)}</span>
+        <span style="font-weight:600;font-size:.85rem"><span class="lang-badge ${info.grupo.toLowerCase()}">${info.grupo}</span> ${esc(info.title)}</span>
         <a href="/admin/mensajes" style="font-size:.75rem;color:var(--gray-500)">← Volver</a>
       </div>
       <form method="POST" action="/admin/mensajes/${clave}" onsubmit="return fetch(this.action,{method:this.method,body:new URLSearchParams(new FormData(this))}).then(()=>{window.location.reload()}).catch(()=>{window.location.reload()}),false" style="padding:16px">
