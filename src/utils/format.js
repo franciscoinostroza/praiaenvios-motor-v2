@@ -1,4 +1,5 @@
 import { normalizarCategoriasConIA } from './categories.js';
+import { renderizarPlantilla } from './plantillas.js';
 
 export async function extractMotorParams(datos) {
   var origen = datos.tipo_flujo === 'comprando_desde_venezuela'
@@ -37,85 +38,86 @@ export async function extractMotorParams(datos) {
   };
 }
 
-export function formatearMensaje(datos, resultadoMotor) {
+export async function formatearMensaje(datos, resultadoMotor) {
   var total_reales = resultadoMotor.total_final || 0;
   var tasa = resultadoMotor.tasa_dolar;
   var total_usd = (total_reales / tasa).toFixed(2);
+  var esVenezuela = datos.tipo_flujo === 'comprando_desde_venezuela';
 
   var modalidad = resultadoMotor.modalidad
     || (resultadoMotor.cajas && resultadoMotor.cajas.length > 0 ? resultadoMotor.cajas[0].modalidad : undefined);
   var modalidadNombre = { 1: 'Modalidad 1', 2: 'Modalidad 2', 3: 'Modalidad 3', 4: 'Modalidad 4' }[modalidad] || modalidad;
 
-  var origen = datos.tipo_flujo === 'comprando_desde_venezuela'
+  var origen = esVenezuela
     ? 'Curitiba (salida logística)'
     : (datos.origen || '');
 
   var categoria = Array.isArray(datos._categorias_norm)
     ? datos._categorias_norm.join(', ')
     : (datos.categoria || (Array.isArray(datos.categorias) ? datos.categorias.join(', ') : '') || '');
-  var tipoMer = datos.tipo_mercancia || '';
 
-  var cajasInfo = '';
+  var cajas = '';
   if (Array.isArray(datos.boxes) && datos.boxes.length > 0) {
     var partes = [];
     for (var i = 0; i < datos.boxes.length; i++) {
       var c = datos.boxes[i];
       partes.push('Caja ' + (i + 1) + ': ' + c.largo + 'x' + c.ancho + 'x' + c.alto + ' cm, ' + c.peso_bruto + ' kg, R$ ' + c.valor_mercancia);
     }
-    cajasInfo = partes.join('\n');
+    cajas = partes.join('\n• ');
   }
 
   var costo = resultadoMotor.costo_nacional || 0;
   var costoFormateado = costo.toLocaleString('es-VE', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 
-  var agenciaInfo = '';
+  var agencia = '';
   if (datos.agencia && datos.agencia.direccion) {
-    agenciaInfo = '• ' + datos.agencia.direccion + ' (' + (datos.agencia.tipo === 1 ? '1' : '2') + ')\n';
+    agencia = '• ' + datos.agencia.direccion + ' (' + (datos.agencia.tipo === 1 ? '1' : '2') + ')';
+  } else {
+    agencia = '• Tu envío será entregado para retiro en la agencia más cercana a tu destino.';
   }
 
-  var msg = '*Cotización Praia Envíos* 🇧🇷➡️🇻🇪\n\n';
-  msg += '🔎 *DATOS DEL ENVÍO*\n';
-  if (origen) msg += '• Origen: ' + origen + '\n';
-  if (datos.destino_ciudad) msg += '• Destino: ' + datos.destino_ciudad + '\n';
-  if (datos.direccion_destino) msg += '• Dirección destino: ' + datos.direccion_destino + '\n';
-  if (tipoMer) msg += '• Tipo de mercancía: ' + tipoMer + '\n';
-  if (categoria) msg += '• Categoría: ' + categoria + '\n';
-  if (cajasInfo) msg += '• ' + cajasInfo.replace(/\n/g, '\n• ') + '\n';
-  msg += '\n🚀 *MODALIDAD*\n';
+  var modalidadTexto = '';
   if (resultadoMotor.cajas && resultadoMotor.cajas.length > 1) {
     for (var j = 0; j < resultadoMotor.cajas.length; j++) {
       var cb = resultadoMotor.cajas[j];
       var modalidadCaja = { 1: 'Modalidad 1', 2: 'Modalidad 2', 3: 'Modalidad 3', 4: 'Modalidad 4' }[cb.modalidad] || cb.nombre_modalidad;
       var trechoTxt = cb.con_trecho ? ' (incluye trecho)' : '';
-      msg += '• Caja ' + cb.caja + ': ' + modalidadCaja + ' — R$ ' + cb.total + trechoTxt + '\n';
+      modalidadTexto += '• Caja ' + cb.caja + ': ' + modalidadCaja + ' — R$ ' + cb.total + trechoTxt + '\n';
     }
   } else {
-    msg += '• Modalidad aplicada: ' + modalidadNombre + '\n';
+    modalidadTexto = '• Modalidad aplicada: ' + modalidadNombre;
   }
-  msg += '\n💰 *RESULTADO FINAL*\n';
-  if (datos.tipo_flujo === 'comprando_desde_venezuela') {
-    msg += '• Total: $' + total_usd + ' USD\n';
-  } else {
-    msg += '• Total: R$ ' + total_reales + '\n';
-    msg += '• Equivalente: $' + total_usd + ' USD\n';
-  }
-  msg += '\n📦 *TIEMPO DE ENTREGA*\n';
-  msg += '• Tiempo estimado: ' + (resultadoMotor.tiempo_entrega || '') + '\n';
-  if (resultadoMotor.fecha_entrega) msg += '• Fecha estimada de entrega: ' + resultadoMotor.fecha_entrega + '\n';
-  msg += '\n📍 *ENTREGA EN VENEZUELA*\n';
-  if (agenciaInfo) {
-    msg += agenciaInfo;
-  } else {
-    msg += '• Tu envío será entregado para retiro en la agencia más cercana a tu destino.\n';
-  }
-  msg += '\n🇻🇪 *COSTO NACIONAL*\n';
-  msg += '• Costo nacional aproximado: Bs ' + costoFormateado + '\n';
-  if (datos.tipo_flujo === 'comprando_desde_venezuela') {
-    msg += '\n💳 *MÉTODOS DE PAGO:* Zelle, Binance USDT, Tarjeta, PayPal\n';
-  } else {
-    msg += '\n💳 *MÉTODOS DE PAGO:* PIX, Zelle, Binance USDT, Tarjeta, PayPal\n';
-  }
-  msg += '\n_Escribe *Menú* para volver al inicio._';
 
-  return msg;
+  var totalTexto = esVenezuela
+    ? '• Total: $' + total_usd + ' USD'
+    : '• Total: R$ ' + total_reales + '\n• Equivalente: $' + total_usd + ' USD';
+
+  var metodosPago = esVenezuela
+    ? 'Zelle, Binance USDT, Tarjeta, PayPal'
+    : 'PIX, Zelle, Binance USDT, Tarjeta, PayPal';
+
+  var clave = esVenezuela ? 'mensaje_domestico_venezuela' : 'mensaje_domestico_brasil';
+
+  var fechaEntrega = resultadoMotor.fecha_entrega || '';
+
+  var footer = '_Escribe *Menú* para volver al inicio._';
+
+  return await renderizarPlantilla(clave, {
+    origen: origen,
+    destino: datos.destino_ciudad || '',
+    direccion_destino: datos.direccion_destino || '',
+    tipo_mercancia: datos.tipo_mercancia || '',
+    categoria: categoria,
+    cajas: cajas,
+    modalidad: modalidadTexto,
+    total: totalTexto,
+    total_reales: total_reales,
+    total_usd: total_usd,
+    tiempo: resultadoMotor.tiempo_entrega || '',
+    fecha_entrega: fechaEntrega,
+    agencia: agencia,
+    costo_nacional: costoFormateado,
+    metodos_pago: metodosPago,
+    footer: footer
+  });
 }

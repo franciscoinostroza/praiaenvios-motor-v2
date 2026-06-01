@@ -1,6 +1,7 @@
 import { query } from './pool.js';
 import { CATEGORIAS_SEMILLA } from '../utils/categorias-semilla.js';
 import { SYSTEM_PROMPT } from '../utils/classifier.js';
+import { PLANTILLAS_DEFAULT } from '../utils/plantillas.js';
 
 async function seed() {
   // Tarifas Express
@@ -103,6 +104,12 @@ async function seed() {
     await query('INSERT INTO zonas (tipo, ciudad) VALUES ($1, $2) ON CONFLICT (tipo, ciudad) DO NOTHING', [tipo, ciudad]);
   }
   console.log('[seed] zonas ok');
+
+  // Plantillas de mensajes
+  for (const [clave, valor] of Object.entries(PLANTILLAS_DEFAULT)) {
+    await query('INSERT INTO plantillas_mensajes (clave, valor) VALUES ($1, $2) ON CONFLICT (clave) DO NOTHING', [clave, valor]);
+  }
+  console.log('[seed] plantillas_mensajes ok');
 
   console.log('[seed] todos los datos insertados correctamente');
   process.exit(0);

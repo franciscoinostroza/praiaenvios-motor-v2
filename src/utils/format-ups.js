@@ -1,3 +1,5 @@
+import { renderizarPlantilla } from './plantillas.js';
+
 function extractUpsParams(datos) {
   const paisOrigen = datos.pais_origen || 'BR';
   const paisDestino = datos.pais_destino || '';
@@ -53,43 +55,49 @@ function bandera(codigo) {
   return BANDERAS[codigo?.toUpperCase()] || '🌎';
 }
 
-function formatearMensajeUps(datos, resultado) {
+async function formatearMensajeUps(datos, resultado) {
   const rates = resultado.rates || [];
   const paisOrigen = (datos.pais_origen || 'BR').toUpperCase();
   const paisDestino = (datos.pais_destino || '').toUpperCase();
 
-  let msg = '*Cotización Internacional* 🌎\n\n';
-  msg += `Origen: ${bandera(paisOrigen)} ${paisOrigen}${datos.ciudad_origen ? ', ' + datos.ciudad_origen : ''}${datos.codigo_postal_origen ? ' - ' + datos.codigo_postal_origen : ''}\n`;
-  msg += `Destino: ${bandera(paisDestino)} ${paisDestino}${datos.ciudad_destino ? ', ' + datos.ciudad_destino : ''}${datos.codigo_postal_destino ? ' - ' + datos.codigo_postal_destino : ''}\n`;
+  var origenLinea = `Origen: ${bandera(paisOrigen)} ${paisOrigen}${datos.ciudad_origen ? ', ' + datos.ciudad_origen : ''}${datos.codigo_postal_origen ? ' - ' + datos.codigo_postal_origen : ''}`;
+  var destinoLinea = `Destino: ${bandera(paisDestino)} ${paisDestino}${datos.ciudad_destino ? ', ' + datos.ciudad_destino : ''}${datos.codigo_postal_destino ? ' - ' + datos.codigo_postal_destino : ''}`;
 
+  var paquete = '';
   if (Array.isArray(datos.boxes) && datos.boxes.length > 0) {
     const partes = [];
     for (let i = 0; i < datos.boxes.length; i++) {
       const c = datos.boxes[i];
       partes.push(`Caja ${i + 1}: ${c.largo}x${c.ancho}x${c.alto} cm, ${c.peso_bruto} kg${c.valor_mercancia ? ', R$ ' + c.valor_mercancia : ''}`);
     }
-    msg += 'Paquete: ' + partes.join(' | ') + '\n';
+    paquete = 'Paquete: ' + partes.join(' | ');
   }
 
+  var opcionesEnvio = '';
+  var sinCotizaciones = '';
   if (rates.length === 0) {
-    msg += '\nNo se encontraron cotizaciones para esta ruta.\n';
-    msg += '\n_Escribe *Menú* para volver al inicio._';
-    return msg;
+    sinCotizaciones = 'No se encontraron cotizaciones para esta ruta.';
+  } else {
+    for (let i = 0; i < Math.min(rates.length, 5); i++) {
+      const r = rates[i];
+      const dias = r.days ? ` (~${r.days} días)` : '';
+      opcionesEnvio += `🇺🇸 UPS — ${r.service}\n`;
+      opcionesEnvio += `  💰 ${r.currency} ${r.amount}${dias}\n`;
+      if (i < Math.min(rates.length, 5) - 1) opcionesEnvio += '\n';
+    }
   }
 
-  msg += '\n*OPCIONES DE ENVÍO*\n';
+  var footer = '_Escribe *Menú* para volver al inicio._';
 
-  for (let i = 0; i < Math.min(rates.length, 5); i++) {
-    const r = rates[i];
-    const dias = r.days ? ` (~${r.days} días)` : '';
-    msg += `\n🇺🇸 UPS — ${r.service}\n`;
-    msg += `  💰 ${r.currency} ${r.amount}${dias}\n`;
-  }
-
-  msg += '\n💳 *MÉTODOS DE PAGO:* PIX, Zelle, Binance USDT, Tarjeta, PayPal\n';
-  msg += '\n_Escribe *Menú* para volver al inicio._';
-
-  return msg;
+  return await renderizarPlantilla('mensaje_internacional', {
+    origen_linea: origenLinea,
+    destino_linea: destinoLinea,
+    paquete: paquete,
+    opciones_envio: opcionesEnvio,
+    sin_cotizaciones: sinCotizaciones,
+    metodos_pago: 'PIX, Zelle, Binance USDT, Tarjeta, PayPal',
+    footer: footer
+  });
 }
 
 export { extractUpsParams, formatearMensajeUps };

@@ -151,7 +151,7 @@ async function manejarCotizacion(req, res) {
       cajas: cajasResult
     };
 
-    const mensaje_formateado = formatearMensaje(datos, resultadoMotor);
+    const mensaje_formateado = await formatearMensaje(datos, resultadoMotor);
 
     log('INFO', 'Cotización exitosa', { total_reales, total_usd, modalidad }, contacto);
     res.json({ resultado_final, mensaje_formateado });
@@ -205,7 +205,7 @@ async function manejarCotizacionUps(req, res) {
     const resultadoUps = await cotizarUps(entrada);
     log('INFO', 'UPS resultado', { resultado: JSON.stringify(resultadoUps) }, contacto);
 
-    const mensaje_formateado = formatearMensajeUps(datos, resultadoUps);
+    const mensaje_formateado = await formatearMensajeUps(datos, resultadoUps);
     res.json({ resultado_final: resultadoUps, mensaje_formateado });
   } catch (err) {
     log('ERROR', 'Error en cotización UPS', { error: err.message, stack: err.stack?.split('\n')[0] }, contacto);

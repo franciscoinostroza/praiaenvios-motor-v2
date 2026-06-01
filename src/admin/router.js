@@ -6,6 +6,7 @@ import { cotizarDebug as simular } from '../services/motor.js';
 import { log } from '../utils/log.js';
 import { CATEGORIAS_SEMILLA, SEED_SET } from '../utils/categorias-semilla.js';
 import { invalidarPromptCache } from '../utils/classifier.js';
+import { invalidarPlantillasCache, PLANTILLAS_DEFAULT } from '../utils/plantillas.js';
 
 function auth(req, res, next) {
   const pw = process.env.ADMIN_PASSWORD || 'admin123';
@@ -287,6 +288,7 @@ function renderNav(active) {
     { label: 'Categorías', path: '/admin/categorias', icon: '🏷️', key: 'Categorías' },
     { label: 'Prompt IA', path: '/admin/prompt-categorias', icon: '🤖', key: 'Prompt' },
     { label: 'Zonas', path: '/admin/zonas', icon: '📍', key: 'Zonas' },
+    { label: 'Mensajes', path: '/admin/mensajes', icon: '💬', key: 'Mensajes' },
     { divider: true },
     { label: 'Logs', path: '/admin/logs', icon: '📋', key: 'Logs' },
     { divider: true },
@@ -1810,6 +1812,143 @@ function confirmModalidad(form){
       }
     });
   }
+
+  /* ─── MENSAJES (plantillas) ─── */
+  const INFO_MENSAJES = {
+    mensaje_domestico_brasil: { icon: '🇧🇷', title: 'Mensaje Doméstico — Brasil', desc: 'Cotización desde Brasil (con PIX, R$ + USD)' },
+    mensaje_domestico_venezuela: { icon: '🇻🇪', title: 'Mensaje Doméstico — Venezuela', desc: 'Cotización comprando desde Venezuela (solo USD, sin PIX)' },
+    mensaje_internacional: { icon: '🌎', title: 'Mensaje Internacional (UPS)', desc: 'Cotización internacional con tasas UPS' }
+  };
+
+  const DICTAMENES = {
+    mensaje_domestico_brasil: 'Usa {{origen}}, {{destino}}, {{categoria}}, {{cajas}}, {{modalidad}}, {{total_reales}}, {{total_usd}}, {{tiempo}}, {{fecha_entrega}}, {{agencia}}, {{costo_nacional}}, {{metodos_pago}}, {{footer}}',
+    mensaje_domestico_venezuela: 'Usa {{origen}}, {{destino}}, {{categoria}}, {{cajas}}, {{modalidad}}, {{total}}, {{tiempo}}, {{fecha_entrega}}, {{agencia}}, {{costo_nacional}}, {{metodos_pago}}, {{footer}}',
+    mensaje_internacional: 'Usa {{origen_linea}}, {{destino_linea}}, {{paquete}}, {{opciones_envio}}, {{sin_cotizaciones}}, {{metodos_pago}}, {{footer}}'
+  };
+
+  router.get('/mensajes', auth, async (req, res) => {
+    const t = req.adminToken;
+    const toast = req.query.saved
+      ? '<div class="toast toast-success">✅ Plantilla guardada correctamente</div>'
+      : req.query.restored
+        ? '<div class="toast toast-success">↩️ Plantilla restaurada al valor por defecto</div>'
+        : req.query.error
+          ? '<div class="toast toast-error">❌ Error al guardar la plantilla</div>' : '';
+    const esc = (s) => String(s == null ? '' : s).replace(/</g,'&lt;').replace(/>/g,'&gt;');
+
+    let rows = [];
+    try {
+      const result = await query('SELECT clave, valor, updated_at FROM plantillas_mensajes ORDER BY clave');
+      rows = result.rows;
+    } catch {}
+
+    const dbMap = {};
+    for (const r of rows) dbMap[r.clave] = r;
+
+    let html = toast;
+    html += '<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(320px,1fr));gap:14px">';
+
+    for (const [clave, info] of Object.entries(INFO_MENSAJES)) {
+      const dbRow = dbMap[clave];
+      const preview = dbRow ? dbRow.valor.substring(0, 120).replace(/\n/g, '↵ ') : '(usando plantilla por defecto)';
+      const updated = dbRow && dbRow.updated_at ? new Date(dbRow.updated_at).toLocaleString('es-VE') : '—';
+
+      html += `<div class="card" style="display:flex;flex-direction:column">
+        <h3>${info.icon} ${esc(info.title)}</h3>
+        <p>${esc(info.desc)}</p>
+        <div style="font-size:.7rem;color:var(--gray-400);background:var(--gray-50);padding:8px 10px;border-radius:6px;margin-bottom:10px;font-family:monospace;white-space:pre-wrap;word-break:break-word;max-height:80px;overflow:hidden;line-height:1.4">${esc(preview)}${preview.length >= 120 ? '…' : ''}</div>
+        <div style="margin-top:auto;display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+          <a href="/admin/mensajes/${clave}" style="font-size:.75rem">✏️ Editar</a>
+          <form method="POST" action="/admin/mensajes/${clave}/restaurar" onsubmit="event.preventDefault();confirmDelete('¿Restaurar plantilla ${clave} a su valor por defecto?',this)" style="display:inline">
+            <button class="btn-sm btn-del" type="submit" style="font-size:.72rem">↩️ Restaurar</button>
+          </form>
+          <span style="font-size:.65rem;color:var(--gray-400);margin-left:auto">${updated}</span>
+        </div>
+      </div>`;
+    }
+
+    html += '</div>';
+
+    html += '<div style="margin-top:20px;padding:14px 18px;background:#f0f4ff;border:1px solid #bfdbfe;border-radius:10px;font-size:.8rem;color:var(--gray-700);line-height:1.6">';
+    html += '💡 Las plantillas usan variables <code>{{variable}}</code> y condicionales <code>{{#if variable}}...{{/if}}</code>. ';
+    html += 'Si no hay plantilla guardada en la BD, se usa la plantilla por defecto del sistema.<br>';
+    html += '📖 <strong>Cambia libremente</strong> textos, emojis y estructura. Las variables se reemplazan automáticamente.</div>';
+
+    res.send(layout('Mensajes', html, t));
+  });
+
+  router.get('/mensajes/:clave', auth, async (req, res) => {
+    const t = req.adminToken;
+    const clave = req.params.clave;
+    const info = INFO_MENSAJES[clave];
+    if (!info) return res.status(404).send(layout('Error', '<p style="color:var(--red)">Plantilla no encontrada</p>', t));
+
+    const esc = (s) => String(s == null ? '' : s).replace(/</g,'&lt;').replace(/>/g,'&gt;');
+    const toast = req.query.saved
+      ? '<div class="toast toast-success">✅ Plantilla guardada correctamente</div>' : '';
+
+    let valor = '';
+    try {
+      const result = await query('SELECT valor FROM plantillas_mensajes WHERE clave = $1', [clave]);
+      if (result.rows.length > 0) valor = result.rows[0].valor;
+    } catch {}
+
+    if (!valor) {
+      valor = PLANTILLAS_DEFAULT[clave] || '';
+    }
+
+    const dictamen = DICTAMENES[clave] || '';
+
+    const body = `${toast}<div class="table-wrap">
+      <div class="table-toolbar" style="flex-wrap:wrap;gap:8px">
+        <span style="font-weight:600;font-size:.85rem">${info.icon} ${esc(info.title)}</span>
+        <a href="/admin/mensajes" style="font-size:.75rem;color:var(--gray-500)">← Volver</a>
+      </div>
+      <form method="POST" action="/admin/mensajes/${clave}" onsubmit="return fetch(this.action,{method:this.method,body:new URLSearchParams(new FormData(this))}).then(()=>{window.location.reload()}).catch(()=>{window.location.reload()}),false" style="padding:16px">
+        <div style="margin-bottom:12px">
+          <label style="display:block;font-size:.78rem;font-weight:600;color:var(--gray-500);margin-bottom:6px">Plantilla:</label>
+          <textarea name="valor" style="width:100%;min-height:360px;padding:12px;border:1px solid var(--gray-300);border-radius:8px;font-family:ui-monospace,monospace;font-size:.78rem;line-height:1.6;resize:vertical;tab-size:2">${esc(valor)}</textarea>
+        </div>
+        ${dictamen ? `<div style="margin-bottom:12px;padding:10px 14px;background:var(--gray-50);border-radius:8px;font-size:.76rem;color:var(--gray-500);line-height:1.6">📌 Variables disponibles: <code style="background:var(--gray-200);padding:1px 6px;border-radius:4px">${esc(dictamen)}</code></div>` : ''}
+        <div style="display:flex;gap:8px;align-items:center">
+          <button class="btn-add" type="submit">💾 Guardar plantilla</button>
+          <span style="font-size:.72rem;color:var(--gray-400)">🔁 Los cambios se reflejan inmediatamente en las próximas cotizaciones</span>
+        </div>
+      </form>
+    </div>`;
+
+    res.send(layout('Editar Mensaje', body, t));
+  });
+
+  router.post('/mensajes/:clave', auth, async (req, res) => {
+    try {
+      const clave = req.params.clave;
+      const valor = req.body.valor || '';
+      if (!INFO_MENSAJES[clave]) return res.redirect('/admin/mensajes?error=1');
+
+      if (!valor.trim()) {
+        await query("DELETE FROM plantillas_mensajes WHERE clave = $1", [clave]);
+      } else {
+        await query("INSERT INTO plantillas_mensajes (clave, valor, updated_at) VALUES ($1, $2, NOW()) ON CONFLICT (clave) DO UPDATE SET valor = EXCLUDED.valor, updated_at = NOW()", [clave, valor]);
+      }
+      invalidarPlantillasCache();
+      res.redirect(`/admin/mensajes/${clave}?saved=1`);
+    } catch (err) {
+      res.redirect('/admin/mensajes?error=1');
+    }
+  });
+
+  router.post('/mensajes/:clave/restaurar', auth, async (req, res) => {
+    try {
+      const clave = req.params.clave;
+      if (!INFO_MENSAJES[clave]) return res.redirect('/admin/mensajes?error=1');
+      await query("DELETE FROM plantillas_mensajes WHERE clave = $1", [clave]);
+      invalidarPlantillasCache();
+      res.redirect('/admin/mensajes?restored=1');
+    } catch (err) {
+      res.redirect('/admin/mensajes?error=1');
+    }
+  });
 
   return router;
 }

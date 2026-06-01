@@ -94,6 +94,12 @@ CREATE TABLE IF NOT EXISTS rate_cache (
 
 CREATE INDEX IF NOT EXISTS idx_rate_cache_expira ON rate_cache(expira_en);
 
+CREATE TABLE IF NOT EXISTS plantillas_mensajes (
+  clave VARCHAR(50) PRIMARY KEY,
+  valor TEXT NOT NULL,
+  updated_at TIMESTAMP DEFAULT NOW()
+);
+
 `;
 
 async function migrate() {
