@@ -77,17 +77,36 @@ body{font-family:'Inter',-apple-system,sans-serif;background:var(--gray-50);colo
 .hero-card:nth-child(4){border-left-color:#ef4444}
 
 /* ─── QUICK CARDS ─── */
-.quick-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:24px}
-.q-card{background:#fff;border-radius:var(--radius);padding:14px 18px;box-shadow:var(--shadow);border:1px solid var(--gray-200);display:flex;align-items:center;gap:14px;text-decoration:none;transition:box-shadow .2s,border-color .2s,transform .15s}
-.q-card:hover{border-color:var(--blue);box-shadow:0 4px 12px rgba(59,130,246,.12);transform:translateY(-1px)}
-.q-card .q-icon{font-size:1.4rem;flex-shrink:0;width:36px;text-align:center}
+.quick-grid{display:flex;gap:12px;flex-wrap:wrap;margin-bottom:24px}
+.q-card{flex:1;min-width:250px;background:#fff;border-radius:12px;padding:16px 20px;box-shadow:var(--shadow);border:1px solid var(--gray-200);border-left:4px solid var(--gray-300);display:flex;align-items:center;gap:14px;text-decoration:none;transition:all .2s}
+.q-card:hover{box-shadow:0 4px 14px rgba(0,0,0,.08);transform:translateY(-1px)}
+.q-card .q-icon{font-size:1.5rem;width:40px;text-align:center;flex-shrink:0}
 .q-card .q-body{flex:1;min-width:0}
-.q-card .q-title{font-size:.82rem;font-weight:600;color:var(--gray-700)}
-.q-card .q-desc{font-size:.72rem;color:var(--gray-500);margin-top:1px}
-.q-card .q-link{font-size:.72rem;font-weight:600;color:var(--blue);flex-shrink:0;white-space:nowrap}
-.q-card:hover .q-link{text-decoration:underline}
-.q-card.q-logos{border-left:3px solid #ef4444}
-.q-card.q-logos:hover{border-left-color:#ef4444;border-color:#fecaca}
+.q-card .q-title{font-size:.85rem;font-weight:600;color:var(--gray-700)}
+.q-card .q-desc{font-size:.73rem;color:var(--gray-500);margin-top:2px}
+.q-card .q-arrow{font-size:.8rem;color:var(--gray-400);flex-shrink:0;font-weight:600;transition:color .2s}
+.q-card:hover .q-arrow{color:var(--blue)}
+.q-card.sim{background:linear-gradient(135deg,#f8faff,#fff);border-left-color:#3b82f6}
+.q-card.wiki{background:linear-gradient(135deg,#fafdf5,#fff);border-left-color:#22c55e}
+.q-card.logs{background:linear-gradient(135deg,#fff8f8,#fff);border-left-color:#ef4444}
+
+/* ─── MESSAGE CARDS ─── */
+.msg-group{font-size:.85rem;font-weight:700;color:var(--gray-600);display:flex;align-items:center;gap:8px;margin-top:24px;margin-bottom:6px}
+.msg-group:first-child{margin-top:0}
+.msg-group .msg-count{font-size:.7rem;font-weight:400;color:var(--gray-400)}
+.msg-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(340px,1fr));gap:16px}
+.msg-card{background:#fff;border-radius:12px;padding:18px;box-shadow:var(--shadow);border:1px solid var(--gray-200);display:flex;flex-direction:column;transition:box-shadow .2s;border-top:3px solid var(--gray-300)}
+.msg-card:hover{box-shadow:0 4px 12px rgba(0,0,0,.08)}
+.msg-card h3{font-size:.85rem;font-weight:600;color:var(--gray-700);margin-bottom:2px}
+.msg-card .msg-desc{font-size:.73rem;color:var(--gray-500);margin-bottom:10px}
+.msg-card .msg-preview{font-size:.7rem;color:var(--gray-500);background:var(--gray-50);padding:10px 12px;border-radius:8px;font-family:ui-monospace,monospace;line-height:1.5;white-space:pre-wrap;word-break:break-word;max-height:90px;overflow:hidden;margin-bottom:12px;border:1px solid var(--gray-100)}
+.msg-card .msg-footer{display:flex;align-items:center;gap:8px;margin-top:auto;flex-wrap:wrap}
+.msg-card .msg-date{font-size:.65rem;color:var(--gray-400);margin-left:auto}
+.msg-card.es{border-top-color:#3b82f6}
+.msg-card.pt{border-top-color:#22c55e}
+.msg-card.en{border-top-color:#8b5cf6}
+.msg-info{margin-top:20px;padding:14px 18px;background:#f0f4ff;border:1px solid #bfdbfe;border-radius:10px;font-size:.8rem;color:var(--gray-700);line-height:1.6}
+.msg-info code{background:var(--gray-200);padding:1px 5px;border-radius:4px;font-size:.75rem}
 
 @media(max-width:768px){
   .quick-grid{grid-template-columns:1fr;gap:8px}
@@ -196,8 +215,9 @@ td .btn-sm{display:inline-flex;align-items:center;gap:4px;border:none;padding:4p
   .hero{grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:10px}
   .hero-card{padding:12px 14px}
   .hero-card .h-num{font-size:1.25rem}
-  .quick-grid{gap:8px}
+  .quick-grid{flex-direction:column;gap:8px}
   .q-card{padding:12px 14px;gap:10px}
+  .q-card .q-icon{font-size:1.3rem;width:32px}
   .timeline-body{max-height:none}
   .table-toolbar .search-wrap input{width:140px}
   .grid{grid-template-columns:1fr}
@@ -359,7 +379,7 @@ function renderNav(active) {
     { label: 'Matriz de Servicios', path: '/admin/categoria-servicios', icon: '🚦', key: 'Matriz de Servicios' },
     { label: 'Mapeo de Categorías', path: '/admin/mapeo-categorias', icon: '📖', key: 'Mapeo de Categorías' },
     { divider: true },
-    { label: 'Mensajes', path: '/admin/mensajes', icon: '💬', key: 'Mensajes' },
+    { label: 'Mensaje Final', path: '/admin/mensajes', icon: '💬', key: 'Mensaje Final' },
     { divider: true },
     { label: 'Logs', path: '/admin/logs', icon: '📋', key: 'Logs' },
     { divider: true },
@@ -537,11 +557,11 @@ if(document.cookie.includes('token=')){fetch('/admin').then(r=>{if(r.ok&&r.url.i
     </div>`;
 
     // ── quick cards ──
-    const errBadge = heroData.errHoy > 0 ? ` <span style="color:var(--red)">· ${heroData.errHoy} hoy</span>` : '';
+    const errBadge = heroData.errHoy > 0 ? ` · ${heroData.errHoy} hoy` : '';
     const actionsHtml = `<div class="quick-grid">
-      <a href="/admin/simulador" class="q-card"><span class="q-icon">🧮</span><span class="q-body"><span class="q-title">Simulador</span><span class="q-desc">Prueba el motor con datos reales</span></span><span class="q-link">Abrir →</span></a>
-      <a href="/admin/panel" class="q-card"><span class="q-icon">📖</span><span class="q-body"><span class="q-title">Wiki</span><span class="q-desc">Documentación viva del sistema</span></span><span class="q-link">Abrir →</span></a>
-      <a href="/admin/logs?nivel=ERROR" class="q-card${heroData.errHoy > 0 ? ' q-logos' : ''}"><span class="q-icon">📋</span><span class="q-body"><span class="q-title">Logs de Error</span><span class="q-desc">Últimos errores${errBadge}</span></span><span class="q-link">Ver →</span></a>
+      <a href="/admin/simulador" class="q-card sim"><span class="q-icon">🧮</span><span class="q-body"><span class="q-title">Simulador</span><span class="q-desc">Prueba el motor con datos reales</span></span><span class="q-arrow">→</span></a>
+      <a href="/admin/panel" class="q-card wiki"><span class="q-icon">📖</span><span class="q-body"><span class="q-title">Wiki</span><span class="q-desc">Documentación viva del sistema</span></span><span class="q-arrow">→</span></a>
+      <a href="/admin/logs?nivel=ERROR" class="q-card logs"><span class="q-icon">📋</span><span class="q-body"><span class="q-title">Logs de Error</span><span class="q-desc">Últimos errores${errBadge}</span></span><span class="q-arrow">→</span></a>
     </div>`;
 
     // ── timeline ──
@@ -2264,12 +2284,13 @@ function confirmModalidad(form){
     }
 
     var etiquetas = { ES: '🇪🇸 Español', PT: '🇧🇷 Português', EN: '🇺🇸 English' };
+    var clasesGrupo = { ES: 'es', PT: 'pt', EN: 'en' };
 
     for (var g of ['ES', 'PT', 'EN']) {
       var items = grupos[g] || [];
       if (items.length === 0) continue;
-      html += '<div style="margin-top:20px;margin-bottom:10px;font-size:.85rem;font-weight:700;color:var(--gray-600);display:flex;align-items:center;gap:8px">' + etiquetas[g] + ' <span style="font-size:.7rem;font-weight:400;color:var(--gray-400)">' + items.length + ' plantilla(s)</span></div>';
-      html += '<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(320px,1fr));gap:14px">';
+      html += '<div class="msg-group">' + etiquetas[g] + ' <span class="msg-count">' + items.length + ' plantilla(s)</span></div>';
+      html += '<div class="msg-grid">';
       for (var item of items) {
         var clave = item.clave;
         var info = item.info;
@@ -2277,28 +2298,32 @@ function confirmModalidad(form){
         var preview = dbRow ? dbRow.valor.substring(0, 120).replace(/\n/g, '↵ ') : '(usando plantilla por defecto)';
         var updated = dbRow && dbRow.updated_at ? new Date(dbRow.updated_at).toLocaleString('es-VE') : '—';
 
-        html += '<div class="card" style="display:flex;flex-direction:column">';
+        html += '<div class="msg-card ' + clasesGrupo[g] + '">';
         html += '<h3>' + info.icon + ' ' + esc(info.title) + '</h3>';
-        html += '<p>' + esc(info.desc) + '</p>';
-        html += '<div style="font-size:.7rem;color:var(--gray-400);background:var(--gray-50);padding:8px 10px;border-radius:6px;margin-bottom:10px;font-family:monospace;white-space:pre-wrap;word-break:break-word;max-height:80px;overflow:hidden;line-height:1.4">' + esc(preview) + (preview.length >= 120 ? '…' : '') + '</div>';
-        html += '<div style="margin-top:auto;display:flex;gap:8px;align-items:center;flex-wrap:wrap">';
-        html += '<a href="/admin/mensajes/' + clave + '" style="font-size:.75rem">✏️ Editar</a>';
+        html += '<div class="msg-desc">' + esc(info.desc) + '</div>';
+        html += '<div class="msg-preview">' + esc(preview) + (preview.length >= 120 ? '…' : '') + '</div>';
+        html += '<div class="msg-footer">';
+        html += '<a href="/admin/mensajes/' + clave + '" style="font-size:.75rem;color:var(--blue);font-weight:500;text-decoration:none">✏️ Editar</a>';
         html += '<form method="POST" action="/admin/mensajes/' + clave + '/restaurar" onsubmit="event.preventDefault();confirmDelete(\'¿Restaurar plantilla ' + clave + ' a su valor por defecto?\',this)" style="display:inline">';
         html += '<button class="btn-sm btn-del" type="submit" style="font-size:.72rem">↩️ Restaurar</button>';
         html += '</form>';
-        html += '<span style="font-size:.65rem;color:var(--gray-400);margin-left:auto">' + updated + '</span>';
+        html += '<span class="msg-date">' + updated + '</span>';
         html += '</div></div>';
       }
       html += '</div>';
     }
 
-    html += '<div style="margin-top:20px;padding:14px 18px;background:#f0f4ff;border:1px solid #bfdbfe;border-radius:10px;font-size:.8rem;color:var(--gray-700);line-height:1.6">';
+    html += '<div class="msg-info">';
+    html += '💡 Las plantillas usan variables <code>{{variable}}</code> y condicionales <code>{{#if variable}}...{{/if}}</code>. ';
+    html += 'Si no hay plantilla guardada en la BD, se usa la plantilla por defecto del sistema.<br>';
+    html += '📖 <strong>Cambia libremente</strong> textos, emojis y estructura. Las variables se reemplazan automáticamente.<br>';
+    html += '🌐 El sistema selecciona automáticamente la plantilla según el campo <code>idioma</code> del JSON de entrada (<code>es</code>, <code>pt</code>, <code>en</code>). Si no está presente, usa Español.</div>';
     html += '💡 Las plantillas usan variables <code>{{variable}}</code> y condicionales <code>{{#if variable}}...{{/if}}</code>. ';
     html += 'Si no hay plantilla guardada en la BD, se usa la plantilla por defecto del sistema.<br>';
     html += '📖 <strong>Cambia libremente</strong> textos, emojis y estructura. Las variables se reemplazan automáticamente.<br>';
     html += '🌐 El sistema selecciona automáticamente la plantilla según el campo <code>idioma</code> del JSON de entrada (<code>es</code>, <code>pt</code>, <code>en</code>). Si no está presente, usa Español.</div>';
 
-    res.send(layout('Mensajes', html, t));
+    res.send(layout('Mensaje Final', html, t));
   });
 
   router.get('/mensajes/:clave', auth, async (req, res) => {
