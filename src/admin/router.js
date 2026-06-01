@@ -61,14 +61,65 @@ body{font-family:'Inter',-apple-system,sans-serif;background:var(--gray-50);colo
 .stat-card .num{font-size:1.5rem;font-weight:700;color:var(--blue)}
 .stat-card .label{font-size:.75rem;color:var(--gray-500);margin-top:2px;overflow-wrap:break-word}
 
-/* ─── CARDS GRID ─── */
-.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:12px}
-.card{background:#fff;border-radius:var(--radius);padding:16px;box-shadow:var(--shadow);border:1px solid var(--gray-200);transition:box-shadow .2s,border-color .2s}
-.card:hover{border-color:var(--blue);box-shadow:0 4px 12px rgba(59,130,246,.15)}
-.card h3{font-size:.85rem;font-weight:600;color:var(--gray-700);margin-bottom:4px}
-.card p{font-size:.75rem;color:var(--gray-500);margin-bottom:12px}
-.card a{display:inline-flex;align-items:center;gap:4px;background:var(--blue);color:#fff;text-decoration:none;padding:5px 12px;border-radius:6px;font-size:.75rem;font-weight:500;transition:background .15s}
-.card a:hover{background:var(--blue-hover)}
+/* ─── HERO STATS ─── */
+.hero{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:14px;margin-bottom:22px}
+.hero-card{background:#fff;border-radius:12px;padding:18px 20px;box-shadow:var(--shadow);border:1px solid var(--gray-200);border-left:4px solid var(--blue);position:relative;overflow:hidden;transition:box-shadow .2s}
+.hero-card:hover{box-shadow:0 4px 16px rgba(0,0,0,.1)}
+.hero-card .h-icon{font-size:1.3rem;margin-bottom:6px}
+.hero-card .h-num{font-size:1.6rem;font-weight:700;color:var(--gray-800);line-height:1.2}
+.hero-card .h-label{font-size:.72rem;color:var(--gray-500);margin-top:2px}
+.hero-card .h-sub{font-size:.7rem;font-weight:500;margin-top:4px}
+.hero-card .h-sub.green{color:var(--green)}
+.hero-card .h-sub.red{color:var(--red)}
+.hero-card:nth-child(1){border-left-color:#3b82f6}
+.hero-card:nth-child(2){border-left-color:#22c55e}
+.hero-card:nth-child(3){border-left-color:#f59e0b}
+.hero-card:nth-child(4){border-left-color:#ef4444}
+
+/* ─── QUICK ACTIONS ─── */
+.quick-actions{display:flex;gap:8px;margin-bottom:20px;flex-wrap:wrap}
+.qa-btn{display:inline-flex;align-items:center;gap:6px;padding:8px 16px;border-radius:8px;font-size:.8rem;font-weight:600;text-decoration:none;transition:all .15s;border:none;cursor:pointer;font-family:inherit}
+.qa-btn.primary{background:var(--blue);color:#fff}
+.qa-btn.primary:hover{background:var(--blue-hover);transform:translateY(-1px)}
+.qa-btn.secondary{background:var(--gray-100);color:var(--gray-700);border:1px solid var(--gray-200)}
+.qa-btn.secondary:hover{background:var(--gray-200);transform:translateY(-1px)}
+.qa-btn.warning{background:#fef3c7;color:#92400e;border:1px solid #fde68a}
+.qa-btn.warning:hover{background:#fde68a;transform:translateY(-1px)}
+
+/* ─── TIMELINE ─── */
+.timeline{background:#fff;border-radius:var(--radius);box-shadow:var(--shadow);border:1px solid var(--gray-200);margin-bottom:24px;overflow:hidden}
+.timeline-head{display:flex;align-items:center;gap:8px;padding:12px 18px;border-bottom:1px solid var(--gray-200);font-size:.82rem;font-weight:600;color:var(--gray-700)}
+.timeline-body{max-height:220px;overflow-y:auto}
+.tl-item{display:flex;align-items:center;gap:12px;padding:10px 18px;border-bottom:1px solid var(--gray-100);font-size:.78rem;transition:background .12s}
+.tl-item:last-child{border-bottom:none}
+.tl-item:hover{background:var(--gray-50)}
+.tl-time{color:var(--gray-400);font-size:.7rem;white-space:nowrap;min-width:60px;font-weight:500}
+.tl-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0}
+.tl-dot.sedex{background:var(--blue)}
+.tl-dot.pac{background:#f59e0b}
+.tl-dot.latam{background:#8b5cf6}
+.tl-text{color:var(--gray-600);flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.tl-val{font-weight:600;color:var(--gray-800);white-space:nowrap}
+
+/* ─── SECTIONED GRID ─── */
+.section{margin-bottom:20px}
+.section:last-child{margin-bottom:0}
+.section-header{display:flex;align-items:center;gap:8px;margin-bottom:10px;font-size:.82rem;font-weight:600;color:var(--gray-600);text-transform:uppercase;letter-spacing:.04em}
+.section-header .sh-line{flex:1;height:1px;background:var(--gray-200)}
+
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:10px}
+.card{background:#fff;border-radius:var(--radius);padding:14px 16px;box-shadow:var(--shadow);border:1px solid var(--gray-200);border-left:3px solid var(--gray-300);transition:box-shadow .2s,border-color .2s,transform .15s;display:flex;flex-direction:column}
+.card:hover{border-color:var(--gray-300);box-shadow:0 4px 12px rgba(0,0,0,.08);transform:translateY(-1px)}
+.card h3{font-size:.8rem;font-weight:600;color:var(--gray-700);margin-bottom:2px}
+.card p{font-size:.7rem;color:var(--gray-500);margin-bottom:10px;line-height:1.4;flex:1}
+.card a{display:inline-flex;align-items:center;gap:4px;background:var(--gray-100);color:var(--gray-600);text-decoration:none;padding:4px 10px;border-radius:6px;font-size:.7rem;font-weight:500;transition:all .15s;align-self:flex-start}
+.card a:hover{background:var(--blue);color:#fff}
+.card.section-tarifas{border-left-color:#3b82f6}
+.card.section-tarifas a:hover{background:#3b82f6}
+.card.section-envios{border-left-color:#f59e0b}
+.card.section-envios a:hover{background:#f59e0b}
+.card.section-clasificacion{border-left-color:#8b5cf6}
+.card.section-clasificacion a:hover{background:#8b5cf6}
 
 /* ─── TABLE ─── */
 .table-wrap{background:#fff;border-radius:var(--radius);box-shadow:var(--shadow);border:1px solid var(--gray-200);overflow-x:auto;-webkit-overflow-scrolling:touch}
@@ -134,7 +185,12 @@ td .btn-sm{display:inline-flex;align-items:center;gap:4px;border:none;padding:4p
   .side-overlay.open{opacity:1;pointer-events:auto}
   .main{padding:60px 16px 16px;margin-left:0}
   body.menu-open{overflow:hidden}
-  .stats{grid-template-columns:repeat(auto-fill,minmax(130px,1fr))}
+  .hero{grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:10px}
+  .hero-card{padding:12px 14px}
+  .hero-card .h-num{font-size:1.25rem}
+  .quick-actions{gap:6px}
+  .qa-btn{padding:6px 12px;font-size:.75rem}
+  .timeline-body{max-height:none}
   .table-toolbar .search-wrap input{width:140px}
   .grid{grid-template-columns:1fr}
   td,th{padding:6px 8px;font-size:.75rem}
@@ -166,6 +222,10 @@ td .btn-sm{display:inline-flex;align-items:center;gap:4px;border:none;padding:4p
   td .btn-sm{padding:2px 6px;font-size:.64rem}
   .stat-card{padding:10px 12px}
   .stat-card .num{font-size:1.15rem}
+  .hero{gap:8px}
+  .hero-card{padding:10px 12px}
+  .hero-card .h-icon{font-size:1.1rem;margin-bottom:4px}
+  .hero-card .h-num{font-size:1.1rem}
   .stats{gap:8px}
   .grid{gap:8px;padding:0}
   .card{padding:12px}
@@ -419,39 +479,115 @@ if(document.cookie.includes('token=')){fetch('/admin').then(r=>{if(r.ok&&r.url.i
   /* ─── DASHBOARD ─── */
   router.get('/', auth, async (req, res) => {
     const t = req.adminToken;
-    const tables = [
-      { key: 'tarifas_express', icon: '💰', name: 'Tarifas Express', desc: 'Precios por kg — Modalidad 1 — Express — SEDEX' },
-      { key: 'tarifas_terrestre', icon: '🚚', name: 'Tarifas Terrestre', desc: 'Precios por kg — Modalidad 2 — Terrestre — PAC' },
-      { key: 'nacional_op1', icon: '🏠', name: 'Nacional OP1', desc: 'Costo nacional MRW' },
-      { key: 'nacional_op2', icon: '🏠', name: 'Nacional OP2', desc: 'Costo nacional LAE' },
-      { key: 'tramos_boa_vista', icon: '📏', name: 'Tramos Boa Vista', desc: 'Suma dimensiones → precio' },
-      { key: 'tramos_ganancia', icon: '📊', name: 'Tramos Ganancia', desc: 'Peso → USD/kg' },
-      { key: 'modalidades', icon: '📋', name: 'Modalidades', desc: 'Configuración de cada modalidad' },
-      { key: 'formulas', icon: '🧮', name: 'Fórmulas', desc: 'Constantes del motor — descripción incluida' },
-      { key: 'categorias', icon: '🏷️', name: 'Categorías', desc: 'Vocabulario para el clasificador IA' },
-      { key: 'categoria-servicios', table: 'categoria_servicios', icon: '🚦', name: 'Matriz de Servicios', desc: 'Categorías × SEDEX / PAC / LATAM' },
-      { key: 'mapeo-categorias', table: 'mapeo_categorias', icon: '📖', name: 'Mapeo de Categorías', desc: 'Términos de producto → categorías' },
-      { key: 'mensajes', table: 'plantillas_mensajes', icon: '💬', name: 'Mensajes', desc: 'Plantillas de respuesta (ES/PT/EN)' },
-      { key: 'zonas', icon: '📍', name: 'Zonas', desc: 'Base y orígenes prohibidos' },
-    ];
-    let logsStatHtml = '';
+    const esc = (s) => String(s == null ? '' : s).replace(/</g,'&lt;').replace(/>/g,'&gt;');
+
+    // ── queries ──
+    let heroData = { cotizHoy: 0, cotizAyer: 0, tasaUsd: '—', ultCotiz: null, errHoy: 0, ultErr: null };
+    let timelineRows = [];
+    let counts = [];
     try {
-      const errCount = await query("SELECT COUNT(*) c FROM logs WHERE nivel='ERROR' AND created_at >= NOW() - INTERVAL '1 day'");
-      logsStatHtml = `<div class="stat-card"><div class="num" style="color:${parseInt(errCount.rows[0].c) > 0 ? 'var(--red)' : 'var(--green)'}">${errCount.rows[0].c}</div><div class="label">📋 Errores hoy</div></div>`;
+      const [qCotiz, qTasa, qUltCotiz, qErrs, qUltErr, qTimeline] = await Promise.all([
+        query(`SELECT
+          COUNT(*) FILTER (WHERE created_at >= NOW() - INTERVAL '1 day') as hoy,
+          COUNT(*) FILTER (WHERE created_at >= NOW() - INTERVAL '2 days' AND created_at < NOW() - INTERVAL '1 day') as ayer
+        FROM logs WHERE nivel='INFO' AND mensaje LIKE '%Cotización exitosa%'`),
+        query("SELECT valor FROM formulas WHERE clave='tasa_dolar'"),
+        query("SELECT created_at FROM logs WHERE nivel='INFO' AND mensaje LIKE '%Cotización exitosa%' ORDER BY created_at DESC LIMIT 1"),
+        query("SELECT COUNT(*) c FROM logs WHERE nivel='ERROR' AND created_at >= NOW() - INTERVAL '1 day'"),
+        query("SELECT created_at, mensaje FROM logs WHERE nivel='ERROR' ORDER BY created_at DESC LIMIT 1"),
+        query("SELECT created_at, mensaje FROM logs WHERE nivel='INFO' AND mensaje LIKE '%Cotización exitosa%' ORDER BY created_at DESC LIMIT 5"),
+      ]);
+      heroData.cotizHoy = Number(qCotiz.rows[0].hoy);
+      heroData.cotizAyer = Number(qCotiz.rows[0].ayer);
+      heroData.tasaUsd = qTasa.rows.length > 0 ? Number(qTasa.rows[0].valor).toFixed(2) : '—';
+      heroData.ultCotiz = qUltCotiz.rows.length > 0 ? qUltCotiz.rows[0].created_at : null;
+      heroData.errHoy = Number(qErrs.rows[0].c);
+      heroData.ultErr = qUltErr.rows.length > 0 ? { time: qUltErr.rows[0].created_at, msg: qUltErr.rows[0].mensaje } : null;
+      timelineRows = qTimeline.rows;
     } catch {}
-    let statsHtml = '';
-    try {
-      const counts = await Promise.all(tables.map(t => query(`SELECT COUNT(*) c FROM ${t.table || t.key}`)));
-      statsHtml = '<div class="stats">' + tables.map((t, i) =>
-        `<div class="stat-card"><div class="num">${counts[i].rows[0].c}</div><div class="label">${t.icon} ${t.name}</div></div>`
-      ).join('') + logsStatHtml + '</div>';
-    } catch {
-      statsHtml = '<p style="color:var(--red);font-size:.85rem">⚠️ Error al cargar estadísticas</p>';
+
+    // ── hero stats ──
+    const pctCambio = heroData.cotizAyer > 0
+      ? ((heroData.cotizHoy - heroData.cotizAyer) / heroData.cotizAyer * 100).toFixed(0)
+      : null;
+    const cambioCls = pctCambio !== null ? (Number(pctCambio) >= 0 ? 'green' : 'red') : '';
+    const cambioStr = pctCambio !== null ? `${Number(pctCambio) >= 0 ? '+' : ''}${pctCambio}% vs ayer` : '';
+
+    const timeAgo = (d) => {
+      if (!d) return '—';
+      const diff = (Date.now() - new Date(d).getTime()) / 1000;
+      if (diff < 60) return 'hace segundos';
+      if (diff < 3600) return `hace ${Math.floor(diff / 60)} min`;
+      return `hace ${Math.floor(diff / 3600)}h`;
+    };
+
+    const heroHtml = `<div class="hero">
+      <div class="hero-card"><div class="h-icon">📈</div><div class="h-num">${heroData.cotizHoy}</div><div class="h-label">Cotizaciones hoy</div>${cambioStr ? `<div class="h-sub ${cambioCls}">${cambioStr}</div>` : ''}</div>
+      <div class="hero-card"><div class="h-icon">💰</div><div class="h-num">R$ ${heroData.tasaUsd}</div><div class="h-label">Tasa USD</div><div class="h-sub" style="color:var(--gray-400)">desde formulas</div></div>
+      <div class="hero-card"><div class="h-icon">⏱</div><div class="h-num">${timeAgo(heroData.ultCotiz)}</div><div class="h-label">Última cotización</div><div class="h-sub" style="color:var(--gray-400)">${heroData.ultCotiz ? new Date(heroData.ultCotiz).toLocaleString('es-VE',{hour:'2-digit',minute:'2-digit'}) : '—'}</div></div>
+      <div class="hero-card"><div class="h-icon">⚠️</div><div class="h-num" style="color:${heroData.errHoy > 0 ? 'var(--red)' : 'var(--green)'}">${heroData.errHoy}</div><div class="h-label">Errores hoy</div>${heroData.ultErr ? `<div class="h-sub red">${timeAgo(heroData.ultErr.time)}: ${esc(heroData.ultErr.msg.slice(0,50))}</div>` : '<div class="h-sub green">Sin errores</div>'}</div>
+    </div>`;
+
+    // ── quick actions ──
+    const actionsHtml = `<div class="quick-actions">
+      <a href="/admin/simulador" class="qa-btn primary">🧮 Simulador</a>
+      <a href="/admin/panel" class="qa-btn secondary">📖 Wiki</a>
+      <a href="/admin/logs?nivel=ERROR" class="qa-btn ${heroData.errHoy > 0 ? 'warning' : 'secondary'}">📋 Logs de error</a>
+    </div>`;
+
+    // ── timeline ──
+    const dotClass = (msg) => {
+      const m = (msg || '').toLowerCase();
+      if (m.includes('sedex') || m.includes('express')) return 'sedex';
+      if (m.includes('pac') || m.includes('terrestre')) return 'pac';
+      return 'latam';
+    };
+    const extraerValor = (msg) => {
+      const m = msg || '';
+      const match = m.match(/R\$\s*([\d.]+(?:,\d+)?)/);
+      return match ? 'R$ ' + match[1] : '';
+    };
+    const timelineHtml = timelineRows.length > 0 ? `<div class="timeline">
+      <div class="timeline-head">⏱️ Últimas cotizaciones</div>
+      <div class="timeline-body">${timelineRows.map(r =>
+        `<div class="tl-item"><span class="tl-time">${new Date(r.created_at).toLocaleTimeString('es-VE',{hour:'2-digit',minute:'2-digit'})}</span><span class="tl-dot ${dotClass(r.mensaje)}"></span><span class="tl-text">${esc(r.mensaje.slice(0,80))}</span><span class="tl-val">${esc(extraerValor(r.mensaje))}</span></div>`
+      ).join('')}</div>
+    </div>` : '';
+
+    // ── sectioned cards ──
+    const sections = [
+      { key: 'tarifas', icon: '💰', label: 'Tarifas', cls: 'section-tarifas', cards: [
+        { key: 'tarifas_express', icon: '💰', name: 'Express', desc: 'Modalidad 1 — SEDEX' },
+        { key: 'tarifas_terrestre', icon: '🚚', name: 'Terrestre', desc: 'Modalidad 2 — PAC' },
+        { key: 'nacional_op1', icon: '🏠', name: 'Nacional OP1', desc: 'Costo nacional MRW' },
+        { key: 'nacional_op2', icon: '🏠', name: 'Nacional OP2', desc: 'Costo nacional LAE' },
+      ]},
+      { key: 'envios', icon: '📦', label: 'Envíos', cls: 'section-envios', cards: [
+        { key: 'tramos_boa_vista', icon: '📏', name: 'Tramos Boa Vista', desc: 'Suma dimensiones → precio' },
+        { key: 'tramos_ganancia', icon: '📊', name: 'Tramos Ganancia', desc: 'Peso → USD/kg' },
+        { key: 'modalidades', icon: '📋', name: 'Modalidades', desc: 'Configuración de cada modalidad' },
+        { key: 'formulas', icon: '🧮', name: 'Fórmulas', desc: 'Constantes del motor' },
+        { key: 'zonas', icon: '📍', name: 'Zonas', desc: 'Base y orígenes prohibidos' },
+      ]},
+      { key: 'clasificacion', icon: '🤖', label: 'Clasificación', cls: 'section-clasificacion', cards: [
+        { key: 'categoria-servicios', icon: '🚦', name: 'Matriz de Servicios', desc: 'Categorías × SEDEX / PAC / LATAM' },
+        { key: 'mapeo-categorias', icon: '📖', name: 'Mapeo de Categorías', desc: 'Términos → categorías' },
+        { key: 'categorias', icon: '🏷️', name: 'Categorías', desc: 'Vocabulario para el clasificador IA' },
+        { key: 'prompt-categorias', icon: '🤖', name: 'Prompt Clasificador', desc: 'System prompt GPT-4o mini' },
+        { key: 'mensajes', icon: '💬', name: 'Mensajes', desc: 'Plantillas de respuesta ES/PT/EN' },
+      ]},
+    ];
+
+    let seccionesHtml = '';
+    for (const sec of sections) {
+      seccionesHtml += `<div class="section"><div class="section-header">${sec.icon} ${sec.label}<span class="sh-line"></span></div><div class="grid">`;
+      for (const c of sec.cards) {
+        seccionesHtml += `<div class="card ${sec.cls}"><h3>${c.icon} ${c.name}</h3><p>${c.desc}</p><a href="/admin/${c.key}">Editar →</a></div>`;
+      }
+      seccionesHtml += '</div></div>';
     }
-    const cardsHtml = tables.map(t =>
-      `<div class="card"><h3>${t.icon} ${t.name}</h3><p>${t.desc}</p><a href="/admin/${t.key}">Editar →</a></div>`
-    ).join('');
-    const body = `${statsHtml}<div class="grid">${cardsHtml}</div>`;
+
+    const body = `${heroHtml}${actionsHtml}${timelineHtml}${seccionesHtml}`;
     res.send(layout('Admin', body, t));
   });
 
