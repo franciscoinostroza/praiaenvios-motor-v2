@@ -111,6 +111,147 @@ async function seed() {
   }
   console.log('[seed] plantillas_mensajes ok');
 
+  // Categoría × Servicio — matriz de semáforos
+  const CATEGORIAS_MATRIZ = {
+    electronica:             { sedex: 'verde',   pac: 'verde',   latam: 'verde'   },
+    electrodomesticos:       { sedex: 'verde',   pac: 'verde',   latam: 'verde'   },
+    ropa:                    { sedex: 'verde',   pac: 'verde',   latam: 'verde'   },
+    calzado:                 { sedex: 'verde',   pac: 'verde',   latam: 'verde'   },
+    accesorios:              { sedex: 'verde',   pac: 'verde',   latam: 'verde'   },
+    perfumes:                { sedex: 'verde',   pac: 'verde',   latam: 'verde',  doc: 'FISPQ/MSDS' },
+    cosmeticos:              { sedex: 'verde',   pac: 'verde',   latam: 'verde'   },
+    repuestos:               { sedex: 'verde',   pac: 'verde',   latam: 'verde'   },
+    juguetes:                { sedex: 'verde',   pac: 'verde',   latam: 'verde'   },
+    herramientas:            { sedex: 'verde',   pac: 'verde',   latam: 'verde'   },
+    libros:                  { sedex: 'verde',   pac: 'verde',   latam: 'verde'   },
+    alimentos:               { sedex: 'verde',   pac: 'verde',   latam: 'verde'   },
+    suplementos:             { sedex: 'verde',   pac: 'verde',   latam: 'verde'   },
+    documentos:              { sedex: 'verde',   pac: 'rojo',    latam: 'rojo'    },
+    quimicos:                { sedex: 'amarillo',pac: 'amarillo',latam: 'amarillo',doc: 'FISPQ/MSDS' },
+    liquidos:                { sedex: 'amarillo',pac: 'amarillo',latam: 'amarillo',doc: 'FISPQ/MSDS' },
+    baterias:                { sedex: 'rojo',    pac: 'verde',   latam: 'verde'   },
+    corrosivos:              { sedex: 'rojo',    pac: 'rojo',    latam: 'rojo'    },
+    insumos_medicos:         { sedex: 'verde',   pac: 'verde',   latam: 'verde'   },
+    medicamentos:            { sedex: 'rojo',    pac: 'rojo',    latam: 'rojo'    },
+    alcohol:                 { sedex: 'rojo',    pac: 'rojo',    latam: 'rojo'    },
+    grasa:                   { sedex: 'rojo',    pac: 'rojo',    latam: 'rojo'    },
+    agroavicola:             { sedex: 'verde',   pac: 'verde',   latam: 'verde'   },
+    aerosoles_inflamables:   { sedex: 'rojo',    pac: 'rojo',    latam: 'rojo'    },
+    aerosoles_no_inflamables:{ sedex: 'amarillo',pac: 'amarillo',latam: 'amarillo',doc: 'FISPQ/MSDS' },
+    aeronaves_drones:        { sedex: 'rojo',    pac: 'verde',   latam: 'verde'   },
+    odontologicos:           { sedex: 'verde',   pac: 'verde',   latam: 'verde'   },
+    audio_profesional:       { sedex: 'verde',   pac: 'verde',   latam: 'verde'   },
+    instrumentos_musicales:  { sedex: 'verde',   pac: 'verde',   latam: 'verde'   },
+    esotericos:              { sedex: 'verde',   pac: 'verde',   latam: 'verde'   },
+    peluqueria_barberia:     { sedex: 'verde',   pac: 'verde',   latam: 'verde'   },
+    automotriz:              { sedex: 'verde',   pac: 'verde',   latam: 'verde'   },
+    camping_pesca:           { sedex: 'verde',   pac: 'verde',   latam: 'verde'   },
+    mascotas:                { sedex: 'verde',   pac: 'verde',   latam: 'verde'   },
+    deportes:                { sedex: 'verde',   pac: 'verde',   latam: 'verde'   },
+    decoracion:              { sedex: 'verde',   pac: 'verde',   latam: 'verde'   },
+    semillas:                { sedex: 'verde',   pac: 'verde',   latam: 'verde'   },
+    jardineria:              { sedex: 'verde',   pac: 'verde',   latam: 'verde'   },
+    fiesta:                  { sedex: 'verde',   pac: 'verde',   latam: 'verde'   },
+    escolar:                 { sedex: 'verde',   pac: 'verde',   latam: 'verde'   },
+    oficina:                 { sedex: 'verde',   pac: 'verde',   latam: 'verde'   },
+    navidad:                 { sedex: 'verde',   pac: 'verde',   latam: 'verde'   },
+    bisuteria:               { sedex: 'verde',   pac: 'verde',   latam: 'verde'   },
+    joyeria:                 { sedex: 'verde',   pac: 'verde',   latam: 'verde'   },
+    religiosos:              { sedex: 'verde',   pac: 'verde',   latam: 'verde'   },
+    celulares:               { sedex: 'verde',   pac: 'verde',   latam: 'verde'   },
+    textiles_hogar:          { sedex: 'verde',   pac: 'verde',   latam: 'verde'   },
+    gaming:                  { sedex: 'verde',   pac: 'verde',   latam: 'verde'   },
+    fotografia_video:        { sedex: 'verde',   pac: 'verde',   latam: 'verde'   },
+    bebes:                   { sedex: 'verde',   pac: 'verde',   latam: 'verde'   },
+    cocina:                  { sedex: 'verde',   pac: 'verde',   latam: 'verde'   },
+    bano:                    { sedex: 'verde',   pac: 'verde',   latam: 'verde'   },
+    limpieza:                { sedex: 'verde',   pac: 'verde',   latam: 'verde'   },
+    ferreteria:              { sedex: 'verde',   pac: 'verde',   latam: 'verde'   },
+    manualidades:            { sedex: 'verde',   pac: 'verde',   latam: 'verde'   },
+    embalaje:                { sedex: 'verde',   pac: 'verde',   latam: 'verde'   },
+    seguridad:               { sedex: 'verde',   pac: 'verde',   latam: 'verde'   },
+    veterinario:             { sedex: 'verde',   pac: 'verde',   latam: 'verde'   },
+    general:                 { sedex: 'verde',   pac: 'verde',   latam: 'verde'   },
+  };
+
+  for (const [cat, svc] of Object.entries(CATEGORIAS_MATRIZ)) {
+    for (const servicio of ['sedex', 'pac', 'latam']) {
+      await query(
+        "INSERT INTO categoria_servicios (categoria, servicio, estado, documentacion) VALUES ($1, $2, $3, $4) ON CONFLICT (categoria, servicio) DO NOTHING",
+        [cat, servicio, svc[servicio], svc.doc || '']
+      );
+    }
+  }
+  console.log('[seed] categoria_servicios ok (' + Object.keys(CATEGORIAS_MATRIZ).length + ' categorias)');
+
+  // Mapeo de términos a categorías (diccionario editable por admin)
+  const MAPEO_INICIAL = [
+    ['drone', 'aeronaves_drones', 'baterias'],
+    ['dron', 'aeronaves_drones', 'baterias'],
+    ['laptop', 'electronica', 'baterias'],
+    ['notebook', 'electronica', 'baterias'],
+    ['smartphone', 'celulares', 'baterias'],
+    ['celular', 'celulares', 'baterias'],
+    ['tablet', 'electronica', 'baterias'],
+    ['ipad', 'electronica', 'baterias'],
+    ['smartwatch', 'electronica', 'baterias'],
+    ['cámara digital', 'fotografia_video', 'baterias'],
+    ['camara digital', 'fotografia_video', 'baterias'],
+    ['perfume importado', 'perfumes', ''],
+    ['colonia importada', 'perfumes', ''],
+    ['suplemento alimenticio', 'suplementos', 'alimentos'],
+    ['suplemento deportivo', 'suplementos', 'alimentos'],
+    ['grasa automotriz', 'automotriz', ''],
+    ['aceite de motor', 'automotriz', ''],
+    ['medicamento controlado', 'medicamentos', ''],
+    ['bebida alcohólica', 'alcohol', ''],
+    ['bebida alcoholica', 'alcohol', ''],
+    ['licor', 'alcohol', ''],
+    ['instrumento musical', 'instrumentos_musicales', ''],
+    ['guitarra', 'instrumentos_musicales', ''],
+    ['material odontológico', 'odontologicos', ''],
+    ['equipo odontológico', 'odontologicos', ''],
+    ['artículo esotérico', 'esotericos', ''],
+    ['articulo esoterico', 'esotericos', ''],
+    ['herramienta de pesca', 'camping_pesca', ''],
+    ['artículo de pesca', 'camping_pesca', ''],
+    ['juguete para mascota', 'mascotas', ''],
+    ['accesorio para mascota', 'mascotas', ''],
+    ['artículo de navidad', 'navidad', ''],
+    ['adorno navideño', 'navidad', ''],
+    ['adorno navideno', 'navidad', ''],
+    ['bisutería fina', 'bisuteria', ''],
+    ['bisuteria fina', 'bisuteria', ''],
+    ['bisutería artesanal', 'bisuteria', ''],
+    ['bisuteria artesanal', 'bisuteria', ''],
+    ['semilla de', 'semillas', ''],
+    ['semillas de', 'semillas', ''],
+    ['artículo religioso', 'religiosos', ''],
+    ['articulo religioso', 'religiosos', ''],
+  ];
+  for (const [termino, categoria, restricciones] of MAPEO_INICIAL) {
+    await query(
+      "INSERT INTO mapeo_categorias (termino, categoria, restricciones) VALUES ($1, $2, $3) ON CONFLICT (termino) DO NOTHING",
+      [termino, categoria, restricciones]
+    );
+  }
+  console.log('[seed] mapeo_categorias ok (' + MAPEO_INICIAL.length + ' terminos)');
+
+  // Actualizar nombres de modalidades con nomenclatura mixta
+  const NOMBRES_MODALIDADES = {
+    EXPRESS: 'Modalidad 1 — Express — SEDEX',
+    TERRESTRE: 'Modalidad 2 — Terrestre — PAC',
+    AEREO: 'Modalidad 3 — Aéreo — LATAM',
+    AEREO_TRECHO: 'Modalidad 4 — Aéreo + Trecho — LATAM Trecho'
+  };
+  for (const [mod, nombre] of Object.entries(NOMBRES_MODALIDADES)) {
+    await query(
+      "UPDATE modalidades SET valor = $1 WHERE modalidad = $2 AND clave = 'nombre'",
+      [nombre, mod]
+    );
+  }
+  console.log('[seed] nombres de modalidades actualizados');
+
   console.log('[seed] todos los datos insertados correctamente');
   process.exit(0);
 }

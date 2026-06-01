@@ -10,7 +10,7 @@ export async function loadConfig(forceReload = false) {
     return cache;
   }
 
-  const [expressRows, terreRows, nac1Rows, nac2Rows, bvRows, ganRows, modRows, formRows, catRows, zonaRows] = await Promise.all([
+  const [expressRows, terreRows, nac1Rows, nac2Rows, bvRows, ganRows, modRows, formRows, catRows, zonaRows, svcRows, mapRows] = await Promise.all([
     query('SELECT kg, precio_bs FROM tarifas_express ORDER BY kg'),
     query('SELECT kg, precio_bs FROM tarifas_terrestre ORDER BY kg'),
     query('SELECT kg, precio_bs FROM nacional_op1 ORDER BY kg'),
@@ -20,7 +20,9 @@ export async function loadConfig(forceReload = false) {
     query('SELECT modalidad, clave, valor FROM modalidades ORDER BY modalidad, clave'),
     query('SELECT clave, valor FROM formulas'),
     query('SELECT tipo, categoria FROM categorias ORDER BY tipo, categoria'),
-    query('SELECT tipo, ciudad FROM zonas ORDER BY tipo, ciudad')
+    query('SELECT tipo, ciudad FROM zonas ORDER BY tipo, ciudad'),
+    query('SELECT categoria, servicio, estado, documentacion FROM categoria_servicios ORDER BY categoria, servicio'),
+    query('SELECT termino, categoria, restricciones FROM mapeo_categorias ORDER BY termino')
   ]);
 
   const TABLA_EXPRESS = {};
@@ -71,11 +73,31 @@ export async function loadConfig(forceReload = false) {
     else if (r.tipo === 'PROHIBIDO') ORIGENES_PROHIBIDOS.push(ciudad);
   }
 
+  // ── Matriz categoría × servicio ──
+  const SERVICIOS_MATRIZ = { sedex: { permitidas: [], amarillas: {}, docs: {} }, pac: { permitidas: [], amarillas: {}, docs: {} }, latam: { permitidas: [], amarillas: {}, docs: {} } };
+  for (const r of svcRows.rows) {
+    const svc = r.servicio;
+    if (r.estado === 'verde' || r.estado === 'amarillo') {
+      SERVICIOS_MATRIZ[svc].permitidas.push(r.categoria);
+      if (r.estado === 'amarillo') {
+        SERVICIOS_MATRIZ[svc].amarillas[r.categoria] = true;
+        if (r.documentacion) SERVICIOS_MATRIZ[svc].docs[r.categoria] = r.documentacion;
+      }
+    }
+  }
+
+  // ── Mapeo de términos → categorías ──
+  const MAPEO_TERMINOS = {};
+  for (const r of mapRows.rows) {
+    MAPEO_TERMINOS[r.termino] = { categoria: r.categoria, restricciones: r.restricciones ? r.restricciones.split(',').map(s => s.trim()).filter(Boolean) : [] };
+  }
+
   const config = {
     TABLA_EXPRESS, TABLA_TERRESTRE, TABLA_NACIONAL_OP1, TABLA_NACIONAL_OP2,
     TRAMOS_BOA_VISTA, TRAMOS_GANANCIA, MODALIDADES, FORMULAS,
     CATEGORIAS_SOLO_AEREO, CATEGORIAS_TERRESTRE, CATEGORIAS_NEUTRAS,
-    ZONA_BASE, ORIGENES_PROHIBIDOS
+    ZONA_BASE, ORIGENES_PROHIBIDOS,
+    SERVICIOS_MATRIZ, MAPEO_TERMINOS
   };
 
   cache = config;

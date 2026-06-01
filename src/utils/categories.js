@@ -1,4 +1,27 @@
+import { query } from '../db/pool.js';
 import { clasificarConIA } from './classifier.js';
+
+let mapeoCache = null;
+let mapeoCacheTimestamp = 0;
+const MAPEO_CACHE_TTL = 30000;
+
+async function cargarMapeo() {
+  const now = Date.now();
+  if (mapeoCache && (now - mapeoCacheTimestamp) < MAPEO_CACHE_TTL) return mapeoCache;
+  try {
+    const result = await query('SELECT termino, categoria, restricciones FROM mapeo_categorias');
+    const map = {};
+    for (const r of result.rows) {
+      map[r.termino.toLowerCase().trim()] = {
+        categoria: r.categoria,
+        restricciones: r.restricciones ? r.restricciones.split(',').map(s => s.trim()).filter(Boolean) : []
+      };
+    }
+    mapeoCache = map;
+    mapeoCacheTimestamp = now;
+    return map;
+  } catch { return {}; }
+}
 
 const TERMINOS_POR_CATEGORIA = {
   electronicos: [
@@ -397,15 +420,29 @@ export function normalizarCategorias(categorias) {
 }
 
 export async function normalizarCategoriasConIA(categorias) {
+  var mapeo = await cargarMapeo();
   var resultado = [];
   for (var i = 0; i < categorias.length; i++) {
-    var input = categorias[i].trim();
+    var input = categorias[i].trim().toLowerCase();
+
+    // Paso 1: buscar en mapeo_categorias (diccionario editable por admin)
+    var mapeado = mapeo[input];
+    if (mapeado) {
+      if (!resultado.includes(mapeado.categoria)) resultado.push(mapeado.categoria);
+      for (var ri = 0; ri < mapeado.restricciones.length; ri++) {
+        if (!resultado.includes(mapeado.restricciones[ri])) resultado.push(mapeado.restricciones[ri]);
+      }
+      continue;
+    }
+
+    // Paso 2: IA clasificadora
     var llmResult = await clasificarConIA(input);
     if (llmResult) {
       for (var j = 0; j < llmResult.length; j++) {
         if (!resultado.includes(llmResult[j])) resultado.push(llmResult[j]);
       }
     } else {
+      // Paso 3: fallback al diccionario default
       var fallback = normalizarCategorias([input]);
       for (var k = 0; k < fallback.length; k++) {
         if (!resultado.includes(fallback[k])) resultado.push(fallback[k]);

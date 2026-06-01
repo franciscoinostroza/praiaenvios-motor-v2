@@ -100,6 +100,21 @@ CREATE TABLE IF NOT EXISTS plantillas_mensajes (
   updated_at TIMESTAMP DEFAULT NOW()
 );
 
+CREATE TABLE IF NOT EXISTS categoria_servicios (
+  id SERIAL PRIMARY KEY,
+  categoria VARCHAR(100) NOT NULL,
+  servicio VARCHAR(10) NOT NULL,
+  estado VARCHAR(10) NOT NULL DEFAULT 'verde',
+  documentacion TEXT DEFAULT '',
+  UNIQUE(categoria, servicio)
+);
+
+CREATE TABLE IF NOT EXISTS mapeo_categorias (
+  termino VARCHAR(200) PRIMARY KEY,
+  categoria VARCHAR(100) NOT NULL,
+  restricciones TEXT DEFAULT ''
+);
+
 `;
 
 async function migrate() {

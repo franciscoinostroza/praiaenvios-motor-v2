@@ -3,7 +3,7 @@ export function crearMotor(config) {
     TABLA_EXPRESS, TABLA_TERRESTRE, TABLA_NACIONAL_OP1, TABLA_NACIONAL_OP2,
     TRAMOS_BOA_VISTA, TRAMOS_GANANCIA, MODALIDADES, FORMULAS,
     CATEGORIAS_SOLO_AEREO, CATEGORIAS_TERRESTRE, CATEGORIAS_NEUTRAS,
-    ZONA_BASE, ORIGENES_PROHIBIDOS
+    ZONA_BASE, ORIGENES_PROHIBIDOS, SERVICIOS_MATRIZ, MAPEO_TERMINOS
   } = config;
 
   function calcularPesoVolumetrico(largo, ancho, alto) {
@@ -61,20 +61,38 @@ export function crearMotor(config) {
     return fecha.getDate() + ' de ' + meses[fecha.getMonth()] + ' de ' + fecha.getFullYear();
   }
 
-  function tieneCategoriasSoloAereo(categorias) {
+  function servicioPermitido(categorias, servicio) {
+    const info = SERVICIOS_MATRIZ[servicio];
+    if (!info) return false;
     const norm = categorias.map(c => c.toLowerCase().trim());
     for (let i = 0; i < norm.length; i++) {
-      if (CATEGORIAS_SOLO_AEREO.indexOf(norm[i]) !== -1) return true;
+      if (info.permitidas.indexOf(norm[i]) === -1) return false;
     }
-    return false;
+    return true;
   }
 
-  function tieneCategoriasTerrestre(categorias) {
+  function obtenerDocumentacion(categorias, servicio) {
+    const info = SERVICIOS_MATRIZ[servicio];
+    if (!info) return [];
+    const docs = [];
     const norm = categorias.map(c => c.toLowerCase().trim());
     for (let i = 0; i < norm.length; i++) {
-      if (CATEGORIAS_TERRESTRE.indexOf(norm[i]) !== -1) return true;
+      if (info.docs[norm[i]]) docs.push(info.docs[norm[i]]);
     }
-    return false;
+    return docs;
+  }
+
+  function categoriasConocidas() {
+    const set = {};
+    for (const svc of ['sedex', 'pac', 'latam']) {
+      const info = SERVICIOS_MATRIZ[svc];
+      if (info) {
+        for (let i = 0; i < info.permitidas.length; i++) {
+          set[info.permitidas[i]] = true;
+        }
+      }
+    }
+    return Object.keys(set);
   }
 
   function validarInput(d) {
@@ -94,7 +112,7 @@ export function crearMotor(config) {
     if (!Array.isArray(d.categorias) || d.categorias.length === 0)
       return 'Campo inválido: categorias debe ser un arreglo con al menos un elemento';
 
-    const categoriasValidas = CATEGORIAS_SOLO_AEREO.concat(CATEGORIAS_TERRESTRE).concat(CATEGORIAS_NEUTRAS);
+    const categoriasValidas = categoriasConocidas();
     const categoriasNorm = d.categorias.map(c => c.toLowerCase().trim());
     for (let j = 0; j < categoriasNorm.length; j++) {
       const cat = categoriasNorm[j];
@@ -115,17 +133,6 @@ export function crearMotor(config) {
     const origenNorm = d.ciudad_origen.toLowerCase().trim();
     if (ORIGENES_PROHIBIDOS.indexOf(origenNorm) !== -1)
       return 'No se atienden envíos desde ' + d.ciudad_origen + ' como origen';
-
-    if (tieneCategoriasTerrestre(d.categorias)) {
-      const mt = MODALIDADES.TERRESTRE;
-      if (d.tipo_mercancia !== 'personal'
-          || parseFloat(d.peso_bruto) > mt.peso_max_kg
-          || parseFloat(d.largo) > mt.dimension_max_cm
-          || parseFloat(d.ancho) > mt.dimension_max_cm
-          || parseFloat(d.alto) > mt.dimension_max_cm
-          || parseFloat(d.valor_mercancia) > mt.valor_max_rs)
-        return 'Las categorías indicadas solo pueden enviarse por vía terrestre y el envío excede los límites de esa modalidad';
-    }
 
     return null;
   }
@@ -139,7 +146,7 @@ export function crearMotor(config) {
     if (!Array.isArray(d.categorias) || d.categorias.length === 0)
       return 'Campo inválido: categorias debe ser un arreglo con al menos un elemento';
 
-    const categoriasValidas = CATEGORIAS_SOLO_AEREO.concat(CATEGORIAS_TERRESTRE).concat(CATEGORIAS_NEUTRAS);
+    const categoriasValidas = categoriasConocidas();
     const categoriasNorm = d.categorias.map(c => c.toLowerCase().trim());
     for (let j = 0; j < categoriasNorm.length; j++) {
       const cat = categoriasNorm[j];
@@ -161,26 +168,11 @@ export function crearMotor(config) {
     if (ORIGENES_PROHIBIDOS.indexOf(origenNorm) !== -1)
       return 'No se atienden envíos desde ' + d.ciudad_origen + ' como origen';
 
-    if (tieneCategoriasTerrestre(d.categorias)) {
-      const mt = MODALIDADES.TERRESTRE;
-      if (d.tipo_mercancia !== 'personal')
-        return 'Las categorías indicadas solo pueden enviarse por vía terrestre y el tipo comercial no aplica';
-      for (let b = 0; b < d.boxes.length; b++) {
-        const bx = d.boxes[b];
-        if (parseFloat(bx.peso_bruto) > mt.peso_max_kg
-            || parseFloat(bx.largo) > mt.dimension_max_cm
-            || parseFloat(bx.ancho) > mt.dimension_max_cm
-            || parseFloat(bx.alto) > mt.dimension_max_cm
-            || parseFloat(bx.valor_mercancia) > mt.valor_max_rs)
-          return 'Caja ' + (b + 1) + ': las categorías indicadas solo pueden ir por vía terrestre y excede los límites de esa modalidad';
-      }
-    }
-
     for (let i = 0; i < d.boxes.length; i++) {
       const box = d.boxes[i];
-      const numericos = ['peso_bruto', 'largo', 'ancho', 'alto', 'valor_mercancia'];
-      for (let k = 0; k < numericos.length; k++) {
-        const campo = numericos[k];
+      const nums = ['peso_bruto', 'largo', 'ancho', 'alto', 'valor_mercancia'];
+      for (let k = 0; k < nums.length; k++) {
+        const campo = nums[k];
         if (box[campo] === undefined || box[campo] === null) return 'Caja ' + (i + 1) + ': falta el campo ' + campo;
         if (isNaN(parseFloat(box[campo]))) return 'Caja ' + (i + 1) + ': ' + campo + ' debe ser numérico';
         if (parseFloat(box[campo]) <= 0) return 'Caja ' + (i + 1) + ': ' + campo + ' debe ser mayor que 0';
@@ -190,26 +182,11 @@ export function crearMotor(config) {
     return null;
   }
 
-  function validarExpress(peso_bruto, largo, ancho, alto, valor_mercancia, tipo_mercancia, categorias) {
-    const m = MODALIDADES.EXPRESS;
-    if (tipo_mercancia !== 'personal') return false;
-    if (peso_bruto > m.peso_max_kg) return false;
-    if (largo > m.dimension_max_cm || ancho > m.dimension_max_cm || alto > m.dimension_max_cm) return false;
-    if (valor_mercancia > m.valor_max_rs) return false;
-    if (tieneCategoriasSoloAereo(categorias)) return false;
-    if (tieneCategoriasTerrestre(categorias)) return false;
-    return true;
-  }
-
-  function validarTerrestre(peso_bruto, largo, ancho, alto, valor_mercancia, tipo_mercancia, categorias) {
-    const m = MODALIDADES.TERRESTRE;
-    if (tipo_mercancia !== 'personal') return false;
-    if (peso_bruto > m.peso_max_kg) return false;
-    if (largo > m.dimension_max_cm || ancho > m.dimension_max_cm || alto > m.dimension_max_cm) return false;
-    if (valor_mercancia > m.valor_max_rs) return false;
-    if (tieneCategoriasSoloAereo(categorias)) return false;
-    if (!tieneCategoriasTerrestre(categorias)) return false;
-    return true;
+  function elegirServicio(categorias) {
+    if (servicioPermitido(categorias, 'sedex')) return 'sedex';
+    if (servicioPermitido(categorias, 'pac')) return 'pac';
+    if (servicioPermitido(categorias, 'latam')) return 'latam';
+    return null;
   }
 
   function calcularExpress(peso_bruto, largo, ancho, alto) {
@@ -283,12 +260,16 @@ export function crearMotor(config) {
     const categorias = params.categorias;
     const ciudad_origen = params.ciudad_origen;
 
-    let total_principal, modalidad_cfg;
+    const servicio = elegirServicio(categorias);
+    if (!servicio) return { status: 'error_datos', mensaje: 'Ningún servicio disponible para las categorías indicadas. Algunos productos no pueden transportarse.' };
 
-    if (validarExpress(peso_bruto, largo, ancho, alto, valor_mercancia, tipo_mercancia, categorias)) {
+    let total_principal, modalidad_cfg;
+    var modalidadPorServicio = { sedex: 'EXPRESS', pac: 'TERRESTRE', latam: 'AEREO' };
+
+    if (servicio === 'sedex') {
       total_principal = calcularExpress(peso_bruto, largo, ancho, alto);
       modalidad_cfg = MODALIDADES.EXPRESS;
-    } else if (validarTerrestre(peso_bruto, largo, ancho, alto, valor_mercancia, tipo_mercancia, categorias)) {
+    } else if (servicio === 'pac') {
       total_principal = calcularTerrestre(peso_bruto, largo, ancho, alto);
       modalidad_cfg = MODALIDADES.TERRESTRE;
     } else {
@@ -304,6 +285,8 @@ export function crearMotor(config) {
       modalidad_cfg = MODALIDADES.AEREO_TRECHO;
     }
 
+    const docs = obtenerDocumentacion(categorias, servicio);
+
     return {
       status: 'ok',
       modalidad: modalidad_cfg.id,
@@ -313,7 +296,8 @@ export function crearMotor(config) {
       fecha_entrega: calcularFechaEntrega(modalidad_cfg.tiempo_entrega_dias),
       con_trecho: trecho > 0,
       costo_nacional: calcularCostoNacional(peso_bruto),
-      tasa_dolar: FORMULAS.tasa_dolar
+      tasa_dolar: FORMULAS.tasa_dolar,
+      documentacion_requerida: docs
     };
   }
 
@@ -337,9 +321,12 @@ export function crearMotor(config) {
     const tarifa_usd_kg = calcularTarifaUSD(peso_bruto);
     const costo_nacional = calcularCostoNacional(peso_bruto);
 
+    const servicio = elegirServicio(categorias);
+    if (!servicio) return { status: 'error_datos', mensaje: 'Ningún servicio disponible para las categorías indicadas.' };
+
     let modalidad_cfg, componentes = {};
 
-    if (validarExpress(peso_bruto, largo, ancho, alto, valor_mercancia, tipo_mercancia, categorias)) {
+    if (servicio === 'sedex') {
       modalidad_cfg = MODALIDADES.EXPRESS;
       const kg_fact = Math.min(Math.ceil(peso_fact), modalidad_cfg.peso_max_kg);
       componentes = {
@@ -350,7 +337,7 @@ export function crearMotor(config) {
         cargo_fijo: modalidad_cfg.valor_fijo_rs,
         boa_vista
       };
-    } else if (validarTerrestre(peso_bruto, largo, ancho, alto, valor_mercancia, tipo_mercancia, categorias)) {
+    } else if (servicio === 'pac') {
       modalidad_cfg = MODALIDADES.TERRESTRE;
       const kg_base = Math.min(Math.ceil(peso_bruto), modalidad_cfg.peso_max_kg);
       componentes = {
@@ -396,6 +383,7 @@ export function crearMotor(config) {
 
     const total_final = Math.round(sub_total + trecho_val);
     const tasa = FORMULAS.tasa_dolar;
+    const docs = obtenerDocumentacion(categorias, servicio);
 
     return {
       status: 'ok',
@@ -416,7 +404,8 @@ export function crearMotor(config) {
       total_usd: +(total_final / tasa).toFixed(2),
       tasa_dolar: tasa,
       tiempo_entrega: modalidad_cfg.tiempo_entrega_dias + ' días',
-      con_trecho: trecho_val > 0
+      con_trecho: trecho_val > 0,
+      documentacion_requerida: docs
     };
   }
 
@@ -457,6 +446,9 @@ export function crearMotor(config) {
       });
     }
 
+    const servicio = elegirServicio(categorias);
+    const docs = servicio ? obtenerDocumentacion(categorias, servicio) : [];
+
     return {
       status: 'ok',
       total_final: Math.round(totalFinal),
@@ -464,7 +456,8 @@ export function crearMotor(config) {
       fecha_entrega: calcularFechaEntrega(maxDias),
       costo_nacional: calcularCostoNacional(totalPeso),
       tasa_dolar: FORMULAS.tasa_dolar,
-      cajas: cajas
+      cajas: cajas,
+      documentacion_requerida: docs
     };
   }
 

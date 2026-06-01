@@ -126,12 +126,12 @@ export async function formatearMensaje(datos, resultadoMotor) {
   if (resultadoMotor.cajas && resultadoMotor.cajas.length > 1) {
     for (var j = 0; j < resultadoMotor.cajas.length; j++) {
       var cb = resultadoMotor.cajas[j];
-      var modalidadCaja = { 1: 'Modalidad 1', 2: 'Modalidad 2', 3: 'Modalidad 3', 4: 'Modalidad 4' }[cb.modalidad] || cb.nombre_modalidad;
+      var modalidadCaja = cb.nombre_modalidad || { 1: 'Modalidad 1', 2: 'Modalidad 2', 3: 'Modalidad 3', 4: 'Modalidad 4' }[cb.modalidad] || modalidad;
       var trechoTxt = cb.con_trecho ? ' (' + t.trecho + ')' : '';
       modalidadTexto += '* ' + t.caja + ' ' + cb.caja + ': ' + modalidadCaja + ' — R$ ' + cb.total + trechoTxt + '\n';
     }
   } else {
-    modalidadTexto = '* ' + t.modalidad_aplicada + ': ' + modalidadNombre;
+    modalidadTexto = '* ' + t.modalidad_aplicada + ': ' + (resultadoMotor.nombre_modalidad || modalidadNombre);
   }
 
   var totalTexto = esVenezuela
@@ -145,7 +145,7 @@ export async function formatearMensaje(datos, resultadoMotor) {
 
   var fechaEntrega = resultadoMotor.fecha_entrega || '';
 
-  return await renderizarPlantilla(clave, {
+  var msg = await renderizarPlantilla(clave, {
     origen: origen,
     direccion_origen: direccionOrigen,
     ciudad_base_calculo: ciudadBaseCalculo,
@@ -169,4 +169,18 @@ export async function formatearMensaje(datos, resultadoMotor) {
     metodos_pago: metodosPago,
     footer: t.footer
   });
+
+  var docs = resultadoMotor.documentacion_requerida;
+  if (docs && docs.length > 0) {
+    var docsUnicos = [];
+    for (var di = 0; di < docs.length; di++) {
+      if (docsUnicos.indexOf(docs[di]) === -1) docsUnicos.push(docs[di]);
+    }
+    msg += '\n📋 *DOCUMENTACIÓN REQUERIDA*\n';
+    for (var di2 = 0; di2 < docsUnicos.length; di2++) {
+      msg += '* ' + docsUnicos[di2] + '\n';
+    }
+  }
+
+  return msg;
 }

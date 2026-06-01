@@ -288,6 +288,10 @@ function renderNav(active) {
     { label: 'Categorías', path: '/admin/categorias', icon: '🏷️', key: 'Categorías' },
     { label: 'Prompt IA', path: '/admin/prompt-categorias', icon: '🤖', key: 'Prompt' },
     { label: 'Zonas', path: '/admin/zonas', icon: '📍', key: 'Zonas' },
+    { divider: true },
+    { label: 'Matriz Servicios', path: '/admin/categoria-servicios', icon: '🚦', key: 'Matriz Servicios' },
+    { label: 'Mapeo Categorías', path: '/admin/mapeo-categorias', icon: '📖', key: 'Mapeo Categorías' },
+    { divider: true },
     { label: 'Mensajes', path: '/admin/mensajes', icon: '💬', key: 'Mensajes' },
     { divider: true },
     { label: 'Logs', path: '/admin/logs', icon: '📋', key: 'Logs' },
@@ -1557,7 +1561,7 @@ function confirmGanancia(form){
       html += '<table><thead><tr><th>clave</th><th>valor</th><th>Descripción</th><th style="width:100px">Acciones</th></tr></thead><tbody>';
 
       for (const row of items) {
-        const editable = row.clave !== 'nombre' && row.clave !== 'id';
+        const editable = row.clave !== 'id';
         const desc = DESC_MODALIDADES[row.clave] || '';
 
         html += '<tr>';
@@ -1812,6 +1816,223 @@ function confirmModalidad(form){
       }
     });
   }
+
+  /* ─── CATEGORÍA × SERVICIO (Matriz de semáforos) ─── */
+  const SERVICIOS = ['sedex', 'pac', 'latam'];
+  const ESTADOS = { verde: '🟢 Verde', amarillo: '🟡 Amarillo', rojo: '🔴 Rojo' };
+
+  router.get('/categoria-servicios', auth, async (req, res) => {
+    const t = req.adminToken;
+    const toast = req.query.saved
+      ? '<div class="toast toast-success">✅ Matriz actualizada</div>'
+      : req.query.error ? '<div class="toast toast-error">❌ Error al actualizar</div>' : '';
+    const esc = (s) => String(s == null ? '' : s).replace(/</g,'&lt;').replace(/>/g,'&gt;');
+
+    let html = toast;
+
+    // Obtener categorías únicas
+    const catResult = await query('SELECT DISTINCT categoria FROM categoria_servicios ORDER BY categoria');
+    const categorias = catResult.rows.map(r => r.categoria);
+
+    // Obtener estados actuales
+    const svcResult = await query('SELECT * FROM categoria_servicios ORDER BY categoria, servicio');
+    const matriz = {};
+    for (const r of svcResult.rows) {
+      if (!matriz[r.categoria]) matriz[r.categoria] = {};
+      matriz[r.categoria][r.servicio] = { estado: r.estado, doc: r.documentacion || '' };
+    }
+
+    html += '<div class="table-wrap">';
+    html += '<div class="table-toolbar"><span style="font-weight:600;font-size:.85rem">🚦 Matriz Categoría × Servicio</span></div>';
+    html += '<table><thead><tr><th>Categoría</th>';
+    for (const s of SERVICIOS) html += '<th style="text-align:center;text-transform:uppercase">🟢 ' + s + '</th>';
+    html += '<th style="min-width:180px">Documentación</th>';
+    html += '<th style="width:60px"></th></tr></thead><tbody>';
+
+    for (const cat of categorias) {
+      html += '<tr>';
+      html += '<td><strong>' + esc(cat) + '</strong></td>';
+      for (const s of SERVICIOS) {
+        const celda = matriz[cat] && matriz[cat][s];
+        const estado = celda ? celda.estado : 'verde';
+        html += '<td style="text-align:center">';
+        html += '<form class="inline" method="POST" action="/admin/categoria-servicios/update" style="justify-content:center">';
+        html += '<input type="hidden" name="categoria" value="' + esc(cat) + '">';
+        html += '<input type="hidden" name="servicio" value="' + s + '">';
+        html += '<select name="estado" onchange="this.form.submit()" style="padding:3px 6px;border:1px solid var(--gray-300);border-radius:5px;font-size:.75rem">';
+        for (const [val, label] of Object.entries(ESTADOS)) {
+          html += '<option value="' + val + '"' + (estado === val ? ' selected' : '') + '>' + label + '</option>';
+        }
+        html += '</select></form></td>';
+      }
+      const doc = matriz[cat] && matriz[cat].sedex ? matriz[cat].sedex.doc : '';
+      html += '<td>';
+      html += '<form class="inline" method="POST" action="/admin/categoria-servicios/update-doc">';
+      html += '<input type="hidden" name="categoria" value="' + esc(cat) + '">';
+      html += '<input type="text" name="documentacion" value="' + esc(doc) + '" placeholder="FISPQ/MSDS..." style="width:160px;padding:3px 6px;border:1px solid var(--gray-300);border-radius:5px;font-size:.75rem">';
+      html += '<button class="btn-sm btn-save" type="submit">💾</button></form></td>';
+      html += '<td>';
+      html += '<form method="POST" action="/admin/categoria-servicios/delete" onsubmit="event.preventDefault();confirmDelete(\'¿Eliminar categoría ' + esc(cat) + ' de la matriz?\',this)">';
+      html += '<input type="hidden" name="categoria" value="' + esc(cat) + '">';
+      html += '<button class="btn-sm btn-del" type="submit">🗑️</button></form></td>';
+      html += '</tr>';
+    }
+
+    html += '</tbody></table></div>';
+
+    // Formulario agregar categoría
+    html += '<div class="add-form"><h3>➕ Agregar categoría a la matriz</h3>';
+    html += '<form class="fields" method="POST" action="/admin/categoria-servicios/add">';
+    html += '<label>categoría <input type="text" name="categoria" required placeholder="nueva_categoria"></label>';
+    for (const s of SERVICIOS) {
+      html += '<label>' + s + ' <select name="estado_' + s + '">';
+      for (const [val, label] of Object.entries(ESTADOS)) html += '<option value="' + val + '"' + (val === 'verde' ? ' selected' : '') + '>' + label + '</option>';
+      html += '</select></label>';
+    }
+    html += '<button class="btn-add" type="submit">➕ Agregar</button></form></div>';
+
+    html += '<div style="margin-top:16px;padding:14px 18px;background:#f0f4ff;border:1px solid #bfdbfe;border-radius:10px;font-size:.8rem;color:var(--gray-700);line-height:1.6">';
+    html += '🚦 <strong>Matriz de servicios</strong> — Define qué categorías pueden ir por cada servicio.<br>';
+    html += '🟢 <strong>Verde</strong> = Permitido | 🟡 <strong>Amarillo</strong> = Requiere documentación | 🔴 <strong>Rojo</strong> = No permitido<br>';
+    html += '📋 Si una categoría requiere documento, escribí el nombre del documento en la columna "Documentación".<br>';
+    html += '💡 El motor prueba servicios en orden: <strong>SEDEX → PAC → LATAM</strong>. Usa el primero que tenga todas las categorías en Verde o Amarillo.</div>';
+
+    res.send(layout('Matriz de Servicios', html, t));
+  });
+
+  router.post('/categoria-servicios/update', auth, async (req, res) => {
+    try {
+      await query("UPDATE categoria_servicios SET estado = $1 WHERE categoria = $2 AND servicio = $3", [req.body.estado, req.body.categoria, req.body.servicio]);
+      invalidateCache();
+      res.redirect('/admin/categoria-servicios?saved=1');
+    } catch { res.redirect('/admin/categoria-servicios?error=1'); }
+  });
+
+  router.post('/categoria-servicios/update-doc', auth, async (req, res) => {
+    try {
+      await query("UPDATE categoria_servicios SET documentacion = $1 WHERE categoria = $2 AND servicio = 'sedex'", [req.body.documentacion || '', req.body.categoria]);
+      await query("UPDATE categoria_servicios SET documentacion = $1 WHERE categoria = $2 AND servicio = 'pac'", [req.body.documentacion || '', req.body.categoria]);
+      await query("UPDATE categoria_servicios SET documentacion = $1 WHERE categoria = $2 AND servicio = 'latam'", [req.body.documentacion || '', req.body.categoria]);
+      invalidateCache();
+      res.redirect('/admin/categoria-servicios?saved=1');
+    } catch { res.redirect('/admin/categoria-servicios?error=1'); }
+  });
+
+  router.post('/categoria-servicios/add', auth, async (req, res) => {
+    try {
+      const cat = req.body.categoria.toLowerCase().trim().replace(/\s+/g, '_');
+      for (const s of SERVICIOS) {
+        const estado = req.body['estado_' + s] || 'verde';
+        await query("INSERT INTO categoria_servicios (categoria, servicio, estado) VALUES ($1, $2, $3) ON CONFLICT (categoria, servicio) DO NOTHING", [cat, s, estado]);
+      }
+      invalidateCache();
+      res.redirect('/admin/categoria-servicios?saved=1');
+    } catch { res.redirect('/admin/categoria-servicios?error=1'); }
+  });
+
+  router.post('/categoria-servicios/delete', auth, async (req, res) => {
+    try {
+      await query("DELETE FROM categoria_servicios WHERE categoria = $1", [req.body.categoria]);
+      invalidateCache();
+      res.redirect('/admin/categoria-servicios?saved=1');
+    } catch { res.redirect('/admin/categoria-servicios?error=1'); }
+  });
+
+  /* ─── MAPEO DE CATEGORÍAS (diccionario editable) ─── */
+  router.get('/mapeo-categorias', auth, async (req, res) => {
+    const t = req.adminToken;
+    const toast = req.query.saved
+      ? '<div class="toast toast-success">✅ Mapeo guardado</div>'
+      : req.query.deleted ? '<div class="toast toast-error">🗑️ Mapeo eliminado</div>'
+      : req.query.error ? '<div class="toast toast-error">❌ Error</div>' : '';
+    const esc = (s) => String(s == null ? '' : s).replace(/</g,'&lt;').replace(/>/g,'&gt;');
+
+    // Obtener categorías disponibles para los selects
+    const catResult = await query('SELECT DISTINCT categoria FROM categoria_servicios ORDER BY categoria');
+    const categorias = catResult.rows.map(r => r.categoria);
+    const catOptions = categorias.map(c => '<option value="' + esc(c) + '">' + esc(c) + '</option>').join('');
+
+    const search = (req.query.search || '').toLowerCase().trim();
+    let querySql = 'SELECT termino, categoria, restricciones FROM mapeo_categorias';
+    const params = [];
+    if (search) {
+      querySql += ' WHERE termino ILIKE $1 OR categoria ILIKE $1';
+      params.push('%' + search + '%');
+    }
+    querySql += ' ORDER BY termino LIMIT 200';
+
+    const result = await query(querySql, params);
+    const rows = result.rows;
+
+    let html = toast;
+    html += '<div class="table-wrap">';
+    html += '<div class="table-toolbar">';
+    html += '<span style="font-weight:600;font-size:.85rem">📖 Mapeo de Términos → Categorías</span>';
+    html += '<div class="search-wrap"><span class="icon">🔍</span><input type="text" placeholder="Buscar término..." value="' + esc(search) + '" onchange="location=\'?search=\'+encodeURIComponent(this.value)"></div>';
+    html += '</div>';
+    html += '<table><thead><tr><th>Término</th><th>Categoría</th><th>Restricciones</th><th style="width:120px">Acciones</th></tr></thead><tbody>';
+
+    for (const row of rows) {
+      html += '<tr>';
+      html += '<td><span style="font-weight:600;color:var(--gray-500)">' + esc(row.termino) + '</span></td>';
+      html += '<td>';
+      html += '<form class="inline" method="POST" action="/admin/mapeo-categorias/' + encodeURIComponent(row.termino) + '/update" onsubmit="return fetch(this.action,{method:this.method,body:new URLSearchParams(new FormData(this))}).then(()=>{window.location.reload()}).catch(()=>{window.location.reload()}),false">';
+      html += '<select name="categoria" style="padding:3px 6px;border:1px solid var(--gray-300);border-radius:5px;font-size:.75rem">';
+      for (const c of categorias) {
+        html += '<option value="' + esc(c) + '"' + (row.categoria === c ? ' selected' : '') + '>' + esc(c) + '</option>';
+      }
+      html += '</select>';
+      html += '</td>';
+      html += '<td><input type="text" name="restricciones" value="' + esc(row.restricciones) + '" placeholder="baterias,quimicos" style="width:160px;padding:3px 6px;border:1px solid var(--gray-300);border-radius:5px;font-size:.75rem"></td>';
+      html += '<td>';
+      html += '<button class="btn-sm btn-save" type="submit">💾</button></form>';
+      html += '<form class="inline" method="POST" action="/admin/mapeo-categorias/' + encodeURIComponent(row.termino) + '/delete" onsubmit="event.preventDefault();confirmDelete(\'Eliminar mapeo para "' + esc(row.termino) + '"?\',this)">';
+      html += '<button class="btn-sm btn-del" type="submit">🗑️</button></form></td>';
+      html += '</tr>';
+    }
+
+    html += '</tbody></table></div>';
+
+    html += '<div class="add-form"><h3>➕ Agregar mapeo</h3>';
+    html += '<form class="fields" method="POST" action="/admin/mapeo-categorias/add" onsubmit="return fetch(this.action,{method:this.method,body:new URLSearchParams(new FormData(this))}).then(()=>{window.location.reload()}).catch(()=>{window.location.reload()}),false">';
+    html += '<label>término <input type="text" name="termino" required placeholder="ej: drone con cámara"></label>';
+    html += '<label>categoría <select name="categoria" required>' + catOptions + '</select></label>';
+    html += '<label>restricciones <input type="text" name="restricciones" placeholder="baterias,quimicos"></label>';
+    html += '<button class="btn-add" type="submit">➕ Agregar</button></form></div>';
+
+    html += '<div style="margin-top:16px;padding:14px 18px;background:#f0f4ff;border:1px solid #bfdbfe;border-radius:10px;font-size:.8rem;color:var(--gray-700);line-height:1.6">';
+    html += '📖 <strong>Mapeo de términos</strong> — Si el Prompt Maestro pasa el nombre exacto de un producto como categoría, buscálo acá.<br>';
+    html += '💡 <strong>Restricciones:</strong> Categorías adicionales separadas por coma. Ej: "baterias,quimicos"<br>';
+    html += '🔁 El mapeo tiene prioridad sobre el clasificador IA y el diccionario.</div>';
+
+    res.send(layout('Mapeo de Categorías', html, t));
+  });
+
+  router.post('/mapeo-categorias/add', auth, async (req, res) => {
+    try {
+      await query("INSERT INTO mapeo_categorias (termino, categoria, restricciones) VALUES ($1, $2, $3) ON CONFLICT (termino) DO NOTHING",
+        [req.body.termino.toLowerCase().trim(), req.body.categoria, req.body.restricciones || '']);
+      invalidateCache();
+      res.redirect('/admin/mapeo-categorias?saved=1');
+    } catch { res.redirect('/admin/mapeo-categorias?error=1'); }
+  });
+
+  router.post('/mapeo-categorias/:termino/update', auth, async (req, res) => {
+    try {
+      await query("UPDATE mapeo_categorias SET categoria = $1, restricciones = $2 WHERE termino = $3",
+        [req.body.categoria, req.body.restricciones || '', req.params.termino]);
+      invalidateCache();
+      res.redirect('/admin/mapeo-categorias?saved=1');
+    } catch { res.redirect('/admin/mapeo-categorias?error=1'); }
+  });
+
+  router.post('/mapeo-categorias/:termino/delete', auth, async (req, res) => {
+    try {
+      await query("DELETE FROM mapeo_categorias WHERE termino = $1", [req.params.termino]);
+      invalidateCache();
+      res.redirect('/admin/mapeo-categorias?deleted=1');
+    } catch { res.redirect('/admin/mapeo-categorias?error=1'); }
+  });
 
   /* ─── MENSAJES (plantillas) ─── */
   const INFO_MENSAJES = {
