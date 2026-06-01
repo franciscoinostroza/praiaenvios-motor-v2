@@ -10,7 +10,7 @@ export async function loadConfig(forceReload = false) {
     return cache;
   }
 
-  const [expressRows, terreRows, nac1Rows, nac2Rows, bvRows, ganRows, modRows, formRows, catRows, zonaRows, svcRows, mapRows] = await Promise.all([
+  const [expressRows, terreRows, nac1Rows, nac2Rows, bvRows, ganRows, modRows, formRows, zonaRows, svcRows, mapRows] = await Promise.all([
     query('SELECT kg, precio_bs FROM tarifas_express ORDER BY kg'),
     query('SELECT kg, precio_bs FROM tarifas_terrestre ORDER BY kg'),
     query('SELECT kg, precio_bs FROM nacional_op1 ORDER BY kg'),
@@ -19,7 +19,6 @@ export async function loadConfig(forceReload = false) {
     query('SELECT hasta_kg, usd_kg FROM tramos_ganancia ORDER BY id'),
     query('SELECT modalidad, clave, valor FROM modalidades ORDER BY modalidad, clave'),
     query('SELECT clave, valor FROM formulas'),
-    query('SELECT tipo, categoria FROM categorias ORDER BY tipo, categoria'),
     query('SELECT tipo, ciudad FROM zonas ORDER BY tipo, ciudad'),
     query('SELECT categoria, servicio, estado, documentacion FROM categoria_servicios ORDER BY categoria, servicio'),
     query('SELECT termino, categoria, restricciones FROM mapeo_categorias ORDER BY termino')
@@ -55,16 +54,6 @@ export async function loadConfig(forceReload = false) {
   const FORMULAS = {};
   for (const r of formRows.rows) FORMULAS[r.clave] = Number(r.valor);
 
-  const CATEGORIAS_SOLO_AEREO = [];
-  const CATEGORIAS_TERRESTRE = [];
-  const CATEGORIAS_NEUTRAS = [];
-  for (const r of catRows.rows) {
-    const cat = r.categoria.toLowerCase().trim();
-    if (r.tipo === 'SOLO_AEREO') CATEGORIAS_SOLO_AEREO.push(cat);
-    else if (r.tipo === 'TERRESTRE') CATEGORIAS_TERRESTRE.push(cat);
-    else if (r.tipo === 'NEUTRAS') CATEGORIAS_NEUTRAS.push(cat);
-  }
-
   const ZONA_BASE = [];
   const ORIGENES_PROHIBIDOS = [];
   for (const r of zonaRows.rows) {
@@ -95,7 +84,6 @@ export async function loadConfig(forceReload = false) {
   const config = {
     TABLA_EXPRESS, TABLA_TERRESTRE, TABLA_NACIONAL_OP1, TABLA_NACIONAL_OP2,
     TRAMOS_BOA_VISTA, TRAMOS_GANANCIA, MODALIDADES, FORMULAS,
-    CATEGORIAS_SOLO_AEREO, CATEGORIAS_TERRESTRE, CATEGORIAS_NEUTRAS,
     ZONA_BASE, ORIGENES_PROHIBIDOS,
     SERVICIOS_MATRIZ, MAPEO_TERMINOS
   };
