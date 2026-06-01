@@ -285,7 +285,6 @@ function renderNav(active) {
     { label: 'Modalidades', path: '/admin/modalidades', icon: '📋', key: 'Modalidades' },
     { label: 'Fórmulas', path: '/admin/formulas', icon: '🧮', key: 'Fórmulas' },
     { divider: true },
-    { label: 'Categorías', path: '/admin/categorias', icon: '🏷️', key: 'Categorías' },
     { label: 'Prompt IA', path: '/admin/prompt-categorias', icon: '🤖', key: 'Prompt' },
     { label: 'Zonas', path: '/admin/zonas', icon: '📍', key: 'Zonas' },
     { divider: true },
