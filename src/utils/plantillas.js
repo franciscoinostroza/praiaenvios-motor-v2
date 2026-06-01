@@ -24,7 +24,8 @@ const PLANTILLAS_DEFAULT = {
 📍 *ENTREGA EN VENEZUELA*\n\
 {{agencia}}\n\n\
 🇻🇪 *COSTO NACIONAL*\n\
-• Costo nacional aproximado: Bs {{costo_nacional}}\n\n\
+• Costo nacional aproximado: Bs {{costo_nacional}}\n\
+Este costo deberás pagarlo en Venezuela a tasa oficial del Banco Central de Venezuela y lo pagarás a la empresa local que realizará el transporte, ya que no te cobramos este trecho en reales. De esa forma ahorras pagando en moneda local, bolívares.\n\n\
 💳 *MÉTODOS DE PAGO:* {{metodos_pago}}\n\n\
 {{footer}}',
 
@@ -46,7 +47,8 @@ const PLANTILLAS_DEFAULT = {
 📍 *ENTREGA EN VENEZUELA*\n\
 {{agencia}}\n\n\
 🇻🇪 *COSTO NACIONAL*\n\
-• Costo nacional aproximado: Bs {{costo_nacional}}\n\n\
+• Costo nacional aproximado: Bs {{costo_nacional}}\n\
+Este costo deberás pagarlo en Venezuela a tasa oficial del Banco Central de Venezuela y lo pagarás a la empresa local que realizará el transporte, ya que no te cobramos este trecho en reales. De esa forma ahorras pagando en moneda local, bolívares.\n\n\
 💳 *MÉTODOS DE PAGO:* {{metodos_pago}}\n\n\
 {{footer}}',
 
