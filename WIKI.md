@@ -399,3 +399,17 @@ Admin → Categorías. Si quieres que la IA la reconozca, edita el Prompt.
 | **NEUTRAS** | Sin restricción de modalidad |
 | **TERRESTRE** | Solo por tierra |
 | **SOLO_AEREO** | Solo por aire |
+
+---
+
+## 🚦 Sistema de Categorías y Servicios
+
+El sistema tiene 3 capas que trabajan juntas para decidir qué servicio usar:
+
+**Capa 1 — Prompt Maestro (IA):** Clasifica el producto en categorías generales.
+
+**Capa 2 — Normalizador:** Busca en `mapeo_categorias` (editable por admin), si no encuentra usa IA clasificadora, y si falla usa diccionario local. Agrega restricciones secundarias (ej: `baterias` para laptops).
+
+**Capa 3 — Matriz de Servicios:** Revisa qué servicios (SEDEX → PAC → LATAM) tienen todas las categorías en 🟢 o 🟡. Elige la primera que cumpla.
+
+📖 Documentación completa: `SISTEMA_DE_CATEGORIAS.md`
