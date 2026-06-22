@@ -328,10 +328,12 @@ async function seed() {
   console.log('[seed] config_texto ok');
 
   console.log('[seed] todos los datos insertados correctamente');
-  process.exit(0);
 }
 
-seed().catch(err => {
-  console.error('[seed] error:', err.message);
-  process.exit(1);
-});
+const isMain = process.argv[1] && (process.argv[1].endsWith('seed.js') || process.argv[1].endsWith('seed'));
+if (isMain) {
+  seed().then(() => process.exit(0)).catch(err => {
+    console.error('[seed] error:', err.message);
+    process.exit(1);
+  });
+}

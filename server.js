@@ -9,6 +9,7 @@ import { crearAdminRouter } from './src/admin/router.js';
 import { log } from './src/utils/log.js';
 import { loadConfig } from './src/motor/config.js';
 import { formatearMensajeCompleto } from './src/utils/format-completo.js';
+import { runSetup } from './src/db/setup.js';
 
 const app = express();
 app.use(express.json());
@@ -425,4 +426,6 @@ app.use('/admin', crearAdminRouter());
 app.get('/health', (_, res) => res.json({ status: 'ok', version: 'v2.0.0' }));
 
 const PORT = process.env.PORT || 3000;
-app.listen(PORT, () => log('INFO', `Praia Envíos Motor v2 en http://localhost:${PORT}`));
+runSetup().then(() => {
+  app.listen(PORT, () => log('INFO', `Praia Envíos Motor v2 en http://localhost:${PORT}`));
+});

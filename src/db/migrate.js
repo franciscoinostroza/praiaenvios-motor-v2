@@ -130,16 +130,18 @@ CREATE TABLE IF NOT EXISTS config_texto (
 
 `;
 
-async function migrate() {
+export async function migrate() {
   const statements = TABLES.split(';').filter(s => s.trim().length > 0);
   for (const stmt of statements) {
     await query(stmt);
   }
   console.log('[migrate] tablas creadas correctamente');
-  process.exit(0);
 }
 
-migrate().catch(err => {
-  console.error('[migrate] error:', err.message);
-  process.exit(1);
-});
+const isMain = process.argv[1] && (process.argv[1].endsWith('migrate.js') || process.argv[1].endsWith('db\\migrate.js'));
+if (isMain) {
+  migrate().then(() => process.exit(0)).catch(err => {
+    console.error('[migrate] error:', err.message);
+    process.exit(1);
+  });
+}
