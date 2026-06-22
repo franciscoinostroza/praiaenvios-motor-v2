@@ -1425,7 +1425,8 @@ ${body}`, t));
     formulas: { cols: ['clave', 'valor'], pk: 'clave', title: 'Fórmulas', icon: '🧮' },
     categorias: { cols: ['tipo', 'categoria'], pk: 'id', title: 'Categorías', icon: '🏷️' },
     zonas: { cols: ['tipo', 'ciudad'], pk: 'id', title: 'Zonas', icon: '📍' },
-    trechos_config: { cols: ['ciudad', 'codigo_iata', 'direccion_latam', 'tiempo_adicional_dias', 'activo'], pk: 'ciudad', title: 'Trechos LATAM', icon: '✈️' }
+    trechos_config: { cols: ['ciudad', 'codigo_iata', 'direccion_latam', 'tiempo_adicional_dias', 'activo'], pk: 'ciudad', title: 'Trechos LATAM', icon: '✈️' },
+    config_texto: { cols: ['clave', 'valor'], pk: 'clave', title: 'Configuración de Texto', icon: '📝' }
   };
 
   const DESCRIPCIONES_FORMULAS = {
@@ -1439,11 +1440,8 @@ ${body}`, t));
     nacional_peso_max:      'Peso máximo (kg) para el cálculo del costo nacional',
     tasa_dolar:             'Tasa de cambio utilizada para convertir BRL → USD',
     tasa_ups_offset:        'Puntos adicionales a la tasa de cambio para cotizaciones UPS (ej: 0.40 = +40 pts)',
-    porcentaje_ganancia_ups:'Porcentaje de ganancia Praia sobre el precio UPS (40 = 40%)',
-    direccion_base_curitiba:'Dirección de la base logística en Curitiba (texto, configurable)'
+    porcentaje_ganancia_ups:'Porcentaje de ganancia Praia sobre el precio UPS (40 = 40%)'
   };
-
-  const FORMULAS_TEXTUALES = ['direccion_base_curitiba'];
 
   /* ─── FÓRMULAS (página personalizada con descripciones) ─── */
   function renderFormulasPage(rows, toast, t) {
@@ -1454,14 +1452,11 @@ ${body}`, t));
 
     for (const row of rows) {
       const desc = DESCRIPCIONES_FORMULAS[row.clave] || '';
-      const esTextual = FORMULAS_TEXTUALES.includes(row.clave);
-      const inputType = esTextual ? 'text' : 'number';
-      const stepAttr = esTextual ? '' : 'step="any"';
       html += `<tr>
         <td><span style="font-weight:600;color:var(--gray-500)">${esc(row.clave)}</span></td>
         <td>
           <form class="inline" method="POST" action="/admin/formulas/${esc(row.clave)}/update" data-clave="${esc(row.clave)}" onsubmit="event.preventDefault();confirmFormulaUpdate(this)">
-            <input type="${inputType}" ${stepAttr} name="valor" value="${esc(row.valor)}" style="${esTextual ? 'min-width:300px' : ''}">
+            <input type="number" step="any" name="valor" value="${esc(row.valor)}">
         </td>
         <td style="font-size:.78rem;color:var(--gray-500);max-width:360px">${desc ? esc(desc) : '<span style="color:var(--gray-400);font-style:italic">Sin descripción</span>'}</td>
         <td>
@@ -1484,7 +1479,7 @@ ${body}`, t));
     html += '<div class="add-form"><h3>➕ Agregar nueva fórmula</h3>';
     html += '<form class="fields" method="POST" action="/admin/formulas/add" onsubmit="return fetch(this.action,{method:this.method,body:new URLSearchParams(new FormData(this))}).then(()=>{window.location.reload()}).catch(()=>{window.location.reload()}),false">';
     html += '<label>clave <input type="text" name="clave" required placeholder="ej: impuesto_extra"></label>';
-    html += '<label>valor <input type="text" name="valor" required placeholder="Valor (número o texto)"></label>';
+    html += '<label>valor <input type="number" step="any" name="valor" required placeholder="0.00"></label>';
     html += '<button class="btn-add" type="submit">➕ Agregar</button>';
     html += '</form></div>';
 
@@ -1521,8 +1516,7 @@ function confirmFormulaUpdate(form){
 
   router.post('/formulas/add', auth, async (req, res) => {
     try {
-      const val = FORMULAS_TEXTUALES.includes(req.body.clave) ? req.body.valor : Number(req.body.valor);
-      await query('INSERT INTO formulas (clave, valor) VALUES ($1, $2) ON CONFLICT (clave) DO NOTHING', [req.body.clave, val]);
+      await query('INSERT INTO formulas (clave, valor) VALUES ($1, $2) ON CONFLICT (clave) DO NOTHING', [req.body.clave, Number(req.body.valor)]);
       invalidateCache();
       res.redirect('/admin/formulas?saved=1');
     } catch (err) {
@@ -1532,8 +1526,7 @@ function confirmFormulaUpdate(form){
 
   router.post('/formulas/:pk/update', auth, async (req, res) => {
     try {
-      const val = FORMULAS_TEXTUALES.includes(req.params.pk) ? req.body.valor : Number(req.body.valor);
-      await query('UPDATE formulas SET valor = $1 WHERE clave = $2', [val, req.params.pk]);
+      await query('UPDATE formulas SET valor = $1 WHERE clave = $2', [Number(req.body.valor), req.params.pk]);
       invalidateCache();
       res.redirect('/admin/formulas?saved=1');
     } catch (err) {

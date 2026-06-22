@@ -1,0 +1,1262 @@
+﻿FORMATOS FINALES DE COTIZACION - PRAIA ENVIOS + UPS
+Documento de referencia para WhatsApp / Motor de cotizaciones
+
+Objetivo:
+Este documento organiza todos los formatos finales de respuesta que deben mostrarse al cliente segun el tipo de cotizacion solicitada. Incluye los casos donde se muestra conjuntamente la logistica de Praia Envios y UPS, y los casos internacionales donde solo debe mostrarse UPS.
+
+Regla general de totales:
+En todos los formatos, los valores finales deben mostrarse en Reales y en Dolares para no confundir al cliente.
+
+Forma recomendada:
+* Total a pagar: R$ {{total_reales}} o ${{total_usd}} USD
+
+Si el valor corresponde a una opcion UPS especifica:
+* Total UPS: R$ {{ups_total_reales}} o ${{ups_total_usd}} USD
+
+Regla interna obligatoria para UPS:
+- Cada opcion UPS debe mostrarse en Reales y en Dolares.
+- Cada opcion UPS debe mostrar su tiempo aproximado de entrega dentro de la misma opcion de servicio.
+- El precio final UPS mostrado al cliente debe incluir la ganancia Praia del 40% sobre el precio que devuelve el sistema para cada opcion UPS.
+- Formula interna del motor para cada opcion UPS sin extras: total_ups = precio_ups_sistema + 40% ganancia Praia.
+- Si existe recolecta solicitada, el valor de la recolecta debe sumarse dentro de cada opcion UPS.
+- Si existe trecho, el valor del trecho debe sumarse dentro de cada opcion UPS.
+- Si existen trecho y recolecta, ambos valores deben estar sumados en cada opcion UPS.
+- No mostrar la formula al cliente final; mostrar solamente el servicio, tiempo estimado, total final en R$ y alternativa en USD.
+
+Regla interna obligatoria para modalidad Praia:
+- La modalidad Praia debe mostrarse siempre solo como numero o combinacion numerica.
+- No escribir "Modalidad aplicada: Modalidad 1" ni duplicar la frase.
+- Formato correcto: 🚀 *Modalidad aplicada:* 1
+- Si aplica trecho junto con otra modalidad, mostrar combinacion con guion. Ejemplos: 4-1, 4-2, 4-3.
+- La modalidad 4 representa trecho.
+- Si no hay trecho, nunca mostrar 4.
+- Si el formato es solo UPS internacional y no incluye Servicio Praia Envios, no mostrar modalidad Praia.
+
+Reglas condicionales obligatorias:
+- Si el destino es Venezuela, puede mostrarse el bloque de Servicio Praia Envios y tambien el bloque UPS.
+- Si el destino NO es Venezuela, no mostrar Servicio Praia Envios, no mostrar costo nacional en Venezuela y no mostrar direccion de entrega en Venezuela.
+- Si hay recolecta solicitada, mostrarla como bloque aparte y aclarar que esta incluida en los totales correspondientes.
+- En cada bloque de Servicio Praia Envios, incluir la aclaracion de cobertura internacional hasta Venezuela y evitar repetir esa misma explicacion en el bloque de costo nacional.
+- En cada bloque de Servicio UPS Internacional, incluir la aclaracion de que UPS no cubre cargos o impuestos de aduana del pais destino.
+- Si hay trecho LATAM Cargo, mostrar el bloque de trecho y aclarar que el valor del trecho esta sumado al total UPS y al total Praia cuando ambos servicios apliquen.
+- Si el origen no tiene cobertura LATAM Cargo, no inventar trecho, no mostrar costo de trecho y cotizar automaticamente desde Curitiba cuando corresponda.
+- El bloque PRODUCTOS NO DISPONIBLES solo se muestra si realmente existen productos no disponibles.
+- Si no hay productos no disponibles, omitir completamente ese titulo, su separador y su explicacion.
+
+Variables sugeridas:
+Puedes ajustar los nombres segun los campos reales que devuelve tu motor.
+
+Datos generales:
+{{origen}}
+{{direccion_origen}}
+{{origen_base_calculo}}
+{{destino_pais}}
+{{destino_ciudad}}
+{{direccion_destino}}
+{{codigo_postal_destino}}
+{{categoria}}
+{{tipo_mercancia}}
+{{numero_cajas}}
+{{resumen_cajas}}
+{{valor_total_mercancia_reales}}
+{{valor_total_mercancia_usd}}
+
+Praia Envios:
+{{praia_modalidad}}
+{{praia_total_reales}}
+{{praia_total_usd}}
+{{praia_tiempo}}
+{{praia_fecha_entrega}}
+{{agencia_direccion}}
+{{agencia_tipo}}
+{{costo_nacional_bs}}
+
+UPS:
+{{ups_origen_linea}}
+{{ups_destino_linea}}
+{{ups_paquete}}
+{{ups_opciones_envio}}
+{{ups_sin_cotizaciones}}
+{{ups_tiempo_estimado}}
+{{ups_servicio_tiempo}}
+
+Recolecta:
+{{valor_recolecta_reales}}
+{{valor_recolecta_usd}}
+
+Trecho:
+{{trecho_ciudad_origen}}
+{{trecho_codigo_iata}}
+{{trecho_direccion_latam}}
+{{valor_trecho_reales}}
+{{valor_trecho_usd}}
+{{trecho_observacion}}
+
+Compra asistida:
+{{productos_cotizados}}
+{{productos_no_disponibles}}
+{{total_compra_reales}}
+{{total_compra_usd}}
+{{total_servicio_reales}}
+{{total_servicio_usd}}
+
+============================================================
+FORMATO 1
+COTIZAR DESDE CURITIBA A VENEZUELA SIN TRECHO Y SIN RECOLECTA
+============================================================
+
+Resumen:
+Nota interna para el motor: si este formato muestra UPS, cada opcion UPS debe traer nombre del servicio, tiempo aproximado de entrega, total en R$ y alternativa en USD. El total UPS visible debe incluir precio UPS devuelto por el sistema + 40% de ganancia Praia. Si aplica recolecta o trecho, tambien deben estar sumados dentro de cada opcion UPS.
+Modalidad Praia en este formato: mostrar solo la modalidad principal que devuelva el motor, usando numero 1, 2 o 3. No mostrar 4 porque no hay trecho.
+Este formato se usa cuando la caja sale desde Curitiba o desde una ciudad base que no requiere trecho adicional, no se solicito recolecta y el destino es Venezuela. Debe mostrar en un solo mensaje Servicio Praia Envios + Servicio UPS Internacional. No se muestra bloque de trecho ni bloque de recolecta.
+
+Formato:
+
+✅ *Cotizacion aproximada lista*
+
+Calculamos tu cotizacion desde Brasil hacia Venezuela con Praia Envios y UPS 🇧🇷📦🇻🇪
+
+━━━━━━━━━━━━━━━━━━
+🔎 *DATOS DEL ENVIO*
+━━━━━━━━━━━━━━━━━━
+
+🇧🇷 *Pais de origen:* Brasil
+🏙️ *Ciudad de origen:* {{origen}}
+📍 *Direccion de origen:* {{direccion_origen}}
+📦 *Ciudad base de calculo:* {{origen_base_calculo}}
+
+🌍 *Pais de destino:* Venezuela
+🏙️ *Ciudad de destino:* {{destino_ciudad}}
+🏠 *Direccion de destino:* {{direccion_destino}}
+🏷️ *Codigo postal destino:* {{codigo_postal_destino}}
+
+📦 *Producto que envias:* {{categoria}}
+🚚 *Tipo de envio:* {{tipo_mercancia}}
+📦 *Cantidad de cajas:* {{numero_cajas}}
+📦 *Detalle de cajas:* {{resumen_cajas}}
+💰 *Valor total declarado:* R$ {{valor_total_mercancia_reales}} o ${{valor_total_mercancia_usd}} USD
+
+━━━━━━━━━━━━━━━━━━
+🇧🇷📦 *SERVICIO PRAIA ENVIOS*
+━━━━━━━━━━━━━━━━━━
+
+Tu pago cubre el servicio internacional hasta Venezuela y la entrega a una transportadora local como MRW, Zoom, Aerocav o LAE.
+Solo pagaras aparte el envio nacional dentro de Venezuela, directamente a esa transportadora y en bolivares a tasa BCV.
+No pagas nada mas por el servicio internacional.
+
+🚀 *Modalidad aplicada:* {{praia_modalidad}}
+💰 *Total Praia Envios:* R$ {{praia_total_reales}} o ${{praia_total_usd}} USD
+
+📦 *Tiempo de entrega*
+* Tiempo estimado aproximado: {{praia_tiempo}} dias
+* Fecha estimada de entrega: {{praia_fecha_entrega}}
+
+📍 *DIRECCION DE ENTREGA EN VENEZUELA*
+* {{agencia_direccion}} ({{agencia_tipo}})
+
+🇻🇪 *COSTO NACIONAL*
+* Costo nacional aproximado: Bs {{costo_nacional_bs}}
+
+━━━━━━━━━━━━━━━━━━
+✈️ *SERVICIO UPS INTERNACIONAL*
+━━━━━━━━━━━━━━━━━━
+
+*Cotizacion Internacional* 🌎
+
+UPS cubre el transporte internacional, pero no incluye los cargos o impuestos que puedan generarse al entrar al pais destino.
+Si la aduana aplica algun pago, el destinatario debera cancelarlo localmente para liberar la mercancia.
+
+{{ups_origen_linea}}
+
+{{ups_destino_linea}}
+{{ups_paquete}}
+
+*OPCIONES DE ENVIO*
+{{ups_opciones_envio}}
+
+📌 Cada opcion UPS debe mostrar sus valores finales asi:
+* Servicio UPS: {{ups_servicio_nombre}}
+* Tiempo estimado UPS: {{ups_tiempo_estimado}}
+* Total en Reales: R$ {{ups_total_reales}}
+* Alternativa en Dolares: ${{ups_total_usd}} USD
+📌 Estos valores ya deben incluir el 40% de ganancia Praia sobre el precio UPS devuelto por el sistema.
+
+━━━━━━━━━━━━━━━━━━
+💳 *METODOS DE PAGO*
+━━━━━━━━━━━━━━━━━━
+
+PIX, Zelle, Binance USDT, Tarjeta de Credito, PayPal
+
+Escribe *Menu* para volver al inicio o dime que caja, producto o direccion deseas cambiar.
+
+============================================================
+FORMATO 2
+COTIZAR A VENEZUELA CON TRECHO DESDE CIUDAD FUERA DE BASE LOGISTICA
+============================================================
+
+Resumen:
+Nota interna para el motor: si este formato muestra UPS, cada opcion UPS debe traer nombre del servicio, tiempo aproximado de entrega, total en R$ y alternativa en USD. El total UPS visible debe incluir precio UPS devuelto por el sistema + 40% de ganancia Praia. Si aplica recolecta o trecho, tambien deben estar sumados dentro de cada opcion UPS.
+Modalidad Praia en este formato: si aplica trecho, mostrar combinacion numerica 4-X, donde 4 es trecho y X es la modalidad principal devuelta por el motor. Ejemplo: 4-2. No duplicar texto.
+Este formato se usa cuando la mercancia sale desde una ciudad de Brasil fuera de la base logistica y existe cobertura LATAM Cargo para llevarla hasta Curitiba. Debe mostrar Praia Envios + UPS. El costo del trecho debe estar sumado al total Praia y tambien al total de cada opcion UPS.
+
+Formato:
+
+✅ *Cotizacion aproximada lista*
+
+Calculamos tu cotizacion desde {{trecho_ciudad_origen}} hacia Venezuela, usando trecho nacional hasta Curitiba + Praia Envios + UPS 🇧🇷📦🇻🇪
+
+━━━━━━━━━━━━━━━━━━
+🔎 *DATOS DEL ENVIO*
+━━━━━━━━━━━━━━━━━━
+
+🇧🇷 *Pais de origen:* Brasil
+🏙️ *Ciudad de origen:* {{origen}}
+📍 *Direccion de origen:* {{direccion_origen}}
+📦 *Ciudad base de calculo:* Curitiba
+
+🌍 *Pais de destino:* Venezuela
+🏙️ *Ciudad de destino:* {{destino_ciudad}}
+🏠 *Direccion de destino:* {{direccion_destino}}
+🏷️ *Codigo postal destino:* {{codigo_postal_destino}}
+
+📦 *Producto que envias:* {{categoria}}
+🚚 *Tipo de envio:* {{tipo_mercancia}}
+📦 *Cantidad de cajas:* {{numero_cajas}}
+📦 *Detalle de cajas:* {{resumen_cajas}}
+💰 *Valor total declarado:* R$ {{valor_total_mercancia_reales}} o ${{valor_total_mercancia_usd}} USD
+
+━━━━━━━━━━━━━━━━━━
+🇧🇷✈️ *TRECHO NACIONAL EN BRASIL*
+━━━━━━━━━━━━━━━━━━
+
+Tu ciudad de origen esta fuera de la base logistica principal. Se incluye el trecho nacional hasta Curitiba.
+
+* Ciudad de origen del trecho: {{trecho_ciudad_origen}}
+* Codigo IATA LATAM Cargo: {{trecho_codigo_iata}}
+* Direccion LATAM Cargo: {{trecho_direccion_latam}}
+* Valor del trecho: R$ {{valor_trecho_reales}} o ${{valor_trecho_usd}} USD
+* Modalidad de trecho: 4
+
+📌 El valor del trecho debe estar sumado al total Praia Envios y tambien dentro de cada opcion UPS mostrada.
+📌 Formula interna UPS con trecho: (precio UPS devuelto por el sistema + 40% ganancia Praia) + valor del trecho.
+
+━━━━━━━━━━━━━━━━━━
+🇧🇷📦 *SERVICIO PRAIA ENVIOS*
+━━━━━━━━━━━━━━━━━━
+
+Tu pago cubre el servicio internacional hasta Venezuela y la entrega a una transportadora local como MRW, Zoom, Aerocav o LAE.
+Solo pagaras aparte el envio nacional dentro de Venezuela, directamente a esa transportadora y en bolivares a tasa BCV.
+No pagas nada mas por el servicio internacional.
+
+🚀 *Modalidad aplicada:* {{praia_modalidad}}
+💰 *Total Praia Envios con trecho incluido:* R$ {{praia_total_reales}} o ${{praia_total_usd}} USD
+
+📦 *Tiempo de entrega*
+* Tiempo estimado aproximado: {{praia_tiempo}} dias
+* Fecha estimada de entrega: {{praia_fecha_entrega}}
+
+📍 *DIRECCION DE ENTREGA EN VENEZUELA*
+* {{agencia_direccion}} ({{agencia_tipo}})
+
+🇻🇪 *COSTO NACIONAL*
+* Costo nacional aproximado: Bs {{costo_nacional_bs}}
+
+━━━━━━━━━━━━━━━━━━
+✈️ *SERVICIO UPS INTERNACIONAL*
+━━━━━━━━━━━━━━━━━━
+
+*Cotizacion Internacional* 🌎
+
+UPS cubre el transporte internacional, pero no incluye los cargos o impuestos que puedan generarse al entrar al pais destino.
+Si la aduana aplica algun pago, el destinatario debera cancelarlo localmente para liberar la mercancia.
+
+🇧🇷✈️ *TRECHO INCLUIDO EN UPS*
+* Valor del trecho: R$ {{valor_trecho_reales}} o ${{valor_trecho_usd}} USD
+📌 Este valor debe sumarse dentro del precio final de cada opcion UPS.
+📌 Formula interna UPS: (precio UPS devuelto por el sistema + 40% ganancia Praia) + valor del trecho.
+{{ups_origen_linea}}
+
+{{ups_destino_linea}}
+{{ups_paquete}}
+
+*OPCIONES DE ENVIO*
+{{ups_opciones_envio}}
+
+📌 Cada opcion UPS debe mostrar sus valores finales asi:
+* Servicio UPS: {{ups_servicio_nombre}}
+* Tiempo estimado UPS: {{ups_tiempo_estimado}}
+* Total en Reales: R$ {{ups_total_reales}}
+* Alternativa en Dolares: ${{ups_total_usd}} USD
+📌 Estos valores ya deben incluir el 40% de ganancia Praia sobre el precio UPS devuelto por el sistema.
+
+━━━━━━━━━━━━━━━━━━
+💳 *METODOS DE PAGO*
+━━━━━━━━━━━━━━━━━━
+
+PIX, Zelle, Binance USDT, Tarjeta de Credito, PayPal
+
+Escribe *Menu* para volver al inicio o dime que caja, producto o direccion deseas cambiar.
+
+============================================================
+FORMATO 3
+COTIZAR DESDE CURITIBA A VENEZUELA CON RECOLECTA
+============================================================
+
+Resumen:
+Nota interna para el motor: si este formato muestra UPS, cada opcion UPS debe traer nombre del servicio, tiempo aproximado de entrega, total en R$ y alternativa en USD. El total UPS visible debe incluir precio UPS devuelto por el sistema + 40% de ganancia Praia. Si aplica recolecta o trecho, tambien deben estar sumados dentro de cada opcion UPS.
+Modalidad Praia en este formato: mostrar solo la modalidad principal 1, 2 o 3. La recolecta no cambia la modalidad y no debe mostrarse como modalidad 4.
+Este formato se usa cuando el origen esta en una ciudad con recolecta disponible, el cliente solicito incluir recolecta y el destino es Venezuela. Debe mostrar Praia Envios + UPS. La recolecta debe mostrarse aparte y aclarar que esta incluida en los totales de Praia y UPS cuando fue seleccionada.
+
+Formato:
+
+✅ *Cotizacion aproximada lista*
+
+Calculamos tu cotizacion desde Brasil hacia Venezuela con recolecta incluida 🇧🇷🚚📦🇻🇪
+
+━━━━━━━━━━━━━━━━━━
+🔎 *DATOS DEL ENVIO*
+━━━━━━━━━━━━━━━━━━
+
+🇧🇷 *Pais de origen:* Brasil
+🏙️ *Ciudad de origen:* {{origen}}
+📍 *Direccion de origen:* {{direccion_origen}}
+📦 *Ciudad base de calculo:* {{origen_base_calculo}}
+
+🌍 *Pais de destino:* Venezuela
+🏙️ *Ciudad de destino:* {{destino_ciudad}}
+🏠 *Direccion de destino:* {{direccion_destino}}
+🏷️ *Codigo postal destino:* {{codigo_postal_destino}}
+
+📦 *Producto que envias:* {{categoria}}
+🚚 *Tipo de envio:* {{tipo_mercancia}}
+📦 *Cantidad de cajas:* {{numero_cajas}}
+📦 *Detalle de cajas:* {{resumen_cajas}}
+💰 *Valor total declarado:* R$ {{valor_total_mercancia_reales}} o ${{valor_total_mercancia_usd}} USD
+
+━━━━━━━━━━━━━━━━━━
+🇧🇷 🚚 *RECOLECTA*
+━━━━━━━━━━━━━━━━━━
+
+* Valor de la recolecta: R$ {{valor_recolecta_reales}} o ${{valor_recolecta_usd}} USD
+📌 La recolecta fue solicitada y debe estar incluida en los totales mostrados para Praia Envios y UPS.
+📌 Formula interna UPS con recolecta: (precio UPS devuelto por el sistema + 40% ganancia Praia) + valor de la recolecta.
+
+━━━━━━━━━━━━━━━━━━
+🇧🇷📦 *SERVICIO PRAIA ENVIOS*
+━━━━━━━━━━━━━━━━━━
+
+Tu pago cubre el servicio internacional hasta Venezuela y la entrega a una transportadora local como MRW, Zoom, Aerocav o LAE.
+Solo pagaras aparte el envio nacional dentro de Venezuela, directamente a esa transportadora y en bolivares a tasa BCV.
+No pagas nada mas por el servicio internacional.
+
+🚀 *Modalidad aplicada:* {{praia_modalidad}}
+💰 *Total Praia Envios con recolecta incluida:* R$ {{praia_total_reales}} o ${{praia_total_usd}} USD
+
+📦 *Tiempo de entrega*
+* Tiempo estimado aproximado: {{praia_tiempo}} dias
+* Fecha estimada de entrega: {{praia_fecha_entrega}}
+
+📍 *DIRECCION DE ENTREGA EN VENEZUELA*
+* {{agencia_direccion}} ({{agencia_tipo}})
+
+🇻🇪 *COSTO NACIONAL*
+* Costo nacional aproximado: Bs {{costo_nacional_bs}}
+
+━━━━━━━━━━━━━━━━━━
+✈️ *SERVICIO UPS INTERNACIONAL*
+━━━━━━━━━━━━━━━━━━
+
+*Cotizacion Internacional* 🌎
+
+UPS cubre el transporte internacional, pero no incluye los cargos o impuestos que puedan generarse al entrar al pais destino.
+Si la aduana aplica algun pago, el destinatario debera cancelarlo localmente para liberar la mercancia.
+
+🇧🇷🚚 *RECOLECTA INCLUIDA EN UPS*
+* Valor de la recolecta: R$ {{valor_recolecta_reales}} o ${{valor_recolecta_usd}} USD
+📌 Este valor debe sumarse dentro del precio final de cada opcion UPS.
+📌 Formula interna UPS: (precio UPS devuelto por el sistema + 40% ganancia Praia) + valor de la recolecta.
+{{ups_origen_linea}}
+
+{{ups_destino_linea}}
+{{ups_paquete}}
+
+*OPCIONES DE ENVIO*
+{{ups_opciones_envio}}
+
+📌 Cada opcion UPS debe mostrar sus valores finales asi:
+* Servicio UPS: {{ups_servicio_nombre}}
+* Tiempo estimado UPS: {{ups_tiempo_estimado}}
+* Total en Reales: R$ {{ups_total_reales}}
+* Alternativa en Dolares: ${{ups_total_usd}} USD
+📌 Estos valores ya deben incluir el 40% de ganancia Praia sobre el precio UPS devuelto por el sistema.
+
+━━━━━━━━━━━━━━━━━━
+💳 *METODOS DE PAGO*
+━━━━━━━━━━━━━━━━━━
+
+PIX, Zelle, Binance USDT, Tarjeta de Credito, PayPal
+
+Escribe *Menu* para volver al inicio o dime que caja, producto o direccion deseas cambiar.
+
+============================================================
+FORMATO 4
+COTIZAR DESDE OTRAS CIUDADES DE BRASIL A VENEZUELA SIN COBERTURA LATAM
+============================================================
+
+Resumen:
+Nota interna para el motor: si este formato muestra UPS, cada opcion UPS debe traer nombre del servicio, tiempo aproximado de entrega, total en R$ y alternativa en USD. El total UPS visible debe incluir precio UPS devuelto por el sistema + 40% de ganancia Praia. Si aplica recolecta o trecho, tambien deben estar sumados dentro de cada opcion UPS.
+Modalidad Praia en este formato: cotizar desde Curitiba sin trecho, por lo tanto mostrar solo 1, 2 o 3. No mostrar modalidad 4.
+Este formato se usa cuando el origen informado esta fuera de la base logistica y no tiene cobertura LATAM Cargo permitida, o por alguna regla no se puede prometer trecho. Debe informarse al cliente que debe enviar la caja hasta Curitiba por Correios u otra transportadora de confianza. La cotizacion se muestra automaticamente desde Curitiba como base logistica. No aplica trecho ni recolecta para Praia ni UPS.
+
+Formato:
+
+✅ *Cotizacion aproximada lista*
+
+Calculamos tu cotizacion usando Curitiba como base logistica de Praia Envios 🇧🇷📦🇻🇪
+
+━━━━━━━━━━━━━━━━━━
+⚠️ *ORIGEN FUERA DE COBERTURA DE TRECHO*
+━━━━━━━━━━━━━━━━━━
+
+Tu ciudad de origen no tiene cobertura de trecho LATAM Cargo disponible para este flujo, o no podemos prometer ese servicio desde esa ciudad.
+
+Para continuar, deberas enviar tu caja hasta nuestra base logistica en Curitiba usando Correios o cualquier transportadora de tu confianza.
+
+📍 *Base Praia Envios Curitiba:*
+Rua Padre Leonardo Nunes 30, Loja 02, CEP 80330-320, Bairro Portao, Curitiba, Parana, Brasil. A nombre de: Praia Envios.
+
+📌 En este caso no se aplica costo de trecho ni recolecta en Praia Envios ni en UPS. La cotizacion se calcula desde Curitiba.
+
+━━━━━━━━━━━━━━━━━━
+🔎 *DATOS DEL ENVIO*
+━━━━━━━━━━━━━━━━━━
+
+🇧🇷 *Pais de origen:* Brasil
+🏙️ *Ciudad informada por el cliente:* {{origen}}
+📦 *Ciudad base de calculo:* Curitiba
+
+🌍 *Pais de destino:* Venezuela
+🏙️ *Ciudad de destino:* {{destino_ciudad}}
+🏠 *Direccion de destino:* {{direccion_destino}}
+🏷️ *Codigo postal destino:* {{codigo_postal_destino}}
+
+📦 *Producto que envias:* {{categoria}}
+🚚 *Tipo de envio:* {{tipo_mercancia}}
+📦 *Cantidad de cajas:* {{numero_cajas}}
+📦 *Detalle de cajas:* {{resumen_cajas}}
+💰 *Valor total declarado:* R$ {{valor_total_mercancia_reales}} o ${{valor_total_mercancia_usd}} USD
+
+━━━━━━━━━━━━━━━━━━
+🇧🇷📦 *SERVICIO PRAIA ENVIOS*
+━━━━━━━━━━━━━━━━━━
+
+Tu pago cubre el servicio internacional hasta Venezuela y la entrega a una transportadora local como MRW, Zoom, Aerocav o LAE.
+Solo pagaras aparte el envio nacional dentro de Venezuela, directamente a esa transportadora y en bolivares a tasa BCV.
+No pagas nada mas por el servicio internacional.
+
+🚀 *Modalidad aplicada:* {{praia_modalidad}}
+💰 *Total Praia Envios desde Curitiba:* R$ {{praia_total_reales}} o ${{praia_total_usd}} USD
+
+📦 *Tiempo de entrega*
+* Tiempo estimado aproximado: {{praia_tiempo}} dias
+* Fecha estimada de entrega: {{praia_fecha_entrega}}
+
+📍 *DIRECCION DE ENTREGA EN VENEZUELA*
+* {{agencia_direccion}} ({{agencia_tipo}})
+
+🇻🇪 *COSTO NACIONAL*
+* Costo nacional aproximado: Bs {{costo_nacional_bs}}
+
+━━━━━━━━━━━━━━━━━━
+✈️ *SERVICIO UPS INTERNACIONAL*
+━━━━━━━━━━━━━━━━━━
+
+*Cotizacion Internacional* 🌎
+
+UPS cubre el transporte internacional, pero no incluye los cargos o impuestos que puedan generarse al entrar al pais destino.
+Si la aduana aplica algun pago, el destinatario debera cancelarlo localmente para liberar la mercancia.
+
+{{ups_origen_linea}}
+
+{{ups_destino_linea}}
+{{ups_paquete}}
+
+*OPCIONES DE ENVIO*
+{{ups_opciones_envio}}
+
+📌 Cada opcion UPS debe mostrar sus valores finales asi:
+* Servicio UPS: {{ups_servicio_nombre}}
+* Tiempo estimado UPS: {{ups_tiempo_estimado}}
+* Total en Reales: R$ {{ups_total_reales}}
+* Alternativa en Dolares: ${{ups_total_usd}} USD
+📌 Estos valores ya deben incluir el 40% de ganancia Praia sobre el precio UPS devuelto por el sistema.
+
+━━━━━━━━━━━━━━━━━━
+💳 *METODOS DE PAGO*
+━━━━━━━━━━━━━━━━━━
+
+PIX, Zelle, Binance USDT, Tarjeta de Credito, PayPal
+
+Escribe *Menu* para volver al inicio o dime que caja, producto o direccion deseas cambiar.
+
+============================================================
+FORMATO 5
+PRODUCTOS QUE QUIERO COMPRAR - DESTINO VENEZUELA - TODOS LOS PRODUCTOS VALIDOS
+============================================================
+
+Resumen:
+Nota interna para el motor: si este formato muestra UPS, cada opcion UPS debe traer nombre del servicio, tiempo aproximado de entrega, total en R$ y alternativa en USD. El total UPS visible debe incluir precio UPS devuelto por el sistema + 40% de ganancia Praia. Si aplica recolecta o trecho, tambien deben estar sumados dentro de cada opcion UPS.
+Modalidad Praia en este formato: mostrar solo la modalidad principal que devuelva el motor, usando numero 1, 2 o 3. No mostrar 4 porque no hay trecho.
+Este formato se usa cuando el cliente eligio cotizar productos que quiere comprar mediante links, fotos o descripciones, todos los productos estan disponibles, y el destino es Venezuela. Debe mostrar productos cotizados, cajas seleccionadas, costo aproximado de compra, Servicio Praia Envios y UPS en un mismo mensaje.
+
+Formato:
+
+✅ *Cotizacion aproximada lista*
+
+Calculamos tu cotizacion de compra asistida + envio internacional desde Brasil 🇧🇷🛒📦🇻🇪
+
+━━━━━━━━━━━━━━━━━━
+📍 *DATOS DEL ENVIO*
+━━━━━━━━━━━━━━━━━━
+
+🇧🇷 *Pais de origen:* Brasil
+🏙️ *Ciudad de origen:* Curitiba, Parana
+📦 *Salida logistica:* Praia Envios Curitiba
+📍 *Direccion de origen:* Rua Padre Leonardo Nunes 30, Loja 02, CEP 80330-320, Bairro Portao, Curitiba, Parana, Brasil.
+
+🌍 *Pais de destino:* Venezuela
+🏙️ *Ciudad de destino:* {{destino_ciudad}}
+🏠 *Direccion de destino:* {{direccion_destino}}
+🏷️ *Codigo postal destino:* {{codigo_postal_destino}}
+
+📦 *Producto que envias:* {{categoria}}
+🚚 *Tipo de envio:* {{tipo_mercancia}}
+
+━━━━━━━━━━━━━━━━━━
+🛒 *PRODUCTOS COTIZADOS*
+━━━━━━━━━━━━━━━━━━
+
+{{productos_cotizados}}
+
+━━━━━━━━━━━━━━━━━━
+💰 *COSTO APROXIMADO DE LA COMPRA*
+━━━━━━━━━━━━━━━━━━
+
+* Total compra aproximado: R$ {{total_compra_reales}} o ${{total_compra_usd}} USD
+
+━━━━━━━━━━━━━━━━━━
+📦 *CAJAS SELECCIONADAS PRAIA*
+━━━━━━━━━━━━━━━━━━
+
+{{resumen_cajas}}
+
+* Valor total declarado: R$ {{valor_total_mercancia_reales}} o ${{valor_total_mercancia_usd}} USD
+
+━━━━━━━━━━━━━━━━━━
+🇧🇷📦 *SERVICIO PRAIA ENVIOS*
+━━━━━━━━━━━━━━━━━━
+
+Tu pago cubre el servicio internacional hasta Venezuela y la entrega a una transportadora local como MRW, Zoom, Aerocav o LAE.
+Solo pagaras aparte el envio nacional dentro de Venezuela, directamente a esa transportadora y en bolivares a tasa BCV.
+No pagas nada mas por el servicio internacional.
+
+🚀 *Modalidad aplicada:* {{praia_modalidad}}
+💰 *Total Praia Envios:* R$ {{praia_total_reales}} o ${{praia_total_usd}} USD
+
+📦 *Tiempo de entrega*
+* Tiempo estimado aproximado: {{praia_tiempo}} dias
+* Fecha estimada de entrega: {{praia_fecha_entrega}}
+
+📍 *DIRECCION DE ENTREGA EN VENEZUELA*
+* {{agencia_direccion}} ({{agencia_tipo}})
+
+🇻🇪 *COSTO NACIONAL*
+* Costo nacional aproximado: Bs {{costo_nacional_bs}}
+
+━━━━━━━━━━━━━━━━━━
+✈️ *SERVICIO UPS INTERNACIONAL*
+━━━━━━━━━━━━━━━━━━
+
+*Cotizacion Internacional* 🌎
+
+UPS cubre el transporte internacional, pero no incluye los cargos o impuestos que puedan generarse al entrar al pais destino.
+Si la aduana aplica algun pago, el destinatario debera cancelarlo localmente para liberar la mercancia.
+
+{{ups_origen_linea}}
+
+{{ups_destino_linea}}
+{{ups_paquete}}
+
+*OPCIONES DE ENVIO*
+{{ups_opciones_envio}}
+
+📌 Cada opcion UPS debe mostrar sus valores finales asi:
+* Servicio UPS: {{ups_servicio_nombre}}
+* Tiempo estimado UPS: {{ups_tiempo_estimado}}
+* Total en Reales: R$ {{ups_total_reales}}
+* Alternativa en Dolares: ${{ups_total_usd}} USD
+📌 Estos valores ya deben incluir el 40% de ganancia Praia sobre el precio UPS devuelto por el sistema.
+
+━━━━━━━━━━━━━━━━━━
+💳 *METODOS DE PAGO*
+━━━━━━━━━━━━━━━━━━
+
+PIX, Zelle, Binance USDT, Tarjeta de Credito, PayPal
+
+Escribe *Menu* para volver al inicio o dime que producto, caja o direccion deseas cambiar.
+
+============================================================
+FORMATO 6
+PRODUCTOS QUE QUIERO COMPRAR - DESTINO VENEZUELA - CON PRODUCTOS NO DISPONIBLES
+============================================================
+
+Resumen:
+Nota interna para el motor: si este formato muestra UPS, cada opcion UPS debe traer nombre del servicio, tiempo aproximado de entrega, total en R$ y alternativa en USD. El total UPS visible debe incluir precio UPS devuelto por el sistema + 40% de ganancia Praia. Si aplica recolecta o trecho, tambien deben estar sumados dentro de cada opcion UPS.
+Modalidad Praia en este formato: mostrar solo la modalidad principal que devuelva el motor, usando numero 1, 2 o 3. No mostrar 4 porque no hay trecho.
+Este formato es igual al formato 5, pero incluye un bloque condicional de productos no disponibles. Los productos sin stock o no disponibles no deben tomarse en cuenta para el calculo de compra, caja, valor declarado ni flete.
+
+Formato:
+
+✅ *Cotizacion aproximada lista*
+
+Calculamos tu cotizacion de compra asistida + envio internacional desde Brasil 🇧🇷🛒📦🇻🇪
+
+━━━━━━━━━━━━━━━━━━
+📍 *DATOS DEL ENVIO*
+━━━━━━━━━━━━━━━━━━
+
+🇧🇷 *Pais de origen:* Brasil
+🏙️ *Ciudad de origen:* Curitiba, Parana
+📦 *Salida logistica:* Praia Envios Curitiba
+📍 *Direccion de origen:* Rua Padre Leonardo Nunes 30, Loja 02, CEP 80330-320, Bairro Portao, Curitiba, Parana, Brasil.
+
+🌍 *Pais de destino:* Venezuela
+🏙️ *Ciudad de destino:* {{destino_ciudad}}
+🏠 *Direccion de destino:* {{direccion_destino}}
+🏷️ *Codigo postal destino:* {{codigo_postal_destino}}
+
+📦 *Producto que envias:* {{categoria}}
+🚚 *Tipo de envio:* {{tipo_mercancia}}
+
+━━━━━━━━━━━━━━━━━━
+🛒 *PRODUCTOS COTIZADOS*
+━━━━━━━━━━━━━━━━━━
+
+{{productos_cotizados}}
+
+━━━━━━━━━━━━━━━━━━
+⚠️ *PRODUCTOS NO DISPONIBLES*
+━━━━━━━━━━━━━━━━━━
+
+{{productos_no_disponibles}}
+
+📌 Los productos sin stock o no disponibles no fueron tomados en cuenta para el calculo de compra, caja, valor declarado ni flete.
+
+━━━━━━━━━━━━━━━━━━
+💰 *COSTO APROXIMADO DE LA COMPRA*
+━━━━━━━━━━━━━━━━━━
+
+* Total compra aproximado: R$ {{total_compra_reales}} o ${{total_compra_usd}} USD
+
+━━━━━━━━━━━━━━━━━━
+📦 *CAJAS SELECCIONADAS PRAIA*
+━━━━━━━━━━━━━━━━━━
+
+{{resumen_cajas}}
+
+* Valor total declarado: R$ {{valor_total_mercancia_reales}} o ${{valor_total_mercancia_usd}} USD
+
+━━━━━━━━━━━━━━━━━━
+🇧🇷📦 *SERVICIO PRAIA ENVIOS*
+━━━━━━━━━━━━━━━━━━
+
+Tu pago cubre el servicio internacional hasta Venezuela y la entrega a una transportadora local como MRW, Zoom, Aerocav o LAE.
+Solo pagaras aparte el envio nacional dentro de Venezuela, directamente a esa transportadora y en bolivares a tasa BCV.
+No pagas nada mas por el servicio internacional.
+
+🚀 *Modalidad aplicada:* {{praia_modalidad}}
+💰 *Total Praia Envios:* R$ {{praia_total_reales}} o ${{praia_total_usd}} USD
+
+📦 *Tiempo de entrega*
+* Tiempo estimado aproximado: {{praia_tiempo}} dias
+* Fecha estimada de entrega: {{praia_fecha_entrega}}
+
+📍 *DIRECCION DE ENTREGA EN VENEZUELA*
+* {{agencia_direccion}} ({{agencia_tipo}})
+
+🇻🇪 *COSTO NACIONAL*
+* Costo nacional aproximado: Bs {{costo_nacional_bs}}
+
+━━━━━━━━━━━━━━━━━━
+✈️ *SERVICIO UPS INTERNACIONAL*
+━━━━━━━━━━━━━━━━━━
+
+*Cotizacion Internacional* 🌎
+
+UPS cubre el transporte internacional, pero no incluye los cargos o impuestos que puedan generarse al entrar al pais destino.
+Si la aduana aplica algun pago, el destinatario debera cancelarlo localmente para liberar la mercancia.
+
+{{ups_origen_linea}}
+
+{{ups_destino_linea}}
+{{ups_paquete}}
+
+*OPCIONES DE ENVIO*
+{{ups_opciones_envio}}
+
+📌 Cada opcion UPS debe mostrar sus valores finales asi:
+* Servicio UPS: {{ups_servicio_nombre}}
+* Tiempo estimado UPS: {{ups_tiempo_estimado}}
+* Total en Reales: R$ {{ups_total_reales}}
+* Alternativa en Dolares: ${{ups_total_usd}} USD
+📌 Estos valores ya deben incluir el 40% de ganancia Praia sobre el precio UPS devuelto por el sistema.
+
+━━━━━━━━━━━━━━━━━━
+💳 *METODOS DE PAGO*
+━━━━━━━━━━━━━━━━━━
+
+PIX, Zelle, Binance USDT, Tarjeta de Credito, PayPal
+
+Escribe *Menu* para volver al inicio o dime que producto, caja o direccion deseas cambiar.
+
+============================================================
+FORMATO 7
+BRASIL A OTRO PAIS DIFERENTE A VENEZUELA - SALIENDO DESDE CURITIBA
+============================================================
+
+Resumen:
+Nota interna para el motor: si este formato muestra UPS, cada opcion UPS debe traer nombre del servicio, tiempo aproximado de entrega, total en R$ y alternativa en USD. El total UPS visible debe incluir precio UPS devuelto por el sistema + 40% de ganancia Praia. Si aplica recolecta o trecho, tambien deben estar sumados dentro de cada opcion UPS.
+Modalidad Praia en este formato: no aplica porque el resultado muestra solo UPS internacional. No mostrar bloque ni campo de modalidad Praia.
+Este formato se usa cuando el destino no es Venezuela y la salida se calcula desde Curitiba. No debe mostrar Praia Envios, costo nacional venezolano ni direccion de entrega en Venezuela. Solo debe mostrar UPS internacional.
+
+Formato:
+
+✅ *Cotizacion internacional lista*
+
+Calculamos tu cotizacion UPS desde Brasil hacia {{destino_pais}} 🇧🇷✈️🌎
+
+━━━━━━━━━━━━━━━━━━
+🔎 *DATOS DEL ENVIO*
+━━━━━━━━━━━━━━━━━━
+
+🇧🇷 *Pais de origen:* Brasil
+🏙️ *Ciudad de origen:* {{origen}}
+📍 *Direccion de origen:* {{direccion_origen}}
+📦 *Ciudad base de calculo:* {{origen_base_calculo}}
+
+🌍 *Pais de destino:* {{destino_pais}}
+🏙️ *Ciudad de destino:* {{destino_ciudad}}
+🏠 *Direccion de destino:* {{direccion_destino}}
+🏷️ *Codigo postal destino:* {{codigo_postal_destino}}
+
+📦 *Producto que envias:* {{categoria}}
+🚚 *Tipo de envio:* {{tipo_mercancia}}
+📦 *Cantidad de cajas:* {{numero_cajas}}
+📦 *Detalle de cajas:* {{resumen_cajas}}
+💰 *Valor total declarado:* R$ {{valor_total_mercancia_reales}} o ${{valor_total_mercancia_usd}} USD
+
+━━━━━━━━━━━━━━━━━━
+✈️ *SERVICIO UPS INTERNACIONAL*
+━━━━━━━━━━━━━━━━━━
+
+*Cotizacion Internacional* 🌎
+
+UPS cubre el transporte internacional, pero no incluye los cargos o impuestos que puedan generarse al entrar al pais destino.
+Si la aduana aplica algun pago, el destinatario debera cancelarlo localmente para liberar la mercancia.
+
+{{ups_origen_linea}}
+
+{{ups_destino_linea}}
+{{ups_paquete}}
+
+*OPCIONES DE ENVIO*
+{{ups_opciones_envio}}
+
+📌 Cada opcion UPS debe mostrar sus valores finales asi:
+* Servicio UPS: {{ups_servicio_nombre}}
+* Tiempo estimado UPS: {{ups_tiempo_estimado}}
+* Total en Reales: R$ {{ups_total_reales}}
+* Alternativa en Dolares: ${{ups_total_usd}} USD
+📌 Estos valores ya deben incluir el 40% de ganancia Praia sobre el precio UPS devuelto por el sistema.
+
+━━━━━━━━━━━━━━━━━━
+💳 *METODOS DE PAGO*
+━━━━━━━━━━━━━━━━━━
+
+PIX, Zelle, Binance USDT, Tarjeta de Credito, PayPal
+
+Escribe *Menu* para volver al inicio o dime que caja, producto o direccion deseas cambiar.
+
+============================================================
+FORMATO 8
+BRASIL A OTRO PAIS DIFERENTE A VENEZUELA - SALIENDO DESDE OTRA CIUDAD CON TRECHO
+============================================================
+
+Resumen:
+Nota interna para el motor: si este formato muestra UPS, cada opcion UPS debe traer nombre del servicio, tiempo aproximado de entrega, total en R$ y alternativa en USD. El total UPS visible debe incluir precio UPS devuelto por el sistema + 40% de ganancia Praia. Si aplica recolecta o trecho, tambien deben estar sumados dentro de cada opcion UPS.
+Modalidad Praia en este formato: no aplica porque el resultado muestra solo UPS internacional. No mostrar bloque ni campo de modalidad Praia.
+Este formato se usa cuando el destino no es Venezuela, el origen esta fuera de Curitiba y existe trecho LATAM Cargo hasta Curitiba. Solo se muestra UPS, pero el valor del trecho debe sumarse al total de cada opcion UPS.
+
+Formato:
+
+✅ *Cotizacion internacional lista*
+
+Calculamos tu cotizacion UPS desde {{trecho_ciudad_origen}} hacia {{destino_pais}}, incluyendo trecho nacional hasta Curitiba 🇧🇷✈️🌎
+
+━━━━━━━━━━━━━━━━━━
+🔎 *DATOS DEL ENVIO*
+━━━━━━━━━━━━━━━━━━
+
+🇧🇷 *Pais de origen:* Brasil
+🏙️ *Ciudad de origen:* {{origen}}
+📍 *Direccion de origen:* {{direccion_origen}}
+📦 *Ciudad base de calculo:* Curitiba
+
+🌍 *Pais de destino:* {{destino_pais}}
+🏙️ *Ciudad de destino:* {{destino_ciudad}}
+🏠 *Direccion de destino:* {{direccion_destino}}
+🏷️ *Codigo postal destino:* {{codigo_postal_destino}}
+
+📦 *Producto que envias:* {{categoria}}
+🚚 *Tipo de envio:* {{tipo_mercancia}}
+📦 *Cantidad de cajas:* {{numero_cajas}}
+📦 *Detalle de cajas:* {{resumen_cajas}}
+💰 *Valor total declarado:* R$ {{valor_total_mercancia_reales}} o ${{valor_total_mercancia_usd}} USD
+
+━━━━━━━━━━━━━━━━━━
+🇧🇷✈️ *TRECHO NACIONAL EN BRASIL*
+━━━━━━━━━━━━━━━━━━
+
+* Ciudad de origen del trecho: {{trecho_ciudad_origen}}
+* Codigo IATA LATAM Cargo: {{trecho_codigo_iata}}
+* Direccion LATAM Cargo: {{trecho_direccion_latam}}
+* Valor del trecho: R$ {{valor_trecho_reales}} o ${{valor_trecho_usd}} USD
+* Modalidad de trecho: 4
+
+📌 El valor del trecho debe estar sumado dentro de cada opcion UPS mostrada.
+📌 Formula interna UPS con trecho: (precio UPS devuelto por el sistema + 40% ganancia Praia) + valor del trecho.
+
+━━━━━━━━━━━━━━━━━━
+✈️ *SERVICIO UPS INTERNACIONAL*
+━━━━━━━━━━━━━━━━━━
+
+*Cotizacion Internacional* 🌎
+
+UPS cubre el transporte internacional, pero no incluye los cargos o impuestos que puedan generarse al entrar al pais destino.
+Si la aduana aplica algun pago, el destinatario debera cancelarlo localmente para liberar la mercancia.
+
+🇧🇷✈️ *TRECHO INCLUIDO EN UPS*
+* Valor del trecho: R$ {{valor_trecho_reales}} o ${{valor_trecho_usd}} USD
+📌 Este valor debe sumarse dentro del precio final de cada opcion UPS.
+📌 Formula interna UPS: (precio UPS devuelto por el sistema + 40% ganancia Praia) + valor del trecho.
+{{ups_origen_linea}}
+
+{{ups_destino_linea}}
+{{ups_paquete}}
+
+*OPCIONES DE ENVIO*
+{{ups_opciones_envio}}
+
+📌 Cada opcion UPS debe mostrar sus valores finales asi:
+* Servicio UPS: {{ups_servicio_nombre}}
+* Tiempo estimado UPS: {{ups_tiempo_estimado}}
+* Total en Reales: R$ {{ups_total_reales}}
+* Alternativa en Dolares: ${{ups_total_usd}} USD
+📌 Estos valores ya deben incluir el 40% de ganancia Praia sobre el precio UPS devuelto por el sistema.
+
+━━━━━━━━━━━━━━━━━━
+💳 *METODOS DE PAGO*
+━━━━━━━━━━━━━━━━━━
+
+PIX, Zelle, Binance USDT, Tarjeta de Credito, PayPal
+
+Escribe *Menu* para volver al inicio o dime que caja, producto o direccion deseas cambiar.
+
+============================================================
+FORMATO 9
+BRASIL A OTRO PAIS DIFERENTE A VENEZUELA - SALIENDO DESDE CURITIBA CON RECOLECTA
+============================================================
+
+Resumen:
+Nota interna para el motor: si este formato muestra UPS, cada opcion UPS debe traer nombre del servicio, tiempo aproximado de entrega, total en R$ y alternativa en USD. El total UPS visible debe incluir precio UPS devuelto por el sistema + 40% de ganancia Praia. Si aplica recolecta o trecho, tambien deben estar sumados dentro de cada opcion UPS.
+Modalidad Praia en este formato: no aplica porque el resultado muestra solo UPS internacional. No mostrar bloque ni campo de modalidad Praia.
+Este formato se usa cuando el destino no es Venezuela, la cotizacion es UPS internacional y el cliente solicito recolecta en una ciudad permitida de Parana. No se muestra Praia Envios. La recolecta debe estar sumada al total de cada opcion UPS.
+
+Formato:
+
+✅ *Cotizacion internacional lista*
+
+Calculamos tu cotizacion UPS desde Brasil hacia {{destino_pais}} con recolecta incluida 🇧🇷🚚✈️🌎
+
+━━━━━━━━━━━━━━━━━━
+🔎 *DATOS DEL ENVIO*
+━━━━━━━━━━━━━━━━━━
+
+🇧🇷 *Pais de origen:* Brasil
+🏙️ *Ciudad de origen:* {{origen}}
+📍 *Direccion de origen:* {{direccion_origen}}
+📦 *Ciudad base de calculo:* {{origen_base_calculo}}
+
+🌍 *Pais de destino:* {{destino_pais}}
+🏙️ *Ciudad de destino:* {{destino_ciudad}}
+🏠 *Direccion de destino:* {{direccion_destino}}
+🏷️ *Codigo postal destino:* {{codigo_postal_destino}}
+
+📦 *Producto que envias:* {{categoria}}
+🚚 *Tipo de envio:* {{tipo_mercancia}}
+📦 *Cantidad de cajas:* {{numero_cajas}}
+📦 *Detalle de cajas:* {{resumen_cajas}}
+💰 *Valor total declarado:* R$ {{valor_total_mercancia_reales}} o ${{valor_total_mercancia_usd}} USD
+
+━━━━━━━━━━━━━━━━━━
+🇧🇷 🚚 *RECOLECTA*
+━━━━━━━━━━━━━━━━━━
+
+* Valor de la recolecta: R$ {{valor_recolecta_reales}} o ${{valor_recolecta_usd}} USD
+📌 La recolecta fue solicitada y debe estar incluida dentro de cada opcion UPS mostrada.
+📌 Formula interna UPS con recolecta: (precio UPS devuelto por el sistema + 40% ganancia Praia) + valor de la recolecta.
+
+━━━━━━━━━━━━━━━━━━
+✈️ *SERVICIO UPS INTERNACIONAL*
+━━━━━━━━━━━━━━━━━━
+
+*Cotizacion Internacional* 🌎
+
+UPS cubre el transporte internacional, pero no incluye los cargos o impuestos que puedan generarse al entrar al pais destino.
+Si la aduana aplica algun pago, el destinatario debera cancelarlo localmente para liberar la mercancia.
+
+🇧🇷🚚 *RECOLECTA INCLUIDA EN UPS*
+* Valor de la recolecta: R$ {{valor_recolecta_reales}} o ${{valor_recolecta_usd}} USD
+📌 Este valor debe sumarse dentro del precio final de cada opcion UPS.
+📌 Formula interna UPS: (precio UPS devuelto por el sistema + 40% ganancia Praia) + valor de la recolecta.
+{{ups_origen_linea}}
+
+{{ups_destino_linea}}
+{{ups_paquete}}
+
+*OPCIONES DE ENVIO*
+{{ups_opciones_envio}}
+
+📌 Cada opcion UPS debe mostrar sus valores finales asi:
+* Servicio UPS: {{ups_servicio_nombre}}
+* Tiempo estimado UPS: {{ups_tiempo_estimado}}
+* Total en Reales: R$ {{ups_total_reales}}
+* Alternativa en Dolares: ${{ups_total_usd}} USD
+📌 Estos valores ya deben incluir el 40% de ganancia Praia sobre el precio UPS devuelto por el sistema.
+
+━━━━━━━━━━━━━━━━━━
+💳 *METODOS DE PAGO*
+━━━━━━━━━━━━━━━━━━
+
+PIX, Zelle, Binance USDT, Tarjeta de Credito, PayPal
+
+Escribe *Menu* para volver al inicio o dime que caja, producto o direccion deseas cambiar.
+
+============================================================
+FORMATO 10
+PRODUCTOS QUE QUIERO COMPRAR - DESTINO DIFERENTE A VENEZUELA - TODOS VALIDOS
+============================================================
+
+Resumen:
+Nota interna para el motor: si este formato muestra UPS, cada opcion UPS debe traer nombre del servicio, tiempo aproximado de entrega, total en R$ y alternativa en USD. El total UPS visible debe incluir precio UPS devuelto por el sistema + 40% de ganancia Praia. Si aplica recolecta o trecho, tambien deben estar sumados dentro de cada opcion UPS.
+Modalidad Praia en este formato: no aplica porque el resultado muestra solo UPS internacional. No mostrar bloque ni campo de modalidad Praia.
+Este formato se usa cuando el cliente quiere comprar productos mediante links o fotos, todos los productos estan disponibles y el destino no es Venezuela. Se excluye completamente Praia Envios y solo se muestra UPS internacional.
+
+Formato:
+
+✅ *Cotizacion internacional lista*
+
+Calculamos tu cotizacion de compra asistida + envio UPS desde Brasil hacia {{destino_pais}} 🇧🇷🛒✈️🌎
+
+━━━━━━━━━━━━━━━━━━
+📍 *DATOS DEL ENVIO*
+━━━━━━━━━━━━━━━━━━
+
+🇧🇷 *Pais de origen:* Brasil
+🏙️ *Ciudad de origen:* Curitiba, Parana
+📦 *Salida logistica:* Praia Envios Curitiba
+📍 *Direccion de origen:* Rua Padre Leonardo Nunes 30, Loja 02, CEP 80330-320, Bairro Portao, Curitiba, Parana, Brasil.
+
+🌍 *Pais de destino:* {{destino_pais}}
+🏙️ *Ciudad de destino:* {{destino_ciudad}}
+🏠 *Direccion de destino:* {{direccion_destino}}
+🏷️ *Codigo postal destino:* {{codigo_postal_destino}}
+
+📦 *Producto que envias:* {{categoria}}
+🚚 *Tipo de envio:* {{tipo_mercancia}}
+
+━━━━━━━━━━━━━━━━━━
+🛒 *PRODUCTOS COTIZADOS*
+━━━━━━━━━━━━━━━━━━
+
+{{productos_cotizados}}
+
+━━━━━━━━━━━━━━━━━━
+💰 *COSTO APROXIMADO DE LA COMPRA*
+━━━━━━━━━━━━━━━━━━
+
+* Total compra aproximado: R$ {{total_compra_reales}} o ${{total_compra_usd}} USD
+
+━━━━━━━━━━━━━━━━━━
+📦 *CAJAS SELECCIONADAS*
+━━━━━━━━━━━━━━━━━━
+
+{{resumen_cajas}}
+
+* Valor total declarado: R$ {{valor_total_mercancia_reales}} o ${{valor_total_mercancia_usd}} USD
+
+━━━━━━━━━━━━━━━━━━
+✈️ *SERVICIO UPS INTERNACIONAL*
+━━━━━━━━━━━━━━━━━━
+
+*Cotizacion Internacional* 🌎
+
+UPS cubre el transporte internacional, pero no incluye los cargos o impuestos que puedan generarse al entrar al pais destino.
+Si la aduana aplica algun pago, el destinatario debera cancelarlo localmente para liberar la mercancia.
+
+{{ups_origen_linea}}
+
+{{ups_destino_linea}}
+{{ups_paquete}}
+
+*OPCIONES DE ENVIO*
+{{ups_opciones_envio}}
+
+📌 Cada opcion UPS debe mostrar sus valores finales asi:
+* Servicio UPS: {{ups_servicio_nombre}}
+* Tiempo estimado UPS: {{ups_tiempo_estimado}}
+* Total en Reales: R$ {{ups_total_reales}}
+* Alternativa en Dolares: ${{ups_total_usd}} USD
+📌 Estos valores ya deben incluir el 40% de ganancia Praia sobre el precio UPS devuelto por el sistema.
+
+━━━━━━━━━━━━━━━━━━
+💳 *METODOS DE PAGO*
+━━━━━━━━━━━━━━━━━━
+
+PIX, Zelle, Binance USDT, Tarjeta de Credito, PayPal
+
+Escribe *Menu* para volver al inicio o dime que producto, caja o direccion deseas cambiar.
+
+============================================================
+FORMATO 11
+PRODUCTOS QUE QUIERO COMPRAR - DESTINO DIFERENTE A VENEZUELA - CON PRODUCTOS NO DISPONIBLES
+============================================================
+
+Resumen:
+Nota interna para el motor: si este formato muestra UPS, cada opcion UPS debe traer nombre del servicio, tiempo aproximado de entrega, total en R$ y alternativa en USD. El total UPS visible debe incluir precio UPS devuelto por el sistema + 40% de ganancia Praia. Si aplica recolecta o trecho, tambien deben estar sumados dentro de cada opcion UPS.
+Modalidad Praia en este formato: no aplica porque el resultado muestra solo UPS internacional. No mostrar bloque ni campo de modalidad Praia.
+Este formato es igual al formato 10, pero agrega el bloque de productos no disponibles. Los productos no disponibles no se calculan dentro del total de compra, valor declarado, cajas ni flete UPS.
+
+Formato:
+
+✅ *Cotizacion internacional lista*
+
+Calculamos tu cotizacion de compra asistida + envio UPS desde Brasil hacia {{destino_pais}} 🇧🇷🛒✈️🌎
+
+━━━━━━━━━━━━━━━━━━
+📍 *DATOS DEL ENVIO*
+━━━━━━━━━━━━━━━━━━
+
+🇧🇷 *Pais de origen:* Brasil
+🏙️ *Ciudad de origen:* Curitiba, Parana
+📦 *Salida logistica:* Praia Envios Curitiba
+📍 *Direccion de origen:* Rua Padre Leonardo Nunes 30, Loja 02, CEP 80330-320, Bairro Portao, Curitiba, Parana, Brasil.
+
+🌍 *Pais de destino:* {{destino_pais}}
+🏙️ *Ciudad de destino:* {{destino_ciudad}}
+🏠 *Direccion de destino:* {{direccion_destino}}
+🏷️ *Codigo postal destino:* {{codigo_postal_destino}}
+
+📦 *Producto que envias:* {{categoria}}
+🚚 *Tipo de envio:* {{tipo_mercancia}}
+
+━━━━━━━━━━━━━━━━━━
+🛒 *PRODUCTOS COTIZADOS*
+━━━━━━━━━━━━━━━━━━
+
+{{productos_cotizados}}
+
+━━━━━━━━━━━━━━━━━━
+⚠️ *PRODUCTOS NO DISPONIBLES*
+━━━━━━━━━━━━━━━━━━
+
+{{productos_no_disponibles}}
+
+📌 Los productos sin stock o no disponibles no fueron tomados en cuenta para el calculo de compra, caja, valor declarado ni flete.
+
+━━━━━━━━━━━━━━━━━━
+💰 *COSTO APROXIMADO DE LA COMPRA*
+━━━━━━━━━━━━━━━━━━
+
+* Total compra aproximado: R$ {{total_compra_reales}} o ${{total_compra_usd}} USD
+
+━━━━━━━━━━━━━━━━━━
+📦 *CAJAS SELECCIONADAS*
+━━━━━━━━━━━━━━━━━━
+
+{{resumen_cajas}}
+
+* Valor total declarado: R$ {{valor_total_mercancia_reales}} o ${{valor_total_mercancia_usd}} USD
+
+━━━━━━━━━━━━━━━━━━
+✈️ *SERVICIO UPS INTERNACIONAL*
+━━━━━━━━━━━━━━━━━━
+
+*Cotizacion Internacional* 🌎
+
+UPS cubre el transporte internacional, pero no incluye los cargos o impuestos que puedan generarse al entrar al pais destino.
+Si la aduana aplica algun pago, el destinatario debera cancelarlo localmente para liberar la mercancia.
+
+{{ups_origen_linea}}
+
+{{ups_destino_linea}}
+{{ups_paquete}}
+
+*OPCIONES DE ENVIO*
+{{ups_opciones_envio}}
+
+📌 Cada opcion UPS debe mostrar sus valores finales asi:
+* Servicio UPS: {{ups_servicio_nombre}}
+* Tiempo estimado UPS: {{ups_tiempo_estimado}}
+* Total en Reales: R$ {{ups_total_reales}}
+* Alternativa en Dolares: ${{ups_total_usd}} USD
+📌 Estos valores ya deben incluir el 40% de ganancia Praia sobre el precio UPS devuelto por el sistema.
+
+━━━━━━━━━━━━━━━━━━
+💳 *METODOS DE PAGO*
+━━━━━━━━━━━━━━━━━━
+
+PIX, Zelle, Binance USDT, Tarjeta de Credito, PayPal
+
+Escribe *Menu* para volver al inicio o dime que producto, caja o direccion deseas cambiar.
+
+============================================================
+FORMATOS ADICIONALES RECOMENDADOS
+============================================================
+
+Estos formatos no estaban en la lista inicial, pero conviene tenerlos previstos para evitar respuestas incompletas o confusas.
+
+------------------------------------------------------------
+FORMATO 12
+UPS SIN COTIZACIONES DISPONIBLES
+------------------------------------------------------------
+
+Resumen:
+Nota interna para el motor: si este formato muestra UPS, cada opcion UPS debe traer nombre del servicio, tiempo aproximado de entrega, total en R$ y alternativa en USD. El total UPS visible debe incluir precio UPS devuelto por el sistema + 40% de ganancia Praia. Si aplica recolecta o trecho, tambien deben estar sumados dentro de cada opcion UPS.
+Modalidad Praia en este formato: no aplica porque el resultado muestra solo UPS internacional. No mostrar bloque ni campo de modalidad Praia.
+Se usa cuando el motor no recibe tarifas UPS para el destino, codigo postal, peso, medidas o producto indicado. No debe inventar precio. Si el destino es Venezuela y Praia si calculo, se puede mostrar Praia normalmente y luego este bloque UPS. Si el destino no es Venezuela, se muestra solo este bloque.
+
+Formato:
+
+✈️ *SERVICIO UPS INTERNACIONAL*
+
+UPS cubre el transporte internacional, pero no incluye los cargos o impuestos que puedan generarse al entrar al pais destino.
+Si la aduana aplica algun pago, el destinatario debera cancelarlo localmente para liberar la mercancia.
+
+No conseguimos opciones UPS disponibles con los datos informados.
+
+Posibles motivos:
+* Codigo postal incompleto o no valido.
+* Direccion de destino no reconocida.
+* Peso o medidas fuera del rango permitido.
+* Producto con restriccion internacional.
+
+Puedes revisar el codigo postal, direccion, peso, medidas o producto para intentar cotizar nuevamente.
+
+Escribe *Menu* para volver al inicio o dime que dato deseas cambiar.
+
+------------------------------------------------------------
+FORMATO 13
+TODOS LOS PRODUCTOS ESTAN NO DISPONIBLES
+------------------------------------------------------------
+
+Resumen:
+Nota interna para el motor: si este formato muestra UPS, cada opcion UPS debe traer nombre del servicio, tiempo aproximado de entrega, total en R$ y alternativa en USD. El total UPS visible debe incluir precio UPS devuelto por el sistema + 40% de ganancia Praia. Si aplica recolecta o trecho, tambien deben estar sumados dentro de cada opcion UPS.
+Modalidad Praia en este formato: no aplica porque no se genera cotizacion de flete.
+Se usa cuando el cliente envia links o fotos, pero ningun producto valido queda disponible para cotizar. No debe mostrar flete, cajas, Praia ni UPS porque no hay base de calculo.
+
+Formato:
+
+⚠️ *No pudimos generar la cotizacion*
+
+Los productos enviados aparecen como no disponibles, sin stock o no tienen informacion suficiente para calcular la compra y el envio.
+
+━━━━━━━━━━━━━━━━━━
+⚠️ *PRODUCTOS NO DISPONIBLES*
+━━━━━━━━━━━━━━━━━━
+
+{{productos_no_disponibles}}
+
+📌 Estos productos no fueron tomados en cuenta para compra, caja, valor declarado ni flete.
+
+Puedes enviarme nuevos links, nuevas fotos o productos alternativos para cotizar nuevamente.
+
+Escribe *Menu* para volver al inicio.
+
+------------------------------------------------------------
+FORMATO 14
+PRODUCTO RESTRINGIDO O PROHIBIDO
+------------------------------------------------------------
+
+Resumen:
+Nota interna para el motor: si este formato muestra UPS, cada opcion UPS debe traer nombre del servicio, tiempo aproximado de entrega, total en R$ y alternativa en USD. El total UPS visible debe incluir precio UPS devuelto por el sistema + 40% de ganancia Praia. Si aplica recolecta o trecho, tambien deben estar sumados dentro de cada opcion UPS.
+Modalidad Praia en este formato: no aplica porque el producto esta restringido y no se muestran costos.
+Se usa cuando el producto no puede enviarse por reglas internas, aerolinea, courier, seguridad, aduana o categoria prohibida. No debe mostrar costos.
+
+Formato:
+
+⚠️ *Producto no permitido para envio*
+
+No podemos cotizar este envio porque el producto informado tiene restriccion o no esta permitido para transporte internacional.
+
+📦 *Producto:* {{categoria}}
+📌 *Motivo:* {{motivo_restriccion}}
+
+Puedes enviarme otro producto para verificar o cotizar nuevamente.
+
+Escribe *Menu* para volver al inicio.
+
+------------------------------------------------------------
+FORMATO 15
+TRECHO SOLICITADO PERO SIN VALOR DEVUELTO POR EL MOTOR
+------------------------------------------------------------
+
+Resumen:
+Nota interna para el motor: si este formato muestra UPS, cada opcion UPS debe traer nombre del servicio, tiempo aproximado de entrega, total en R$ y alternativa en USD. El total UPS visible debe incluir precio UPS devuelto por el sistema + 40% de ganancia Praia. Si aplica recolecta o trecho, tambien deben estar sumados dentro de cada opcion UPS.
+Modalidad Praia en este formato: si aplica trecho, mostrar combinacion numerica 4-X, donde 4 es trecho y X es la modalidad principal devuelta por el motor. Ejemplo: 4-2. No duplicar texto.
+Se usa solo si el JSON indica que aplica trecho, pero el motor no devuelve `valor_trecho_reales` ni `valor_trecho_usd`. No debe inventar precio ni sumar manualmente.
+
+Formato:
+
+⚠️ *Cotizacion pendiente de trecho*
+
+Detectamos que tu ciudad de origen requiere trecho nacional hasta Curitiba, pero el sistema no devolvio el valor del trecho.
+
+* Ciudad de origen del trecho: {{trecho_ciudad_origen}}
+* Codigo IATA LATAM Cargo: {{trecho_codigo_iata}}
+* Direccion LATAM Cargo: {{trecho_direccion_latam}}
+
+Para mostrar el total final correctamente, el motor debe devolver el valor del trecho en Reales y en Dolares.
+
+Escribe *Menu* para volver al inicio o corrige la ciudad de origen para cotizar nuevamente.
+
+============================================================
+REGLA FINAL PARA EL MOTOR
+============================================================
+
+El motor debe devolver a WhatsApp un solo campo final ya formateado, por ejemplo:
+
+{{mensaje_whatsapp}}
+
+Wapify debe enviar al cliente ese campo final y no debe enviar:
+- {{respuesta_ia}}
+- {{datos_cotizacion}}
+- JSON crudo
+
+Flujo correcto:
+OpenAI genera JSON
+JavaScript guarda datos_cotizacion
+API externa calcula en el motor
+Motor aplica el formato final correspondiente
+WhatsApp envia {{mensaje_whatsapp}} o el campo equivalente devuelto por el motor
+

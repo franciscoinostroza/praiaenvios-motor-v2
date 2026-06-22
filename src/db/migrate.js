@@ -123,6 +123,11 @@ CREATE TABLE IF NOT EXISTS trechos_config (
   activo BOOLEAN NOT NULL DEFAULT true
 );
 
+CREATE TABLE IF NOT EXISTS config_texto (
+  clave VARCHAR(100) PRIMARY KEY,
+  valor TEXT NOT NULL DEFAULT ''
+);
+
 `;
 
 async function migrate() {

@@ -77,8 +77,7 @@ async function seed() {
     ['nacional_peso_min', 1], ['nacional_peso_max', 80],
     ['tasa_dolar', 4.60],
     ['tasa_ups_offset', 0.40],
-    ['porcentaje_ganancia_ups', 40],
-    ['direccion_base_curitiba', 'Rua Padre Leonardo Nunes 30, Loja 02, CEP 80330-320, Bairro Portao, Curitiba, Parana, Brasil']
+    ['porcentaje_ganancia_ups', 40]
   ];
   for (const [key, val] of forms) {
     await query('INSERT INTO formulas (clave, valor) VALUES ($1, $2) ON CONFLICT (clave) DO NOTHING', [key, val]);
@@ -318,6 +317,15 @@ async function seed() {
     );
   }
   console.log('[seed] trechos_config ok (' + trechos.length + ' ciudades)');
+
+  // Configuración de texto
+  const configTexto = [
+    ['direccion_base_curitiba', 'Rua Padre Leonardo Nunes 30, Loja 02, CEP 80330-320, Bairro Portao, Curitiba, Parana, Brasil']
+  ];
+  for (const [clave, valor] of configTexto) {
+    await query('INSERT INTO config_texto (clave, valor) VALUES ($1, $2) ON CONFLICT (clave) DO NOTHING', [clave, valor]);
+  }
+  console.log('[seed] config_texto ok');
 
   console.log('[seed] todos los datos insertados correctamente');
   process.exit(0);

@@ -10,7 +10,7 @@ export async function loadConfig(forceReload = false) {
     return cache;
   }
 
-  const [expressRows, terreRows, nac1Rows, nac2Rows, bvRows, ganRows, modRows, formRows, zonaRows, svcRows, mapRows, trechoRows] = await Promise.all([
+  const [expressRows, terreRows, nac1Rows, nac2Rows, bvRows, ganRows, modRows, formRows, zonaRows, svcRows, mapRows, trechoRows, configTextoRows] = await Promise.all([
     query('SELECT kg, precio_bs FROM tarifas_express ORDER BY kg'),
     query('SELECT kg, precio_bs FROM tarifas_terrestre ORDER BY kg'),
     query('SELECT kg, precio_bs FROM nacional_op1 ORDER BY kg'),
@@ -22,7 +22,8 @@ export async function loadConfig(forceReload = false) {
     query('SELECT tipo, ciudad FROM zonas ORDER BY tipo, ciudad'),
     query('SELECT categoria, servicio, estado, documentacion FROM categoria_servicios ORDER BY categoria, servicio'),
     query('SELECT termino, categoria, restricciones FROM mapeo_categorias ORDER BY termino'),
-    query('SELECT ciudad, codigo_iata, direccion_latam, tiempo_adicional_dias, activo FROM trechos_config ORDER BY ciudad')
+    query('SELECT ciudad, codigo_iata, direccion_latam, tiempo_adicional_dias, activo FROM trechos_config ORDER BY ciudad'),
+    query('SELECT clave, valor FROM config_texto ORDER BY clave')
   ]);
 
   const TABLA_EXPRESS = {};
@@ -53,15 +54,10 @@ export async function loadConfig(forceReload = false) {
   }
 
   const FORMULAS = {};
+  for (const r of formRows.rows) FORMULAS[r.clave] = Number(r.valor);
+
   const CONFIG_TEXTO = {};
-  for (const r of formRows.rows) {
-    const num = Number(r.valor);
-    if (!isNaN(num)) {
-      FORMULAS[r.clave] = num;
-    } else {
-      CONFIG_TEXTO[r.clave] = r.valor;
-    }
-  }
+  for (const r of configTextoRows.rows) CONFIG_TEXTO[r.clave] = r.valor;
 
   const ZONA_BASE = [];
   const ORIGENES_PROHIBIDOS = [];
