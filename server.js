@@ -426,6 +426,7 @@ app.use('/admin', crearAdminRouter());
 app.get('/health', (_, res) => res.json({ status: 'ok', version: 'v2.0.0' }));
 
 const PORT = process.env.PORT || 3000;
-runSetup().then(() => {
-  app.listen(PORT, () => log('INFO', `Praia Envíos Motor v2 en http://localhost:${PORT}`));
+app.listen(PORT, () => {
+  log('INFO', `Praia Envíos Motor v2 en http://localhost:${PORT}`);
+  runSetup();
 });
