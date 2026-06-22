@@ -115,6 +115,14 @@ CREATE TABLE IF NOT EXISTS mapeo_categorias (
   restricciones TEXT DEFAULT ''
 );
 
+CREATE TABLE IF NOT EXISTS trechos_config (
+  ciudad VARCHAR(100) PRIMARY KEY,
+  codigo_iata VARCHAR(10) NOT NULL,
+  direccion_latam TEXT NOT NULL DEFAULT '',
+  tiempo_adicional_dias INTEGER NOT NULL DEFAULT 5,
+  activo BOOLEAN NOT NULL DEFAULT true
+);
+
 `;
 
 async function migrate() {

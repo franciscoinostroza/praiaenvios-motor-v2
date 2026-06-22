@@ -1,8 +1,9 @@
 export function crearMotor(config) {
   const {
     TABLA_EXPRESS, TABLA_TERRESTRE, TABLA_NACIONAL_OP1, TABLA_NACIONAL_OP2,
-    TRAMOS_BOA_VISTA, TRAMOS_GANANCIA, MODALIDADES, FORMULAS,
-    ZONA_BASE, ORIGENES_PROHIBIDOS, SERVICIOS_MATRIZ, MAPEO_TERMINOS
+    TRAMOS_BOA_VISTA, TRAMOS_GANANCIA, MODALIDADES, FORMULAS, CONFIG_TEXTO,
+    ZONA_BASE, ORIGENES_PROHIBIDOS, ZONAS_SIN_COBERTURA, ZONAS_RECOLECTA,
+    SERVICIOS_MATRIZ, MAPEO_TERMINOS, TRECHOS_MAP
   } = config;
 
   function calcularPesoVolumetrico(largo, ancho, alto) {
@@ -50,6 +51,56 @@ export function crearMotor(config) {
 
   function requiereTrecho(ciudad_origen) {
     return ZONA_BASE.indexOf(ciudad_origen.toLowerCase().trim()) === -1;
+  }
+
+  function getInfoTrecho(ciudad_origen) {
+    const key = ciudad_origen.toLowerCase().trim();
+    const enBase = ZONA_BASE.indexOf(key) !== -1;
+    if (enBase) {
+      return {
+        requiere_trecho: false,
+        modalidad: 0,
+        origen_fuera_zona_base: false,
+        latam_disponible: false,
+        codigo_iata: '',
+        direccion_latam: '',
+        tiempo_adicional_dias: 0,
+        observacion: '',
+        requiere_envio_a_curitiba_por_cliente: false
+      };
+    }
+    const latam = TRECHOS_MAP[key];
+    if (latam) {
+      return {
+        requiere_trecho: true,
+        modalidad: 4,
+        origen_fuera_zona_base: true,
+        latam_disponible: true,
+        codigo_iata: latam.codigo_iata,
+        direccion_latam: latam.direccion_latam,
+        tiempo_adicional_dias: latam.tiempo_adicional_dias,
+        observacion: 'Origen fuera de zona base. Se calcula trecho adicional hasta Curitiba.',
+        requiere_envio_a_curitiba_por_cliente: false
+      };
+    }
+    const sinCobertura = ZONAS_SIN_COBERTURA.indexOf(key) !== -1;
+    return {
+      requiere_trecho: false,
+      modalidad: 0,
+      origen_fuera_zona_base: true,
+      latam_disponible: false,
+      codigo_iata: '',
+      direccion_latam: '',
+      tiempo_adicional_dias: 0,
+      observacion: sinCobertura
+        ? 'Origen fuera de zona base sin LATAM Cargo permitido. Cliente debe enviar por cuenta propia a Curitiba usando Correios u otro servicio.'
+        : 'Ciudad de origen no reconocida. Contacte a un asesor.',
+      requiere_envio_a_curitiba_por_cliente: true
+    };
+  }
+
+  function recolectaDisponible(ciudad_origen) {
+    return ZONAS_RECOLECTA.indexOf(ciudad_origen.toLowerCase().trim()) !== -1;
   }
 
   function calcularFechaEntrega(dias) {
@@ -384,6 +435,7 @@ export function crearMotor(config) {
     const tasa = FORMULAS.tasa_dolar;
     const docs = obtenerDocumentacion(categorias, servicio);
 
+    const infoTrecho = getInfoTrecho(ciudad_origen);
     return {
       status: 'ok',
       modalidad: modalidad_cfg.id,
@@ -404,7 +456,10 @@ export function crearMotor(config) {
       tasa_dolar: tasa,
       tiempo_entrega: modalidad_cfg.tiempo_entrega_dias + ' días',
       con_trecho: trecho_val > 0,
-      documentacion_requerida: docs
+      documentacion_requerida: docs,
+      trecho: infoTrecho,
+      recolecta_disponible: recolectaDisponible(ciudad_origen),
+      direccion_base: CONFIG_TEXTO.direccion_base_curitiba || ''
     };
   }
 
@@ -447,6 +502,8 @@ export function crearMotor(config) {
 
     const servicio = elegirServicio(categorias);
     const docs = servicio ? obtenerDocumentacion(categorias, servicio) : [];
+    const infoTrecho = getInfoTrecho(ciudad_origen);
+    const recolectaDisponibleFlag = recolectaDisponible(ciudad_origen);
 
     return {
       status: 'ok',
@@ -456,7 +513,10 @@ export function crearMotor(config) {
       costo_nacional: calcularCostoNacional(totalPeso),
       tasa_dolar: FORMULAS.tasa_dolar,
       cajas: cajas,
-      documentacion_requerida: docs
+      documentacion_requerida: docs,
+      trecho: infoTrecho,
+      recolecta_disponible: recolectaDisponibleFlag,
+      direccion_base: CONFIG_TEXTO.direccion_base_curitiba || ''
     };
   }
 
@@ -465,6 +525,9 @@ export function crearMotor(config) {
     cotizarMultiple,
     cotizarDebug,
     validarInput,
-    validarInputMultiple
+    validarInputMultiple,
+    requiereTrecho,
+    getInfoTrecho,
+    recolectaDisponible
   };
 }

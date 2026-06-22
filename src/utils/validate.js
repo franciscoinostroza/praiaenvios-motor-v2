@@ -115,6 +115,10 @@ export function validateUpsInput(data) {
     return { valid: false, error: 'Falta: pais_destino' };
   }
 
+  if (!data.codigo_postal_destino || typeof data.codigo_postal_destino !== 'string' || data.codigo_postal_destino.trim().length === 0) {
+    return { valid: false, error: 'Falta: código postal del destino. Es necesario para calcular el envío internacional. Por favor indicá el código postal.' };
+  }
+
   const boxes = data.boxes || data.cajas;
   if (!Array.isArray(boxes) || boxes.length === 0) {
     return { valid: false, error: 'Falta: datos del paquete (boxes)' };

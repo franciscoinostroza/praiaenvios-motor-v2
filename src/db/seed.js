@@ -75,7 +75,10 @@ async function seed() {
     ['flete_aereo_por_kg', 9.5], ['factor_seguro', 0.007],
     ['factor_empresa_manaus', 0.04444], ['factor_ganancia', 6],
     ['nacional_peso_min', 1], ['nacional_peso_max', 80],
-    ['tasa_dolar', 4.60]
+    ['tasa_dolar', 4.60],
+    ['tasa_ups_offset', 0.40],
+    ['porcentaje_ganancia_ups', 40],
+    ['direccion_base_curitiba', 'Rua Padre Leonardo Nunes 30, Loja 02, CEP 80330-320, Bairro Portao, Curitiba, Parana, Brasil']
   ];
   for (const [key, val] of forms) {
     await query('INSERT INTO formulas (clave, valor) VALUES ($1, $2) ON CONFLICT (clave) DO NOTHING', [key, val]);
@@ -98,7 +101,18 @@ async function seed() {
     ['BASE','curitiba'],['BASE','campo largo'],['BASE','contenda'],
     ['BASE','fazenda rio grande'],['BASE','araucária'],['BASE','araucaria'],
     ['BASE','almirante tamandaré'],['BASE','almirante tamandare'],['BASE','manaus'],
-    ['PROHIBIDO','boa vista'],['PROHIBIDO','pacaraima']
+    ['PROHIBIDO','boa vista'],['PROHIBIDO','pacaraima'],
+    ['SIN_COBERTURA','boa vista'],['SIN_COBERTURA','pacaraima'],
+    ['SIN_COBERTURA','goiânia'],['SIN_COBERTURA','goiania'],
+    ['SIN_COBERTURA','fortaleza'],['SIN_COBERTURA','cuiabá'],['SIN_COBERTURA','cuiaba'],
+    ['SIN_COBERTURA','brasília'],['SIN_COBERTURA','brasilia'],
+    ['SIN_COBERTURA','joão pessoa'],['SIN_COBERTURA','joao pessoa'],
+    ['SIN_COBERTURA','teresina'],['SIN_COBERTURA','recife'],
+    ['RECOLECTA','curitiba'],['RECOLECTA','campo largo'],['RECOLECTA','contenda'],
+    ['RECOLECTA','fazenda rio grande'],['RECOLECTA','araucária'],['RECOLECTA','araucaria'],
+    ['RECOLECTA','almirante tamandaré'],['RECOLECTA','almirante tamandare'],
+    ['RECOLECTA','são josé dos pinhais'],['RECOLECTA','sao jose dos pinhais'],
+    ['RECOLECTA','colombo'],['RECOLECTA','pinhais']
   ];
   for (const [tipo, ciudad] of zonas) {
     await query('INSERT INTO zonas (tipo, ciudad) VALUES ($1, $2) ON CONFLICT (tipo, ciudad) DO NOTHING', [tipo, ciudad]);
@@ -256,6 +270,54 @@ async function seed() {
     );
   }
   console.log('[seed] nombres de modalidades actualizados');
+
+  // Trechos LATAM Cargo
+  const trechos = [
+    ['Aracajú','AJU','Aeroporto Santa Maria — Av. Senador Júlio César Leite S/N, Bairro Aeroporto. Loja LATAM à direita da entrada principal.'],
+    ['Belém','BEL','Aeroporto Internacional de Val de Cans — Av. Júlio César, s/n, Val-De-Cans, Belém. Loja LATAM à direita da entrada principal.'],
+    ['Belo Horizonte','CNF','Aeroporto Internacional Tancredo Neves — Rodovia MG 10 S/N. TPS1. Loja LATAM à direita da entrada principal.'],
+    ['Campinas','VCP','Aeroporto de Viracopos — Av. Viracopos s/n, CEP 13052-970. Loja LATAM.'],
+    ['Campo Grande','CGR','Aeroporto Internacional Campo Grande — Av. Duque de Caxias, S/N, Bairro Serradinho. Loja LATAM à direita da entrada principal.'],
+    ['Chapecó','XAP','Aeroporto Serafin Enoss Bertaso — Av. Florenal Ribeiro 4535D, Aeroporto, Chapecó SC. Loja LATAM à direita da entrada principal.'],
+    ['Florianópolis','FLN','Aeroporto Internacional Hercílio Luz — Rod. Ac. ao Aeroporto, 6.200, Carianos, Florianópolis SC. Loja LATAM à direita da entrada principal.'],
+    ['Foz do Iguaçu','IGU','Aeroporto Internacional Cataratas — Rod. BR 469, Km 16,5, s/n, Aeroporto, Foz do Iguaçu PR. Loja LATAM à direita da entrada principal.'],
+    ['Ilhéus','IOS','Aeroporto Jorge Amado — Rua Brigadeiro Eduardo Gomes S/N, Pontal, Ilhéus BA. Loja LATAM à direita da entrada principal.'],
+    ['Imperatriz','IMP','Aeroporto Prefeito Renato Moreira — Rod. BR 010 S/N, Bairro Aeroporto, Imperatriz MA. Loja LATAM à direita da entrada principal.'],
+    ['Jaguaruna','JJG','Aeroporto Regional Sul Humberto Ghizzo Bortoluzzi — Rod. Lussa Librelato s/n, Bairro Retiro, Jaguaruna SC. Loja LATAM à direita da entrada principal.'],
+    ['Joinville','JOI','Aeroporto Joinville-Lauro Carneiro de Loyola — Av. Santos Dumont N9.000, Bairro Cubatão, Joinville SC. Loja LATAM à direita da entrada principal.'],
+    ['Londrina','LDB','Aeroporto Gov. José Rich — Rua Tenente João Mauricio de Medeiros, 300, Bairro Aeroporto, Londrina PR. Loja LATAM à direita da entrada principal.'],
+    ['Macapá','MCP','Aeroporto Internacional Alberto Alcolumbre — Rua Hildemar Maia, S/N°, Jesus de Nazaré, Macapá AP. Loja LATAM à direita da entrada principal.'],
+    ['Maceió','MCZ','Aeroporto Internacional Zumbi dos Palmares — BR 104 KM 91, Tabuleiro do Pinto, Rio Largo AL. Loja LATAM à direita da entrada principal.'],
+    ['Marabá','MAB','Aeroporto João Correa da Rocha — Rod. Transamazônica km 02, Bairro Cidade Nova, Marabá PA. Loja LATAM à direita da entrada principal.'],
+    ['Maringá','MGF','Aeroporto Regional de Maringá Sílvio Name Júnior — Ah. Dr. Vladimir Babkov SN, Parque Industrial, Maringá PR. Loja LATAM à direita da entrada principal.'],
+    ['Montes Claros','MOC','Aeroporto Mário Ribeiro — Av. Cmte. João Milton, Jaraguá MG. Terminal 1. Loja LATAM.'],
+    ['Natal','NAT','Aeroporto Internacional Augusto Severo — Av Dr. Ruy Pereira dos Santos 3100, São Gonçalo do Amarante RN. Loja LATAM à direita da entrada principal.'],
+    ['Navegantes','NVT','Aeroporto Internacional Ministro Victor Konder — Rua Osmar Gaya 1297, Centro, Navegantes SC. Loja LATAM à direita da entrada principal.'],
+    ['Palmas','PMW','Aeroporto Brigadeiro Lysias Rodrigues — Av. Joaquim Teotônio Segurado, s/n, Plano Diretor Expansão Sul, Palmas TO. Loja LATAM.'],
+    ['Petrolina','PNZ','Aeroporto Internacional Senador Nilo Coelho — Rodovia BR 235, km 11, s/n, Zona Rural PE. Terminal 1.'],
+    ['Porto Alegre','POA','Aeroporto Internacional Salgado Filho — Av. Severo Dullius, 90.010, São João, Porto Alegre RS. Loja LATAM à direita da entrada principal.'],
+    ['Porto Velho','PVH','Aeroporto Internacional Governador Jorge Teixeira de Oliveira — Av. Gov. Jorge Teixeira, S/N, Aeroporto, Porto Velho RO. Loja LATAM.'],
+    ['Porto Seguro','BPS','Aeroporto Porto Seguro — Estrada do Aeroporto, s/n°, Cidade Alta, Porto Seguro BA. Loja LATAM à direita da entrada principal.'],
+    ['Rio Branco','RBR','Aeroporto Internacional de Rio Branco — BR 364 KM 18, Vila Aeroporto S/N. Loja LATAM.'],
+    ['Rio de Janeiro / Santos Dumont','SDU','Aeroporto Santos Dumont — Praça Senador Salgado Filho s/n, Centro, Rio de Janeiro RJ. Loja LATAM.'],
+    ['Rio de Janeiro / Galeão','GIG','Aeroporto Internacional de Galeão — Av. 20 de janeiro, snº, Ilha do Governador RJ. TPS2. Loja LATAM.'],
+    ['Ribeirão Preto','RAO','Aeroporto Estadual Dr. Leite Lopes — Av Thomaz Alberto Whately, s/n, Parque Industrial Cel Quito Junqueira, Ribeirão Preto SP. Loja LATAM.'],
+    ['Salvador','SSA','Aeroporto Internacional Dep. Luís Eduardo Magalhães — Praça Gago Coutinho s/n, São Cristóvão, Salvador BA. Loja LATAM.'],
+    ['Santarém','STM','Aeroporto Maestro Wilson Fonseca — Av. Engenheiro Fernando Guilhon s/n, Santarém PA. Loja LATAM.'],
+    ['São Luís','SLZ','Aeroporto Internacional Marechal Cunha Machado — Av. dos Libaneses, 3503, Tirirical, São Luís MA. Loja LATAM.'],
+    ['São José do Rio Preto','SJP','Aeroporto Estadual Prof. Eribelto Manoel Reino — Av dos estudantes JD aeroporto 3505, São José do Rio Preto SP. Loja LATAM.'],
+    ['São Paulo / Congonhas','CGH','Aeroporto de Congonhas — Av. Washington Luis, s/n°, Vila Congonhas, São Paulo SP. Loja LATAM à direita da entrada principal.'],
+    ['São Paulo / Guarulhos','GRU','Aeroporto Internacional de Cumbica — Rodovia Hélio Smidt, s/nº, Guarulhos SP. Terminal 2: 05h-23h, Terminal 3: 04h-02h. Loja LATAM.'],
+    ['Uberlândia','UDI','Aeroporto Ten. Cel. Aviador César Bombonato — Praça José Alves dos Santos, Jardim Ipanema, Uberlândia MG. Loja LATAM.'],
+    ['Vitória','VIX','Aeroporto Eurico de Aguiar Salles — Av. Roza Helena Schorling de Albuquerque, s/n, Aeroporto, Vitória ES. Loja LATAM.']
+  ];
+  for (const [ciudad, iata, direccion] of trechos) {
+    await query(
+      'INSERT INTO trechos_config (ciudad, codigo_iata, direccion_latam, tiempo_adicional_dias, activo) VALUES ($1, $2, $3, 5, true) ON CONFLICT (ciudad) DO NOTHING',
+      [ciudad, iata, direccion]
+    );
+  }
+  console.log('[seed] trechos_config ok (' + trechos.length + ' ciudades)');
 
   console.log('[seed] todos los datos insertados correctamente');
   process.exit(0);

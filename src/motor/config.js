@@ -10,7 +10,7 @@ export async function loadConfig(forceReload = false) {
     return cache;
   }
 
-  const [expressRows, terreRows, nac1Rows, nac2Rows, bvRows, ganRows, modRows, formRows, zonaRows, svcRows, mapRows] = await Promise.all([
+  const [expressRows, terreRows, nac1Rows, nac2Rows, bvRows, ganRows, modRows, formRows, zonaRows, svcRows, mapRows, trechoRows] = await Promise.all([
     query('SELECT kg, precio_bs FROM tarifas_express ORDER BY kg'),
     query('SELECT kg, precio_bs FROM tarifas_terrestre ORDER BY kg'),
     query('SELECT kg, precio_bs FROM nacional_op1 ORDER BY kg'),
@@ -21,7 +21,8 @@ export async function loadConfig(forceReload = false) {
     query('SELECT clave, valor FROM formulas'),
     query('SELECT tipo, ciudad FROM zonas ORDER BY tipo, ciudad'),
     query('SELECT categoria, servicio, estado, documentacion FROM categoria_servicios ORDER BY categoria, servicio'),
-    query('SELECT termino, categoria, restricciones FROM mapeo_categorias ORDER BY termino')
+    query('SELECT termino, categoria, restricciones FROM mapeo_categorias ORDER BY termino'),
+    query('SELECT ciudad, codigo_iata, direccion_latam, tiempo_adicional_dias, activo FROM trechos_config ORDER BY ciudad')
   ]);
 
   const TABLA_EXPRESS = {};
@@ -52,14 +53,40 @@ export async function loadConfig(forceReload = false) {
   }
 
   const FORMULAS = {};
-  for (const r of formRows.rows) FORMULAS[r.clave] = Number(r.valor);
+  const CONFIG_TEXTO = {};
+  for (const r of formRows.rows) {
+    const num = Number(r.valor);
+    if (!isNaN(num)) {
+      FORMULAS[r.clave] = num;
+    } else {
+      CONFIG_TEXTO[r.clave] = r.valor;
+    }
+  }
 
   const ZONA_BASE = [];
   const ORIGENES_PROHIBIDOS = [];
+  const ZONAS_SIN_COBERTURA = [];
+  const ZONAS_RECOLECTA = [];
   for (const r of zonaRows.rows) {
     const ciudad = r.ciudad;
     if (r.tipo === 'BASE') ZONA_BASE.push(ciudad);
     else if (r.tipo === 'PROHIBIDO') ORIGENES_PROHIBIDOS.push(ciudad);
+    else if (r.tipo === 'SIN_COBERTURA') ZONAS_SIN_COBERTURA.push(ciudad);
+    else if (r.tipo === 'RECOLECTA') ZONAS_RECOLECTA.push(ciudad);
+  }
+
+  // ── Trechos LATAM Cargo ──
+  const TRECHOS_MAP = {};
+  for (const r of trechoRows.rows) {
+    if (r.activo) {
+      const ciudadKey = r.ciudad.toLowerCase().trim();
+      TRECHOS_MAP[ciudadKey] = {
+        ciudad: r.ciudad,
+        codigo_iata: r.codigo_iata,
+        direccion_latam: r.direccion_latam,
+        tiempo_adicional_dias: r.tiempo_adicional_dias
+      };
+    }
   }
 
   // ── Matriz categoría × servicio ──
@@ -83,9 +110,9 @@ export async function loadConfig(forceReload = false) {
 
   const config = {
     TABLA_EXPRESS, TABLA_TERRESTRE, TABLA_NACIONAL_OP1, TABLA_NACIONAL_OP2,
-    TRAMOS_BOA_VISTA, TRAMOS_GANANCIA, MODALIDADES, FORMULAS,
-    ZONA_BASE, ORIGENES_PROHIBIDOS,
-    SERVICIOS_MATRIZ, MAPEO_TERMINOS
+    TRAMOS_BOA_VISTA, TRAMOS_GANANCIA, MODALIDADES, FORMULAS, CONFIG_TEXTO,
+    ZONA_BASE, ORIGENES_PROHIBIDOS, ZONAS_SIN_COBERTURA, ZONAS_RECOLECTA,
+    SERVICIOS_MATRIZ, MAPEO_TERMINOS, TRECHOS_MAP
   };
 
   cache = config;
