@@ -1,0 +1,750 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Praia Envíos Motor v2.0.0 — Formatos Combinados UPS</title>
+  <link rel="icon" type="image/png" href="favicon.png" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;700;800&family=DM+Mono:wght@300;400;500&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --bg: #0a0a0f;
+      --bg2: #111118;
+      --accent: #7f5af0;
+      --accent2: #2cb67d;
+      --text: #fffffe;
+      --muted: #94a1b2;
+      --border: rgba(255, 255, 255, 0.07);
+      --card-bg: rgba(255, 255, 255, 0.03);
+    }
+
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: 'DM Mono', monospace;
+      font-weight: 300;
+      line-height: 1.7;
+      position: relative;
+      min-height: 100vh;
+    }
+
+    body::before {
+      content: "";
+      position: fixed;
+      inset: 0;
+      background:
+        radial-gradient(ellipse 80% 60% at 50% -20%, rgba(127,90,240,0.08) 0%, transparent 60%),
+        radial-gradient(ellipse 50% 40% at 80% 100%, rgba(127,90,240,0.04) 0%, transparent 50%);
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    .container {
+      max-width: 960px;
+      margin: 0 auto;
+      padding: 2rem 1.5rem;
+      position: relative;
+      z-index: 1;
+    }
+
+    /* Header / Branding */
+    .brand-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding-bottom: 1.5rem;
+      border-bottom: 1px solid var(--border);
+      margin-bottom: 2.5rem;
+    }
+
+    .brand-logo {
+      font-family: 'Syne', sans-serif;
+      font-size: 1.5rem;
+      font-weight: 800;
+      color: var(--text);
+      text-decoration: none;
+    }
+
+    .brand-logo .accent {
+      color: var(--accent);
+    }
+
+    .brand-version {
+      font-size: 0.75rem;
+      color: var(--muted);
+      background: var(--card-bg);
+      border: 1px solid var(--border);
+      padding: 0.35rem 0.75rem;
+      border-radius: 999px;
+    }
+
+    .brand-version .accent { color: var(--accent); }
+
+    /* Hero */
+    .hero {
+      text-align: center;
+      padding: 3rem 0 2.5rem;
+    }
+
+    .hero h1 {
+      font-family: 'Syne', sans-serif;
+      font-size: 2.2rem;
+      font-weight: 800;
+      margin-bottom: 0.75rem;
+    }
+
+    .hero h1 .accent { color: var(--accent); }
+
+    .hero p {
+      color: var(--muted);
+      font-size: 0.9rem;
+      max-width: 600px;
+      margin: 0 auto;
+    }
+
+    .hero .badge {
+      display: inline-block;
+      margin-top: 1rem;
+      padding: 0.35rem 1rem;
+      background: rgba(127,90,240,0.1);
+      border: 1px solid rgba(127,90,240,0.2);
+      border-radius: 999px;
+      font-size: 0.75rem;
+      color: var(--accent);
+    }
+
+    /* Sections */
+    section {
+      margin-bottom: 3rem;
+    }
+
+    .section-title {
+      font-family: 'Syne', sans-serif;
+      font-size: 1.35rem;
+      font-weight: 700;
+      margin-bottom: 1.25rem;
+      padding-bottom: 0.5rem;
+      border-bottom: 2px solid var(--accent);
+      display: inline-block;
+    }
+
+    .section-title .icon {
+      margin-right: 0.5rem;
+    }
+
+    p, li {
+      color: var(--muted);
+      font-size: 0.85rem;
+      margin-bottom: 0.75rem;
+    }
+
+    strong { color: var(--text); font-weight: 500; }
+    em { color: var(--accent2); font-style: normal; }
+
+    /* Cards */
+    .card {
+      background: var(--card-bg);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 1.5rem;
+      margin-bottom: 1rem;
+      transition: border-color 0.2s;
+    }
+
+    .card:hover {
+      border-color: rgba(127,90,240,0.2);
+    }
+
+    .card h3 {
+      font-family: 'Syne', sans-serif;
+      font-size: 1rem;
+      font-weight: 700;
+      margin-bottom: 0.75rem;
+    }
+
+    .card p, .card li {
+      font-size: 0.8rem;
+    }
+
+    /* Grids */
+    .grid-2 {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 1rem;
+    }
+
+    .grid-3 {
+      display: grid;
+      grid-template-columns: 1fr 1fr 1fr;
+      gap: 1rem;
+    }
+
+    @media (max-width: 768px) {
+      .grid-2, .grid-3 { grid-template-columns: 1fr; }
+    }
+
+    /* Flow diagram */
+    .flow {
+      background: var(--bg2);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 1.5rem;
+      font-family: 'DM Mono', monospace;
+      font-size: 0.8rem;
+      line-height: 2;
+      overflow-x: auto;
+    }
+
+    .flow .arrow { color: var(--accent); }
+    .flow .ok { color: var(--accent2); }
+    .flow .fail { color: #e74c3c; }
+    .flow .path { color: var(--accent); }
+    .flow .comment { color: var(--muted); font-style: italic; }
+
+    /* Tables */
+    .table-wrap {
+      overflow-x: auto;
+      margin-bottom: 1rem;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.8rem;
+      background: var(--card-bg);
+      border-radius: 12px;
+      overflow: hidden;
+    }
+
+    thead {
+      background: rgba(127,90,240,0.1);
+    }
+
+    th {
+      font-family: 'Syne', sans-serif;
+      font-weight: 700;
+      text-align: left;
+      padding: 0.75rem 1rem;
+      font-size: 0.75rem;
+      color: var(--accent);
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+
+    td {
+      padding: 0.65rem 1rem;
+      border-top: 1px solid var(--border);
+      color: var(--muted);
+    }
+
+    tr:hover td {
+      background: rgba(255,255,255,0.02);
+    }
+
+    /* Code blocks (message examples) */
+    .message-block {
+      background: var(--bg2);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 1.25rem;
+      font-family: 'DM Mono', monospace;
+      font-size: 0.75rem;
+      line-height: 1.6;
+      white-space: pre-wrap;
+      word-break: break-word;
+      color: var(--muted);
+      margin-bottom: 1rem;
+      position: relative;
+    }
+
+    .message-block::before {
+      content: "📱 Mensaje al usuario";
+      display: block;
+      font-family: 'Syne', sans-serif;
+      font-size: 0.7rem;
+      font-weight: 700;
+      color: var(--accent);
+      margin-bottom: 0.75rem;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+
+    .message-block .highlight {
+      color: var(--accent2);
+    }
+
+    .message-block .label {
+      color: var(--accent);
+    }
+
+    /* Lists */
+    ul, ol {
+      padding-left: 1.25rem;
+      margin-bottom: 1rem;
+    }
+
+    li {
+      margin-bottom: 0.4rem;
+    }
+
+    ul li::marker { color: var(--accent); }
+
+    /* Divider */
+    hr {
+      border: none;
+      border-top: 1px solid var(--border);
+      margin: 2.5rem 0;
+    }
+
+    /* Pending items */
+    .pending {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      padding: 0.6rem 0.9rem;
+      background: rgba(255,255,255,0.02);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      font-size: 0.8rem;
+      margin-bottom: 0.5rem;
+    }
+
+    .pending .status {
+      display: inline-block;
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: var(--muted);
+      flex-shrink: 0;
+    }
+
+    .pending .status.pending { background: #f1c40f; }
+    .pending .status.done { background: var(--accent2); }
+
+    /* Accent color inline */
+    .accent-text { color: var(--accent); }
+    .green-text { color: var(--accent2); }
+
+    /* Footer */
+    .brand-footer {
+      text-align: center;
+      padding-top: 2rem;
+      border-top: 1px solid var(--border);
+      margin-top: 2rem;
+    }
+
+    .brand-footer p {
+      font-size: 0.7rem;
+      color: var(--muted);
+    }
+
+    .brand-footer .logo {
+      font-family: 'Syne', sans-serif;
+      font-size: 1rem;
+      font-weight: 700;
+      color: var(--text);
+    }
+
+    .brand-footer .logo .accent { color: var(--accent); }
+
+    /* Tag */
+    .tag {
+      display: inline-block;
+      padding: 0.15rem 0.5rem;
+      background: rgba(127,90,240,0.1);
+      border: 1px solid rgba(127,90,240,0.15);
+      border-radius: 4px;
+      font-size: 0.65rem;
+      color: var(--accent);
+      font-weight: 400;
+    }
+
+    a { color: var(--accent); text-decoration: none; }
+    a:hover { text-decoration: underline; }
+
+    /* Back to top */
+    .back-top {
+      display: block;
+      text-align: right;
+      font-size: 0.75rem;
+      margin-top: 0.5rem;
+    }
+
+    .back-top a { color: var(--muted); }
+  </style>
+</head>
+<body>
+
+<div class="container">
+
+  <!-- Header -->
+  <header class="brand-header">
+    <a href="/" class="brand-logo">Pixel<span class="accent">Arch</span></a>
+    <span class="brand-version"><span class="accent">Praia Envíos Motor</span> v2.0.0</span>
+  </header>
+
+  <!-- Hero -->
+  <div class="hero">
+    <h1>Formatos Combinados <span class="accent">Praia + UPS</span></h1>
+    <p>Documentación técnica de la Versión 2 — Integración de UPS Internacional al motor de cotizaciones de Praia Envíos.</p>
+    <span class="badge">Opción 3 · Feature Flag · Formato Completo</span>
+  </div>
+
+  <!-- 1. Resumen -->
+  <section>
+    <h2 class="section-title"><span class="icon">📋</span>Resumen</h2>
+    <p>La <strong>Versión 2</strong> incorpora <strong>UPS Internacional</strong> al motor de cotizaciones de Praia Envíos, permitiendo mostrar ambas opciones (Praia y UPS) en un mismo mensaje para Venezuela, o solo UPS para otros países.</p>
+    <p>Un feature flag <code class="tag">FORMATO_COMPLETO</code> permite activar/desactivar el nuevo flujo sin afectar a usuarios existentes. Con <code class="tag">false</code> (default), el sistema se comporta exactamente como la versión legacy.</p>
+  </section>
+
+  <!-- 2. Flujo general -->
+  <section>
+    <h2 class="section-title"><span class="icon">🔀</span>Flujo General</h2>
+    <div class="flow">
+POST /cotizar → <span class="path">FORMATO_COMPLETO=true?</span>
+  → <span class="fail">NO</span> → Legacy: solo Praia (igual que antes)
+
+  → <span class="ok">SÍ</span> → <span class="path">¿País = Venezuela?</span>
+    → <span class="ok">SÍ</span> → Praia + UPS en <span class="accent-text">PARALELO</span> (Promise.allSettled, timeout 8s)
+      → <span class="ok">UPS ok</span> → mensaje único con <span class="green-text">Praia + UPS</span>
+      → <span class="fail">UPS falla</span> → solo Praia con aviso
+    → <span class="fail">NO</span> → <span class="path">¿País internacional?</span>
+      → <span class="ok">SÍ</span> → solo UPS con <span class="accent-text">1 reintento</span>
+      → <span class="fail">NO</span> → Brasil → legacy (solo Praia)
+    </div>
+    <p class="back-top"><a href="#">↑ volver arriba</a></p>
+  </section>
+
+  <!-- 3. Feature Flag -->
+  <section>
+    <h2 class="section-title"><span class="icon">🚩</span>Feature Flag</h2>
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>Variable</th>
+            <th>Default</th>
+            <th>Descripción</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><code>FORMATO_COMPLETO</code></td>
+            <td><code class="tag">false</code></td>
+            <td><strong>true</strong> = nuevo flujo combinado. <strong>false</strong> = legacy intacto.</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <!-- 4. Nuevas tablas DB -->
+  <section>
+    <h2 class="section-title"><span class="icon">🗄️</span>Nuevas Tablas en DB</h2>
+
+    <div class="grid-2">
+      <div class="card">
+        <h3>trechos_config</h3>
+        <p>Almacena 37 ciudades LATAM con información para el trecho nacional hasta Curitiba.</p>
+        <table>
+          <thead>
+            <tr>
+              <th>Columna</th>
+              <th>Descripción</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr><td><code>ciudad</code></td><td>Nombre de la ciudad</td></tr>
+            <tr><td><code>codigo_iata</code></td><td>Código IATA del aeropuerto</td></tr>
+            <tr><td><code>direccion_latam</code></td><td>Dirección LATAM Cargo</td></tr>
+            <tr><td><code>tiempo_adicional_dias</code></td><td>Días adicionales por trecho</td></tr>
+            <tr><td><code>activo</code></td><td>Si la ciudad está habilitada</td></tr>
+          </tbody>
+        </table>
+        <p style="margin-top: 0.75rem;"><span class="tag">EDITABLE DESDE ADMIN</span> Permite agregar/quitar ciudades sin deploy.</p>
+      </div>
+
+      <div class="card">
+        <h3>config_texto</h3>
+        <p>Almacena configuraciones de texto clave-valor.</p>
+        <table>
+          <thead>
+            <tr>
+              <th>Columna</th>
+              <th>Descripción</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr><td><code>clave</code></td><td>Identificador único</td></tr>
+            <tr><td><code>valor</code></td><td>Texto configurable</td></tr>
+          </tbody>
+        </table>
+        <p style="margin-top: 0.75rem;"><strong>Ejemplo:</strong> <code>direccion_base_curitiba</code> — dirección de la base logística, configurable por si se mudan.</p>
+        <p><span class="tag">EDITABLE DESDE ADMIN</span></p>
+      </div>
+    </div>
+    <p class="back-top"><a href="#">↑ volver arriba</a></p>
+  </section>
+
+  <!-- 5. Configuraciones desde admin -->
+  <section>
+    <h2 class="section-title"><span class="icon">⚙️</span>Configuraciones desde Admin</h2>
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>Config</th>
+            <th>Default</th>
+            <th>Qué controla</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><code>porcentaje_ganancia_ups</code></td>
+            <td><code>40</code></td>
+            <td>Margen de ganancia (%) sobre el precio UPS devuelto por el sistema</td>
+          </tr>
+          <tr>
+            <td><code>tasa_ups_offset</code></td>
+            <td><code>0.40</code></td>
+            <td>Puntos adicionales sobre la tasa de mercado para conversión USD → R$</td>
+          </tr>
+          <tr>
+            <td><code>direccion_base_curitiba</code></td>
+            <td>(texto)</td>
+            <td>Dirección física de la base logística en Curitiba</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <!-- 6. Motor — Nuevas funciones -->
+  <section>
+    <h2 class="section-title"><span class="icon">⚡</span>Motor — Nuevas Funciones</h2>
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>Función</th>
+            <th>Descripción</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><code>getInfoTrecho(ciudad)</code></td>
+            <td>Busca ciudad en trechos_config. Devuelve datos LATAM (IATA, dirección, días adicionales).</td>
+          </tr>
+          <tr>
+            <td><code>recolectaDisponible(ciudad)</code></td>
+            <td>Verifica si la ciudad está en zona de recolecta.</td>
+          </tr>
+          <tr>
+            <td><code>requiereTrecho(ciudad)</code></td>
+            <td>Determina si la ciudad requiere trecho (no está en ZONA_BASE).</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <!-- 7. 15 formatos -->
+  <section>
+    <h2 class="section-title"><span class="icon">🧩</span>15 Formatos Reutilizables</h2>
+    <p>Sistema de bloques que se combinan según condiciones (país, trecho, recolecta, compra assistida, etc.). Reemplaza los templates monolíticos anteriores. Todos los bloques tienen soporte <strong>i18n</strong> (ES/PT/EN).</p>
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>#</th>
+            <th>Cuándo se usa</th>
+            <th>Bloques en el mensaje</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr><td>1</td><td>VE base (Curitiba)</td><td>Praia + UPS</td></tr>
+          <tr><td>2</td><td>VE + trecho LATAM</td><td>Praia + UPS + trecho</td></tr>
+          <tr><td>3</td><td>VE + recolecta</td><td>Praia + UPS + recolecta</td></tr>
+          <tr><td>4</td><td>VE sin cobertura LATAM</td><td>Praia + UPS + aviso "envía a Curitiba"</td></tr>
+          <tr><td>5</td><td>VE + compra assistida</td><td>Praia + UPS + productos + cajas</td></tr>
+          <tr><td>6</td><td>VE + compra + no disponibles</td><td>Praia + UPS + prods + no disponibles</td></tr>
+          <tr><td>7</td><td>Otro país (base)</td><td>Solo UPS</td></tr>
+          <tr><td>8</td><td>Otro país + trecho</td><td>UPS + trecho</td></tr>
+          <tr><td>9</td><td>Otro país + recolecta</td><td>UPS + recolecta</td></tr>
+          <tr><td>10</td><td>Otro país + compra assistida</td><td>UPS + productos</td></tr>
+          <tr><td>11</td><td>Otro país + compra + no disponibles</td><td>UPS + prods + no disponibles</td></tr>
+          <tr><td>12</td><td>Sin cotizaciones UPS</td><td>Aviso de error</td></tr>
+          <tr><td>13</td><td>Todos los productos no disponibles</td><td>Aviso</td></tr>
+          <tr><td>14</td><td>Producto restringido</td><td>Aviso</td></tr>
+          <tr><td>15</td><td>Trecho pendiente sin valor</td><td>Aviso</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <!-- 8. Validaciones nuevas -->
+  <section>
+    <h2 class="section-title"><span class="icon">✅</span>Validaciones Nuevas</h2>
+    <div class="card">
+      <p><code class="tag">codigo_postal_destino</code> es <strong>obligatorio</strong> para cotizaciones UPS. Si no se envía, la cotización UPS devuelve error de validación.</p>
+    </div>
+  </section>
+
+  <!-- 9. Whapify -->
+  <section>
+    <h2 class="section-title"><span class="icon">💬</span>Whapify — Sin Cambios</h2>
+    <div class="flow">
+Usuario WhatsApp → <span class="accent-text">Whapify</span> (conversación)
+  → Whapify pide datos paso a paso
+  → Cuando tiene todo → Whapify llama <span class="path">POST /whapify/cotizar</span>
+  → Nosotros: <span class="ok">mismo handler que /cotizar</span>
+  → Devolvemos <span class="path">resultado_final + mensaje_formateado</span>
+  → Whapify envía mensaje al usuario
+    </div>
+    <p style="margin-top: 0.75rem;">La integración con Whapify no cambió. Solo cambia el <strong>contenido</strong> del mensaje devuelto (ahora puede incluir UPS).</p>
+  </section>
+
+  <!-- 10. Ejemplos -->
+  <section>
+    <h2 class="section-title"><span class="icon">📱</span>Ejemplos de Mensajes al Usuario</h2>
+
+    <h3 style="font-family: 'Syne', sans-serif; font-size: 0.9rem; color: var(--accent2); margin-bottom: 0.75rem;">Venezuela — Praia + UPS (normal)</h3>
+    <div class="message-block">✅ Cotización aproximada lista
+
+Calculamos tu cotización desde Brasil hacia Venezuela
+con Praia Envíos y UPS 🇧🇷📦🇻🇪
+
+🔎 DATOS DEL ENVÍO
+País: Brasil → Venezuela
+Cajas: 1 | Valor: R$ 200
+
+📦 SERVICIO PRAIA ENVÍOS
+Total: <span class="highlight">R$ 264</span> | <span class="highlight">$57.39 USD</span>
+Tiempo: 15 días
+
+✈️ SERVICIO UPS INTERNACIONAL
+UPS Ground: <span class="highlight">R$ 380</span> | <span class="highlight">$82 USD</span>
+UPS Express: <span class="highlight">R$ 520</span> | <span class="highlight">$113 USD</span>
+
+💳 MÉTODOS DE PAGO
+PIX, Zelle, Binance USDT, Tarjeta, PayPal
+    </div>
+
+    <h3 style="font-family: 'Syne', sans-serif; font-size: 0.9rem; color: var(--accent2); margin-bottom: 0.75rem;">Venezuela — Solo Praia (UPS falló)</h3>
+    <div class="message-block">✅ Cotización aproximada lista
+
+...
+
+📦 SERVICIO PRAIA ENVÍOS
+Total: <span class="highlight">R$ 264</span> | <span class="highlight">$57.39 USD</span>
+
+💳 MÉTODOS DE PAGO
+...
+
+⚠️ UPS no estuvo disponible en este momento.
+Solo se muestra cotización Praia Envíos.
+    </div>
+
+    <h3 style="font-family: 'Syne', sans-serif; font-size: 0.9rem; color: var(--accent2); margin-bottom: 0.75rem;">Venezuela — Con trecho (São Paulo)</h3>
+    <div class="message-block">✅ Cotización aproximada lista
+
+Calculamos tu cotización desde São Paulo hacia Venezuela,
+usando trecho nacional hasta Curitiba + Praia Envíos + UPS
+
+🔎 DATOS DEL ENVÍO
+...
+
+TRECHO NACIONAL EN BRASIL
+Trecho São Paulo → Curitiba (LATAM Cargo)
+Valor: <span class="highlight">R$ 21</span> | <span class="highlight">$4.57 USD</span>
+Dirección: Aeropuerto de Congonhas...
+
+📦 SERVICIO PRAIA ENVÍOS
+Total: <span class="highlight">R$ 285</span> | <span class="highlight">$61.96 USD</span>
+
+✈️ SERVICIO UPS INTERNACIONAL
+...
+    </div>
+
+    <h3 style="font-family: 'Syne', sans-serif; font-size: 0.9rem; color: var(--accent2); margin-bottom: 0.75rem;">Otro país — Solo UPS (Chile)</h3>
+    <div class="message-block">✅ Cotización internacional lista
+
+Calculamos tu cotización UPS desde Brasil hacia Chile
+
+🔎 DATOS DEL ENVÍO
+...
+
+✈️ SERVICIO UPS INTERNACIONAL
+UPS Ground: <span class="highlight">R$ 380</span> | <span class="highlight">$82 USD</span>
+...
+    </div>
+    <p class="back-top"><a href="#">↑ volver arriba</a></p>
+  </section>
+
+  <!-- 11. Archivos relevantes -->
+  <section>
+    <h2 class="section-title"><span class="icon">📁</span>Archivos Relevantes</h2>
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>Archivo</th>
+            <th>Rol</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr><td><code>server.js</code></td><td>Feature flag + flujo combinado + whapify</td></tr>
+          <tr><td><code>src/motor/engine.js</code></td><td>getInfoTrecho(), recolectaDisponible()</td></tr>
+          <tr><td><code>src/motor/config.js</code></td><td>Carga trechos_config, config_texto, zonas</td></tr>
+          <tr><td><code>src/services/motor.js</code></td><td>Orquestación cotizar (single/multiple)</td></tr>
+          <tr><td><code>src/utils/format-selector.js</code></td><td>Selecciona formato 1-15 según condiciones</td></tr>
+          <tr><td><code>src/utils/bloques.js</code></td><td>15 bloques reutilizables con i18n</td></tr>
+          <tr><td><code>src/utils/format-completo.js</code></td><td>Constructor de mensajes combinados</td></tr>
+          <tr><td><code>src/utils/validate.js</code></td><td>Validación codigo_postal_destino</td></tr>
+          <tr><td><code>src/db/migrate.js</code></td><td>Creación de tablas trechos_config, config_texto</td></tr>
+          <tr><td><code>src/db/seed.js</code></td><td>Datos iniciales (37 ciudades, zonas, fórmulas)</td></tr>
+          <tr><td><code>src/db/setup.js</code></td><td>Wrapper migrate+seed para startup</td></tr>
+          <tr><td><code>src/admin/router.js</code></td><td>CRUD admin para nuevas tablas</td></tr>
+          <tr><td><code>railway.json</code></td><td>Config deploy con preDeploy (migrate)</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <p class="back-top"><a href="#">↑ volver arriba</a></p>
+  </section>
+
+  <!-- 12. Pendientes -->
+  <section>
+    <h2 class="section-title"><span class="icon">📌</span>Pendientes</h2>
+    <div class="pending">
+      <span class="status pending"></span>
+      <strong>Compra assistida</strong> — Revisar con Prompt Maestro del cliente
+    </div>
+    <div class="pending">
+      <span class="status pending"></span>
+      <strong>Admin panel</strong> — Probar CRUD trechos_config y config_texto
+    </div>
+    <div class="pending">
+      <span class="status pending"></span>
+      <strong>FORMATO_COMPLETO=true default</strong> — Aprobación del cliente
+    </div>
+    <div class="pending">
+      <span class="status pending"></span>
+      <strong>Ajustes post-feedback</strong> — Feedback del cliente probando en vivo
+    </div>
+  </section>
+
+  <!-- Footer -->
+  <footer class="brand-footer">
+    <p class="logo">Pixel<span class="accent">Arch</span></p>
+    <p>Praia Envíos Motor v2.0.0 — Formatos Combinados Praia + UPS</p>
+    <p>Documento generado el 2026-06-25</p>
+  </footer>
+
+</div>
+
+</body>
+</html>
