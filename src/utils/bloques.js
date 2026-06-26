@@ -22,7 +22,7 @@ const TEXTOS = {
     modalidad: 'Modalidad aplicada',
     tiempo_entrega: 'Tiempo de entrega',
     tiempo_estimado: 'Tiempo estimado aproximado',
-    fecha_estimada: 'Fecha estimada de entrega',
+    fecha_estimada: 'Plazo estimado',
     direccion_entrega: 'DIRECCIÓN DE ENTREGA EN VENEZUELA',
     costo_nacional: 'COSTO NACIONAL',
     costo_nacional_label: 'Costo nacional aproximado',
@@ -395,7 +395,7 @@ export function bloqueUps(upsResult, datos, flags, tasaDolar, tasaUpsOffset, por
       const totalUSD = precioConMargen + trechoValorUSD + recolectaValorUSD;
       const tasaUPS = tasaDolar + tasaUpsOffset;
       const totalBRL = totalUSD * tasaUPS;
-      const diasTexto = rate.days ? ' (~' + rate.days + ' ' + t('dias', lang) + ')' : '';
+      const diasTexto = rate.days ? ' (~' + rate.days + ' ' + t('dias', lang) + ' apróx.)' : '';
 
       salida += '\n🇺🇸 UPS — ' + rate.service + '\n';
       salida += '* ' + t('ups_servicio', lang) + ':* ' + rate.service + '\n';

@@ -104,11 +104,7 @@ export function crearMotor(config) {
   }
 
   function calcularFechaEntrega(dias) {
-    const fecha = new Date();
-    fecha.setDate(fecha.getDate() + dias);
-    const meses = ['enero','febrero','marzo','abril','mayo','junio',
-                   'julio','agosto','septiembre','octubre','noviembre','diciembre'];
-    return fecha.getDate() + ' de ' + meses[fecha.getMonth()] + ' de ' + fecha.getFullYear();
+    return '~' + dias + ' días apróx.';
   }
 
   function servicioPermitido(categorias, servicio) {
@@ -342,7 +338,7 @@ export function crearMotor(config) {
       modalidad: modalidad_cfg.id,
       nombre_modalidad: modalidad_cfg.nombre,
       total_final: Math.round(total_principal + trecho),
-      tiempo_entrega: modalidad_cfg.tiempo_entrega_dias + ' días',
+      tiempo_entrega: '~' + modalidad_cfg.tiempo_entrega_dias + ' días apróx.',
       fecha_entrega: calcularFechaEntrega(modalidad_cfg.tiempo_entrega_dias),
       con_trecho: trecho > 0,
       costo_nacional: calcularCostoNacional(peso_bruto),
@@ -454,7 +450,7 @@ export function crearMotor(config) {
       total_final,
       total_usd: +(total_final / tasa).toFixed(2),
       tasa_dolar: tasa,
-      tiempo_entrega: modalidad_cfg.tiempo_entrega_dias + ' días',
+      tiempo_entrega: '~' + modalidad_cfg.tiempo_entrega_dias + ' días apróx.',
       con_trecho: trecho_val > 0,
       documentacion_requerida: docs,
       trecho: infoTrecho,
@@ -508,7 +504,7 @@ export function crearMotor(config) {
     return {
       status: 'ok',
       total_final: Math.round(totalFinal),
-      tiempo_entrega: maxDias + ' días',
+      tiempo_entrega: '~' + maxDias + ' días apróx.',
       fecha_entrega: calcularFechaEntrega(maxDias),
       costo_nacional: calcularCostoNacional(totalPeso),
       tasa_dolar: FORMULAS.tasa_dolar,

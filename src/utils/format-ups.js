@@ -116,7 +116,7 @@ async function formatearMensajeUps(datos, resultado) {
   } else {
     for (let i = 0; i < Math.min(rates.length, 5); i++) {
       const r = rates[i];
-      const dias = r.days ? ' (~' + r.days + ' ' + t.dias + ')' : '';
+      const dias = r.days ? ' (~' + r.days + ' ' + t.dias + ' apróx.)' : '';
       opcionesEnvio += '🇺🇸 UPS — ' + r.service + '\n';
       opcionesEnvio += '  💰 ' + r.currency + ' ' + r.amount + dias + '\n';
       if (i < Math.min(rates.length, 5) - 1) opcionesEnvio += '\n';
