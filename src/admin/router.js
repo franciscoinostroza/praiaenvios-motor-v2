@@ -560,7 +560,7 @@ if(document.cookie.includes('token=')){fetch('/admin').then(r=>{if(r.ok&&r.url.i
     const heroHtml = `<div class="hero">
       <div class="hero-card"><div class="h-icon">📈</div><div class="h-num">${heroData.cotizHoy}</div><div class="h-label">Cotizaciones hoy</div>${cambioStr ? `<div class="h-sub ${cambioCls}">${cambioStr}</div>` : ''}</div>
       <div class="hero-card"><div class="h-icon">💰</div><div class="h-num">R$ ${heroData.tasaUsd}</div><div class="h-label">Tasa USD</div><div class="h-sub" style="color:var(--gray-400)">desde formulas</div></div>
-      <div class="hero-card"><div class="h-icon">🚩</div><div class="h-num" style="font-size:.8rem">${process.env.FORMATO_COMPLETO === 'true' ? '✅ ACTIVO' : '⚪ INACTIVO'}</div><div class="h-label">Formato completo</div><div class="h-sub" style="color:var(--gray-400)">FORMATO_COMPLETO=${process.env.FORMATO_COMPLETO || 'false'}</div></div>
+      <div class="hero-card" onclick="toggleFormato()" style="cursor:pointer"><div class="h-icon">🚩</div><div class="h-num" style="font-size:.8rem">${process.env.FORMATO_COMPLETO === 'true' ? '✅ ACTIVO' : '⚪ INACTIVO'}</div><div class="h-label">Formato completo</div><div class="h-sub" style="color:var(--gray-400)">${process.env.FORMATO_COMPLETO === 'true' ? 'Click para desactivar' : 'Click para activar'}</div></div>
       <div class="hero-card"><div class="h-icon">⏱</div><div class="h-num">${timeAgo(heroData.ultCotiz)}</div><div class="h-label">Última cotización</div><div class="h-sub" style="color:var(--gray-400)">${heroData.ultCotiz ? new Date(heroData.ultCotiz).toLocaleString('es-VE',{hour:'2-digit',minute:'2-digit'}) : '—'}</div></div>
       <div class="hero-card"><div class="h-icon">⚠️</div><div class="h-num" style="color:${heroData.errHoy > 0 ? 'var(--red)' : 'var(--green)'}">${heroData.errHoy}</div><div class="h-label">Errores hoy</div>${heroData.ultErr ? `<div class="h-sub red">${timeAgo(heroData.ultErr.time)}: ${esc(heroData.ultErr.msg.slice(0,50))}</div>` : '<div class="h-sub green">Sin errores</div>'}</div>
     </div>`;
@@ -629,8 +629,40 @@ if(document.cookie.includes('token=')){fetch('/admin').then(r=>{if(r.ok&&r.url.i
       seccionesHtml += '</div></div>';
     }
 
-    const body = `${heroHtml}${actionsHtml}${timelineHtml}${seccionesHtml}`;
+    const toggleScript = `<script>
+async function toggleFormato() {
+  const card = event.currentTarget;
+  card.style.opacity = '0.5';
+  try {
+    const res = await fetch('/admin/format-toggle', { method: 'POST' });
+    if (res.ok) location.reload();
+    else { const t = await res.text(); alert('Error: ' + t); card.style.opacity = '1'; }
+  } catch(e) { alert('Error de red'); card.style.opacity = '1'; }
+}
+</script>`;
+    const body = `${toggleScript}${heroHtml}${actionsHtml}${timelineHtml}${seccionesHtml}`;
     res.send(layout('Admin', body, t));
+  });
+
+  /* ─── FORMATO COMPLETO TOGGLE ─── */
+  router.post('/format-toggle', auth, async (req, res) => {
+    try {
+      const projectId = process.env.RAILWAY_PROJECT_ID || '7ef9507e-ac8c-4959-b684-1583fef4b8d2';
+      const envId = process.env.RAILWAY_ENVIRONMENT_ID || '724c346a-73e6-41d8-9eba-357981fc9f7e';
+      const nuevo = process.env.FORMATO_COMPLETO === 'true' ? 'false' : 'true';
+      await fetch('https://api.railway.app/v2/projects/' + projectId + '/environment/' + envId + '/variables', {
+        method: 'PUT',
+        headers: {
+          'Authorization': 'Bearer ' + (process.env.RAILWAY_API_TOKEN || ''),
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ variables: { FORMATO_COMPLETO: nuevo } })
+      });
+      process.env.FORMATO_COMPLETO = nuevo;
+      res.redirect('/admin');
+    } catch (err) {
+      res.status(500).send('Error: ' + err.message);
+    }
   });
 
   /* ─── PANEL (Wiki viva) ─── */
