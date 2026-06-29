@@ -118,31 +118,75 @@ function consolidarBoxes(datos) {
 
   if (scrapeados.length < 2) return datos;
 
-  let volumenTotal = 0, pesoTotal = 0, valorTotal = 0;
-  for (const b of scrapeados) {
-    volumenTotal += b.largo * b.ancho * b.alto;
-    pesoTotal += b.peso_bruto || 0;
-    valorTotal += b.valor_mercancia || 0;
-  }
+  const items = scrapeados
+    .map(b => ({
+      peso_bruto: b.peso_bruto || 0,
+      largo: b.largo || 30,
+      ancho: b.ancho || 30,
+      alto: b.alto || 30,
+      valor_mercancia: b.valor_mercancia || 0
+    }))
+    .sort((a, b) => (b.largo * b.ancho * b.alto) - (a.largo * a.ancho * a.alto));
 
-  let cajaElegida = CAJAS_ESTANDAR[CAJAS_ESTANDAR.length - 1];
-  for (const caja of CAJAS_ESTANDAR) {
-    if (caja.largo * caja.ancho * caja.alto >= volumenTotal) {
-      cajaElegida = caja;
-      break;
+  const openBoxes = [];
+
+  for (const item of items) {
+    const volItem = item.largo * item.ancho * item.alto;
+    let bestBox = null;
+    let bestRemaining = Infinity;
+    let bestIdx = -1;
+
+    for (let i = 0; i < openBoxes.length; i++) {
+      const box = openBoxes[i];
+      const cajaVol = box.cajaElegida.largo * box.cajaElegida.ancho * box.cajaElegida.alto;
+      const remaining = cajaVol - box.volumenOcupado;
+      if (remaining >= volItem && remaining < bestRemaining) {
+        bestBox = box;
+        bestRemaining = remaining;
+        bestIdx = i;
+      }
+    }
+
+    if (bestBox) {
+      bestBox.volumenOcupado += volItem;
+      bestBox.pesoTotal += item.peso_bruto;
+      bestBox.valorTotal += item.valor_mercancia;
+      bestBox.items.push(item);
+    } else {
+      let cajaElegida = CAJAS_ESTANDAR[CAJAS_ESTANDAR.length - 1];
+      for (const caja of CAJAS_ESTANDAR) {
+        if (caja.largo * caja.ancho * caja.alto >= volItem) {
+          cajaElegida = caja;
+          break;
+        }
+      }
+      openBoxes.push({
+        cajaElegida,
+        volumenOcupado: volItem,
+        pesoTotal: item.peso_bruto,
+        valorTotal: item.valor_mercancia,
+        items: [item]
+      });
     }
   }
 
-  log('INFO', 'Boxes consolidated', { count: scrapeados.length, to: `${cajaElegida.largo}x${cajaElegida.ancho}x${cajaElegida.alto}`, vol: volumenTotal, peso: pesoTotal });
-
   const newBoxes = [...directos];
-  newBoxes.push({
-    peso_bruto: pesoTotal,
-    largo: cajaElegida.largo,
-    ancho: cajaElegida.ancho,
-    alto: cajaElegida.alto,
-    valor_mercancia: valorTotal
+  for (const box of openBoxes) {
+    newBoxes.push({
+      peso_bruto: box.pesoTotal,
+      largo: box.cajaElegida.largo,
+      ancho: box.cajaElegida.ancho,
+      alto: box.cajaElegida.alto,
+      valor_mercancia: box.valorTotal
+    });
+  }
+
+  log('INFO', 'Boxes consolidated (BFD)', {
+    input: scrapeados.length,
+    output: openBoxes.length,
+    boxes: openBoxes.map(b => `${b.cajaElegida.largo}x${b.cajaElegida.ancho}x${b.cajaElegida.alto} vol=${b.volumenOcupado}/${b.cajaElegida.largo * b.cajaElegida.ancho * b.cajaElegida.alto} peso=${b.pesoTotal}`)
   });
+
   datos.boxes = newBoxes;
   return datos;
 }
@@ -516,34 +560,56 @@ async function scrapeUrl(url) {
   return null;
 }
 
+const SCRAPE_TIMEOUT_MS = 20000;
+
 export async function resolverUrls(datos) {
   if (!Array.isArray(datos.boxes)) return datos;
 
-  let scrapeFailed = false;
+  const indicesUrgen = [];
   for (let i = 0; i < datos.boxes.length; i++) {
     const box = datos.boxes[i];
-    if (!box.url) continue;
-    if (box.peso_bruto && box.peso_bruto > 0) continue;
+    if (box.url && (!box.peso_bruto || box.peso_bruto <= 0)) {
+      indicesUrgen.push(i);
+    }
+  }
 
-    const result = await scrapeUrl(box.url);
-    if (!result) {
+  if (indicesUrgen.length === 0) return datos;
+
+  const resultados = await Promise.allSettled(
+    indicesUrgen.map(i => {
+      const box = datos.boxes[i];
+      return Promise.race([
+        scrapeUrl(box.url),
+        new Promise((_, reject) => setTimeout(() => reject(new Error('Scrape timeout after ' + SCRAPE_TIMEOUT_MS + 'ms')), SCRAPE_TIMEOUT_MS))
+      ]);
+    })
+  );
+
+  let scrapeFailed = false;
+  for (let r = 0; r < resultados.length; r++) {
+    const i = indicesUrgen[r];
+    const box = datos.boxes[i];
+    const settled = resultados[r];
+
+    if (settled.status === 'rejected' || !settled.value) {
       scrapeFailed = true;
+      log('WARN', 'Scrape falló para URL', { url: box.url, error: settled.reason?.message || 'sin datos' });
       continue;
     }
 
-    const est = result.title ? estimarDimensiones(result.title) : null;
+    const data = settled.value;
+    const est = data.title ? estimarDimensiones(data.title) : null;
     const cantidad = parseInt(box.cantidad) || 1;
-    const pesoEstimado = result.weight > 0 ? result.weight : (est ? est.peso : 1);
-
-    const tieneDims = result.largo > 0 && result.ancho > 0 && result.alto > 0;
+    const pesoEstimado = data.weight > 0 ? data.weight : (est ? est.peso : 1);
+    const tieneDims = data.largo > 0 && data.ancho > 0 && data.alto > 0;
 
     datos.boxes[i].peso_bruto = pesoEstimado * cantidad;
-    datos.boxes[i].largo = tieneDims ? result.largo : (est ? est.largo : 30);
-    datos.boxes[i].ancho = tieneDims ? result.ancho : (est ? est.ancho : 30);
-    datos.boxes[i].alto = tieneDims ? result.alto : (est ? est.alto : 30);
-    datos.boxes[i].valor_mercancia = (result.price || 0) * cantidad;
+    datos.boxes[i].largo = tieneDims ? data.largo : (est ? est.largo : 30);
+    datos.boxes[i].ancho = tieneDims ? data.ancho : (est ? est.ancho : 30);
+    datos.boxes[i].alto = tieneDims ? data.alto : (est ? est.alto : 30);
+    datos.boxes[i].valor_mercancia = (data.price || 0) * cantidad;
 
-    const dims = tieneDims ? result : est;
+    const dims = tieneDims ? data : est;
     if (cantidad > 1 && dims) {
       const volUnidad = dims.largo * dims.ancho * dims.alto;
       const volTotal = volUnidad * cantidad;
@@ -558,7 +624,7 @@ export async function resolverUrls(datos) {
       }
     }
 
-    log('INFO', 'Box scraped', { box: i + 1, title: result.title, dims: `${datos.boxes[i].largo}x${datos.boxes[i].ancho}x${datos.boxes[i].alto}`, peso: datos.boxes[i].peso_bruto });
+    log('INFO', 'Box scraped', { box: i + 1, title: data.title, dims: `${datos.boxes[i].largo}x${datos.boxes[i].ancho}x${datos.boxes[i].alto}`, peso: datos.boxes[i].peso_bruto });
   }
 
   consolidarBoxes(datos);

@@ -113,22 +113,30 @@ export function crearUps(config) {
       if (address_to.state) shipToAddr.StateProvinceCode = address_to.state;
 
       const nParcels = (parcels || []).filter(Boolean);
-      const pesoTotal = nParcels.reduce((s, p) => s + (parseFloat(p.weight) || 0), 0);
-      const first = nParcels[0] || {};
 
-      const pkg = { PackagingType: { Code: '02' } };
-      if (first.length && first.width && first.height) {
-        pkg.Dimensions = {
+      const pkgs = nParcels.map(p => ({
+        PackagingType: { Code: '02' },
+        Dimensions: (p.length && p.width && p.height) ? {
           UnitOfMeasurement: { Code: 'CM' },
-          Length: String(first.length),
-          Width: String(first.width),
-          Height: String(first.height)
-        };
+          Length: String(p.length),
+          Width: String(p.width),
+          Height: String(p.height)
+        } : undefined,
+        PackageWeight: {
+          UnitOfMeasurement: { Code: 'KGS' },
+          Weight: String(parseFloat(p.weight) || 1)
+        }
+      }));
+
+      if (pkgs.length === 0) {
+        pkgs.push({
+          PackagingType: { Code: '02' },
+          PackageWeight: {
+            UnitOfMeasurement: { Code: 'KGS' },
+            Weight: '1'
+          }
+        });
       }
-      pkg.PackageWeight = {
-        UnitOfMeasurement: { Code: 'KGS' },
-        Weight: String(pesoTotal || parseFloat(first.weight) || 1)
-      };
 
       const rateBody = {
         RateRequest: {
@@ -140,7 +148,7 @@ export function crearUps(config) {
               ShipperNumber: cuenta.account
             },
             ShipTo: { Address: shipToAddr },
-            Package: pkg,
+            Package: pkgs,
             PaymentInformation: {
               ShipmentCharge: {
                 Type: '01',
