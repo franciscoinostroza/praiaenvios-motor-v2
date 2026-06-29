@@ -237,5 +237,5 @@ UPS Ground: R$ 380 | $82 USD
 
 | Item | Estado | Notas |
 |------|--------|-------|
-| FORMATO_COMPLETO=true default | ⏳ Pendiente | Aprobación del cliente |
+| FORMATO_COMPLETO=true default | ✅ Aprobado | Default cambiado a true |
 | Ajustes post-feedback | ⏳ Pendiente | Feedback del cliente probando en vivo |
