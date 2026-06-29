@@ -1933,7 +1933,7 @@ function confirmModalidad(form){
                 ${col === pk ? `<span style="font-weight:600;color:var(--gray-500)">${val}</span>`
                   : isNumeric[col]
                     ? `<input type="number" step="any" name="${col}" value="${val}"${rowTitle ? ` title="${rowTitle}"` : ''}>`
-                    : `<input type="text" name="${col}" value="${val.replace(/"/g,'&quot;')}"${rowTitle ? ` title="${rowTitle}"` : ''}>`}
+                    : `<input type="text" name="${col}" value="${String(val).replace(/"/g,'&quot;')}"${rowTitle ? ` title="${rowTitle}"` : ''}>`}
               </td>`;
             if (col === cols[cols.length - 1]) {
               if (table === 'categorias') {
