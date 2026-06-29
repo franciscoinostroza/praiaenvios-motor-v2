@@ -73,7 +73,7 @@ export function seleccionarFormato(datos, praiaResult, upsResult, flags) {
     return { formato: 13, flags: flagsResult };
   }
 
-  if (trechoInfo?.requiere_trecho && trechoSinValor) {
+  if (!esCompraAssistida && trechoInfo?.requiere_trecho && trechoSinValor) {
     return { formato: 15, flags: flagsResult };
   }
 

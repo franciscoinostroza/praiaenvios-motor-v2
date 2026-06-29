@@ -37,7 +37,8 @@ export async function formatearMensajeCompleto(datos, praiaResult, upsResult, co
 
   const datosConTasa = { ...datos, _tasa_dolar: tasaDolar };
 
-  const origenCiudad = datos.origen || datos.ciudad_origen || 'Curitiba';
+  const esCompraAssistida = datos.tipo_flujo === 'comprando_desde_venezuela' || datos.tipo_flujo === 'comprando_desde_otro_pais';
+  const origenCiudad = esCompraAssistida ? 'Curitiba' : (datos.origen || datos.ciudad_origen || 'Curitiba');
   const trechoInfo = getTrechoInfoFromConfig(origenCiudad, config);
 
   const flagsBase = {
