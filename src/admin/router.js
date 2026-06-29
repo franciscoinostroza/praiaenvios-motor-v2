@@ -1893,7 +1893,7 @@ function confirmModalidad(form){
     const isNullable = info.nullable || [];
     const isNumeric = {};
     for (const col of cols) {
-      if (col === 'valor' && table === 'modalidades') isNumeric[col] = false;
+      if (col === 'valor' && (table === 'modalidades' || table === 'config_texto')) isNumeric[col] = false;
       else if (['precio_bs', 'usd_kg', 'kg', 'hasta_cm', 'hasta_kg', 'valor'].includes(col)) isNumeric[col] = true;
       else isNumeric[col] = false;
     }
