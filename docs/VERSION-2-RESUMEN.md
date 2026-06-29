@@ -237,7 +237,5 @@ UPS Ground: R$ 380 | $82 USD
 
 | Item | Estado | Notas |
 |------|--------|-------|
-| Compra assistida | ⏳ Pendiente | Revisar con Prompt Maestro del cliente |
-| Admin panel | ⏳ No testeado | Probar CRUD trechos_config y config_texto |
 | FORMATO_COMPLETO=true default | ⏳ Pendiente | Aprobación del cliente |
 | Ajustes post-feedback | ⏳ Pendiente | Feedback del cliente probando en vivo |
