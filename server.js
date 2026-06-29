@@ -423,7 +423,7 @@ async function manejarCotizacionUps(req, res) {
 
 app.use('/admin', crearAdminRouter());
 
-app.get('/health', (_, res) => res.json({ status: 'ok', version: 'v2.0.0' }));
+app.get('/health', (_, res) => res.json({ status: 'ok', version: 'v2.1.0' }));
 
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {

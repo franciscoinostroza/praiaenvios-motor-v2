@@ -1,5 +1,19 @@
 # Changelog
 
+## v2.1.0 (2026-06-29)
+
+### Added
+- Scraping paralelo con `Promise.allSettled` (5 URLs se procesan simultáneamente)
+- Timeout individual por URL (20s máximo)
+- Algoritmo BFD (Best Fit Decreasing) para consolidación realista de múltiples cajas
+- UPS multi-paquete: cada caja consolidada se envía como un Package separado a UPS
+
+### Changed
+- `resolverUrls()`: de secuencial a paralelo, cada URL con timeout propio
+- `consolidarBoxes()`: de 1 caja única a múltiples cajas según tamaño (BFD)
+- `crearUps().cotizar()`: soporta array de Package en vez de objeto único
+- `/health`: actualizado a `v2.1.0`
+
 ## v2.0.0 (2026-06-25)
 
 ### Added
