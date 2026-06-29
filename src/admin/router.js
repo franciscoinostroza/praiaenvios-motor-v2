@@ -557,6 +557,7 @@ if(document.cookie.includes('token=')){fetch('/admin').then(r=>{if(r.ok&&r.url.i
     const heroHtml = `<div class="hero">
       <div class="hero-card"><div class="h-icon">📈</div><div class="h-num">${heroData.cotizHoy}</div><div class="h-label">Cotizaciones hoy</div>${cambioStr ? `<div class="h-sub ${cambioCls}">${cambioStr}</div>` : ''}</div>
       <div class="hero-card"><div class="h-icon">💰</div><div class="h-num">R$ ${heroData.tasaUsd}</div><div class="h-label">Tasa USD</div><div class="h-sub" style="color:var(--gray-400)">desde formulas</div></div>
+      <div class="hero-card"><div class="h-icon">🚩</div><div class="h-num" style="font-size:.8rem">${process.env.FORMATO_COMPLETO === 'true' ? '✅ ACTIVO' : '⚪ INACTIVO'}</div><div class="h-label">Formato completo</div><div class="h-sub" style="color:var(--gray-400)">FORMATO_COMPLETO=${process.env.FORMATO_COMPLETO || 'false'}</div></div>
       <div class="hero-card"><div class="h-icon">⏱</div><div class="h-num">${timeAgo(heroData.ultCotiz)}</div><div class="h-label">Última cotización</div><div class="h-sub" style="color:var(--gray-400)">${heroData.ultCotiz ? new Date(heroData.ultCotiz).toLocaleString('es-VE',{hour:'2-digit',minute:'2-digit'}) : '—'}</div></div>
       <div class="hero-card"><div class="h-icon">⚠️</div><div class="h-num" style="color:${heroData.errHoy > 0 ? 'var(--red)' : 'var(--green)'}">${heroData.errHoy}</div><div class="h-label">Errores hoy</div>${heroData.ultErr ? `<div class="h-sub red">${timeAgo(heroData.ultErr.time)}: ${esc(heroData.ultErr.msg.slice(0,50))}</div>` : '<div class="h-sub green">Sin errores</div>'}</div>
     </div>`;
@@ -602,6 +603,10 @@ if(document.cookie.includes('token=')){fetch('/admin').then(r=>{if(r.ok&&r.url.i
         { key: 'modalidades', icon: '📋', name: 'Modalidades', desc: 'Configuración de cada modalidad' },
         { key: 'formulas', icon: '🧮', name: 'Fórmulas', desc: 'Constantes del motor' },
         { key: 'zonas', icon: '📍', name: 'Zonas', desc: 'Base y orígenes prohibidos' },
+      ]},
+      { key: 'ups', icon: '✈️', label: 'UPS / Trechos', cls: 'section-ups', cards: [
+        { key: 'trechos_config', icon: '🛫', name: 'Trechos LATAM', desc: '37 ciudades con IATA y direcciones' },
+        { key: 'config_texto', icon: '📝', name: 'Configuración de Texto', desc: 'Dirección base y textos editables' },
       ]},
       { key: 'clasificacion', icon: '🤖', label: 'Clasificación', cls: 'section-clasificacion', cards: [
         { key: 'categoria-servicios', icon: '🚦', name: 'Matriz de Servicios', desc: 'Categorías × SEDEX / PAC / LATAM' },
