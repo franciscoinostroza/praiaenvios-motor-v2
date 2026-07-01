@@ -384,7 +384,12 @@ export function bloqueUps(upsResult, datos, flags, tasaDolar, tasaUpsOffset, por
   }
 
   if (rates.length === 0) {
-    salida += t('ups_sin_cotizaciones', lang) + '\n';
+    if (upsResult?.status === 'restricted' && upsResult?.motivo) {
+      salida += '⚠️ *' + t('producto_restringido', lang) + '*\n\n';
+      salida += upsResult.motivo + '\n\n';
+    } else {
+      salida += t('ups_sin_cotizaciones', lang) + '\n';
+    }
   } else {
     salida += '*' + t('titulo_opciones_ups', lang).toUpperCase() + '*\n';
     for (let i = 0; i < Math.min(rates.length, 5); i++) {

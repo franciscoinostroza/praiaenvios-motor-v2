@@ -11,7 +11,19 @@ import { loadConfig } from './src/motor/config.js';
 import { formatearMensajeCompleto } from './src/utils/format-completo.js';
 
 
-const CATEGORIAS_RESTRINGIDAS_UPS = ['baterias', 'alimentos', 'quimicos', 'licores'];
+let CATEGORIAS_RESTRINGIDAS_UPS = ['baterias', 'alimentos', 'quimicos', 'licores'];
+
+async function cargarRestringidas() {
+  try {
+    const { query } = await import('./src/db/pool.js');
+    const r = await query("SELECT valor FROM config_texto WHERE clave = 'ups_categorias_restringidas'");
+    if (r.rows.length > 0) {
+      CATEGORIAS_RESTRINGIDAS_UPS = r.rows[0].valor.split(',').map(s => s.trim());
+    }
+  } catch {}
+}
+
+cargarRestringidas();
 
 const app = express();
 app.use(express.json());
@@ -231,6 +243,9 @@ async function manejarCotizacionUpsConRetry(req, res, datos, contacto) {
       });
     }
 
+    const entradaMotor = await extractMotorParams(datos);
+    datos._categorias_norm = entradaMotor.categorias;
+
     const entrada = extractUpsParams(datos);
     log('INFO', 'Entrada UPS (con retry)', { entrada: JSON.stringify(entrada) }, contacto);
 
@@ -301,7 +316,9 @@ function extraerEntradaUps(datos) {
     mass_unit: 'kg'
   })) : [{ length: '30', width: '20', height: '15', distance_unit: 'cm', weight: '1', mass_unit: 'kg' }];
 
-  return { address_from, address_to, parcels };
+  const descripcion = (datos._categorias_norm || datos.categorias || (datos.categoria ? [datos.categoria] : [])).join(', ');
+
+  return { address_from, address_to, parcels, descripcion };
 }
 
 async function ejecutarUpsConTimeout(entrada, timeoutMs) {

@@ -320,7 +320,8 @@ async function seed() {
 
   // Configuración de texto
   const configTexto = [
-    ['direccion_base_curitiba', 'Rua Padre Leonardo Nunes 30, Loja 02, CEP 80330-320, Bairro Portao, Curitiba, Parana, Brasil']
+    ['direccion_base_curitiba', 'Rua Padre Leonardo Nunes 30, Loja 02, CEP 80330-320, Bairro Portao, Curitiba, Parana, Brasil'],
+    ['ups_categorias_restringidas', 'baterias,alimentos,quimicos,licores']
   ];
   for (const [clave, valor] of configTexto) {
     await query('INSERT INTO config_texto (clave, valor) VALUES ($1, $2) ON CONFLICT (clave) DO NOTHING', [clave, valor]);

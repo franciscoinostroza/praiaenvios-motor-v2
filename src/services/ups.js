@@ -68,7 +68,7 @@ export function crearUps(config) {
   }
 
   return {
-    async cotizar({ address_from, address_to, parcels }) {
+    async cotizar({ address_from, address_to, parcels, descripcion }) {
       const paisDestino = (address_to.country || '').toUpperCase();
       const cuenta = elegirCuenta(paisDestino);
       if (!cuenta) throw new Error('No hay cuenta UPS disponible para ' + paisDestino);
@@ -90,7 +90,8 @@ export function crearUps(config) {
           city: address_to.city || '',
           state: address_to.state || ''
         },
-        parcels
+        parcels,
+        descripcion
       });
 
       const cacheado = await obtenerDelCache(cacheKey);
@@ -116,6 +117,7 @@ export function crearUps(config) {
 
       const pkgs = nParcels.map(p => ({
         PackagingType: { Code: '02' },
+        Description: descripcion || undefined,
         Dimensions: (p.length && p.width && p.height) ? {
           UnitOfMeasurement: { Code: 'CM' },
           Length: String(p.length),
@@ -194,9 +196,17 @@ export function crearUps(config) {
         };
       });
 
-      const resultado = { status: 'success', rates };
+      let motivo = '';
+      if (rates.length === 0) {
+        const alerts = data.RateResponse?.Response?.Alert || [];
+        const descs = Array.isArray(alerts) ? alerts : [alerts];
+        const restriccion = descs.find(a => /restrict|prohibit|not.allow|not.available|ineligible/i.test(a.Description || ''));
+        motivo = restriccion?.Description || descs.map(a => a.Description).filter(Boolean).join('; ');
+      }
+
+      const resultado = { status: rates.length > 0 ? 'success' : (motivo ? 'restricted' : 'empty'), rates, motivo };
       await guardarEnCache(cacheKey, resultado);
-      console.log('[ups]', rates.length, 'tarifas obtenidas');
+      console.log('[ups]', rates.length, 'tarifas obtenidas', motivo ? '| ' + motivo.slice(0, 60) : '');
       return resultado;
     }
   };
