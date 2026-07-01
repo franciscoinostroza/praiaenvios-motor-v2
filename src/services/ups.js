@@ -68,6 +68,11 @@ export function crearUps(config) {
   }
 
   return {
+    async obtenerToken(paisDestino) {
+      const cuenta = elegirCuenta(paisDestino || 'BR');
+      const gestor = gestores[cuenta.account];
+      return gestor.obtenerToken();
+    },
     async cotizar({ address_from, address_to, parcels, descripcion }) {
       const paisDestino = (address_to.country || '').toUpperCase();
       const cuenta = elegirCuenta(paisDestino);

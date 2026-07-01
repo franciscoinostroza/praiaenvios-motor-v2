@@ -9,6 +9,7 @@ import { crearAdminRouter } from './src/admin/router.js';
 import { log } from './src/utils/log.js';
 import { loadConfig } from './src/motor/config.js';
 import { formatearMensajeCompleto } from './src/utils/format-completo.js';
+import { verificarRestriccionUps } from './src/services/ups-assure.js';
 
 
 let CATEGORIAS_RESTRINGIDAS_UPS = ['baterias', 'alimentos', 'quimicos', 'licores'];
@@ -29,6 +30,7 @@ const app = express();
 app.use(express.json());
 
 let cotizarUps = null;
+let upsServiceToken = null;
 try {
   const cuentas = [];
   const c1id = process.env.UPS_CUENTA_1_ID;
@@ -54,6 +56,7 @@ try {
       }
     });
     cotizarUps = upsService.cotizar;
+    upsServiceToken = upsService.obtenerToken.bind(upsService);
     log('INFO', `UPS configurado con ${cuentas.length} cuenta(s)`);
   } else {
     log('WARN', 'UPS no configurado — cotizaciones internacionales no disponibles');
@@ -178,13 +181,31 @@ async function manejarCotizacionCompleta(req, res, datos, contacto) {
       }
     }
 
-    const upsRestringido = categoriasNorm.some(c => CATEGORIAS_RESTRINGIDAS_UPS.includes(c));
+    let upsRestringido = categoriasNorm.some(c => CATEGORIAS_RESTRINGIDAS_UPS.includes(c));
 
     if (upsRestringido) {
       log('INFO', 'UPS restringido para categorías', { categorias: categoriasNorm }, contacto);
       datos.producto_restringido = true;
       datos.motivo_restriccion = 'El producto contiene materiales restringidos para envío internacional UPS: ' +
         categoriasNorm.filter(c => CATEGORIAS_RESTRINGIDAS_UPS.includes(c)).join(', ');
+    } else if (upsServiceToken && entrada.boxes.some(b => b._titulo)) {
+      const titulos = entrada.boxes.map(b => b._titulo).filter(Boolean).join(' | ');
+      try {
+        const assureResult = await verificarRestriccionUps({
+          token: await upsServiceToken('BR'),
+          titulo: titulos,
+          paisOrigen: 'BR',
+          paisDestino: datos.pais_destino || 'VE'
+        });
+        if (!assureResult.permitido) {
+          log('INFO', 'UPS restringido por Export Assure', { titulo: titulos, motivo: assureResult.motivo }, contacto);
+          datos.producto_restringido = true;
+          datos.motivo_restriccion = assureResult.motivo || 'Producto restringido por UPS';
+          upsRestringido = true;
+        }
+      } catch (err) {
+        log('WARN', 'Export Assure falló', { error: err.message }, contacto);
+      }
     }
 
     const entradaUps = extraerEntradaUps(datos);
