@@ -608,6 +608,7 @@ export async function resolverUrls(datos) {
     datos.boxes[i].ancho = tieneDims ? data.ancho : (est ? est.ancho : 30);
     datos.boxes[i].alto = tieneDims ? data.alto : (est ? est.alto : 30);
     datos.boxes[i].valor_mercancia = (data.price || 0) * cantidad;
+    datos.boxes[i]._titulo = data.title || '';
 
     const dims = tieneDims ? data : est;
     if (cantidad > 1 && dims) {

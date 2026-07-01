@@ -159,6 +159,25 @@ async function manejarCotizacionCompleta(req, res, datos, contacto) {
     }
 
     const categoriasNorm = datos._categorias_norm || entrada.categorias || [];
+
+    const configPre = await loadConfig();
+    const mapeoTerminos = configPre?.MAPEO_TERMINOS || {};
+    for (const box of entrada.boxes) {
+      if (box._titulo) {
+        const t = box._titulo.toLowerCase();
+        for (const [termino, info] of Object.entries(mapeoTerminos)) {
+          if (t.includes(termino) && info.restricciones.length > 0) {
+            for (const r of info.restricciones) {
+              if (!categoriasNorm.includes(r)) {
+                categoriasNorm.push(r);
+                log('INFO', 'Restricción desde título scrapeado', { titulo: box._titulo, restriccion: r }, contacto);
+              }
+            }
+          }
+        }
+      }
+    }
+
     const upsRestringido = categoriasNorm.some(c => CATEGORIAS_RESTRINGIDAS_UPS.includes(c));
 
     if (upsRestringido) {
