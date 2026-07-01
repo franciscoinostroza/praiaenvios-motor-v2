@@ -11,6 +11,8 @@ import { loadConfig } from './src/motor/config.js';
 import { formatearMensajeCompleto } from './src/utils/format-completo.js';
 
 
+const CATEGORIAS_RESTRINGIDAS_UPS = ['baterias', 'alimentos', 'quimicos', 'licores'];
+
 const app = express();
 app.use(express.json());
 
@@ -144,11 +146,23 @@ async function manejarCotizacionCompleta(req, res, datos, contacto) {
       });
     }
 
+    const categoriasNorm = datos._categorias_norm || entrada.categorias || [];
+    const upsRestringido = categoriasNorm.some(c => CATEGORIAS_RESTRINGIDAS_UPS.includes(c));
+
+    if (upsRestringido) {
+      log('INFO', 'UPS restringido para categorías', { categorias: categoriasNorm }, contacto);
+      datos.producto_restringido = true;
+      datos.motivo_restriccion = 'El producto contiene materiales restringidos para envío internacional UPS: ' +
+        categoriasNorm.filter(c => CATEGORIAS_RESTRINGIDAS_UPS.includes(c)).join(', ');
+    }
+
     const entradaUps = extraerEntradaUps(datos);
 
     const [praiaPromise, upsPromise] = await Promise.allSettled([
       cotizar(entrada),
-      cotizarUps ? ejecutarUpsConTimeout(entradaUps, 8000) : Promise.reject(new Error('UPS no configurado'))
+      (cotizarUps && !upsRestringido)
+        ? ejecutarUpsConTimeout(entradaUps, 8000)
+        : Promise.reject(new Error(upsRestringido ? 'UPS restringido' : 'UPS no configurado'))
     ]);
 
     const praiaResult = praiaPromise.status === 'fulfilled' ? praiaPromise.value : null;
@@ -169,11 +183,12 @@ async function manejarCotizacionCompleta(req, res, datos, contacto) {
     const config = await loadConfig();
     const mensajeFinal = await formatearMensajeCompleto(datos, praiaResult, upsResult, config);
 
-    const mensajeFormateado = mensajeFinal + (
-      !upsResult && cotizarUps
-        ? '\n\n⚠️ UPS no estuvo disponible en este momento. Solo se muestra cotización Praia Envíos.'
-        : ''
-    );
+    const avisoUps = !upsResult && cotizarUps
+      ? (datos.producto_restringido
+          ? '\n\n⚠️ UPS no está disponible para este producto por restricciones de envío internacional (' + datos.motivo_restriccion + '). Solo se muestra cotización Praia Envíos.'
+          : '\n\n⚠️ UPS no estuvo disponible en este momento. Solo se muestra cotización Praia Envíos.')
+      : '';
+    const mensajeFormateado = mensajeFinal + avisoUps;
 
     log('INFO', 'Cotización completa exitosa', {
       total: praiaResult?.total_final,
@@ -218,6 +233,17 @@ async function manejarCotizacionUpsConRetry(req, res, datos, contacto) {
 
     const entrada = extractUpsParams(datos);
     log('INFO', 'Entrada UPS (con retry)', { entrada: JSON.stringify(entrada) }, contacto);
+
+    const categoriasNorm = datos._categorias_norm || datos.categorias || (datos.categoria ? [datos.categoria] : []);
+    const upsRestringido = categoriasNorm.some(c => CATEGORIAS_RESTRINGIDAS_UPS.includes(c));
+
+    if (upsRestringido) {
+      log('WARN', 'UPS restringido para categorías (con retry)', { categorias: categoriasNorm }, contacto);
+      return res.json({
+        resultado_final: { error: true, mensaje: 'UPS no disponible para este producto por restricciones de envío internacional.' },
+        mensaje_formateado: '\u274C UPS no está disponible para este producto por restricciones de envío internacional.'
+      });
+    }
 
     let upsResult = null;
     let lastError = null;
